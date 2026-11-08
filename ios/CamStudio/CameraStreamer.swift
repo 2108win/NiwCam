@@ -145,7 +145,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
               let reason = AVCaptureSession.InterruptionReason(rawValue: raw) else { return }
         switch reason {
         case .videoDeviceNotAvailableInBackground, .videoDeviceNotAvailableWithMultipleForegroundApps:
-            callbacks.error("background", "App Cam Studio trên iPhone đã bị ẩn: hãy mở lại app")
+            callbacks.error("background", "App NiwCam trên iPhone đã bị ẩn: hãy mở lại app")
         case .videoDeviceInUseByAnotherClient:
             callbacks.error("busy", "Camera của iPhone đang bị ứng dụng khác dùng")
         case .videoDeviceNotAvailableDueToSystemPressure:

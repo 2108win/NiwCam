@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Windows.Storage.Streams;
 
-namespace CamStudio.Native;
+namespace NiwCam.Native;
 
 // Raw pointer to an IBuffer's bytes (IBufferByteAccess), so preview frames
 // are copied by the engine straight into the WriteableBitmap: no managed

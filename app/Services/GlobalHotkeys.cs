@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
-// System-wide shortcuts (RegisterHotKey): they work while Cam Studio is hidden in the tray or
+// System-wide shortcuts (RegisterHotKey): they work while NiwCam is hidden in the tray or
 // another app (Discord, Zoom) is in front. A message-only window on the UI thread receives
 // WM_HOTKEY, so the handlers run on the UI thread.
 public sealed unsafe partial class GlobalHotkeys : IDisposable
@@ -22,7 +22,7 @@ public sealed unsafe partial class GlobalHotkeys : IDisposable
     {
         _wndProc = WndProc;
         nint inst = GetModuleHandleW(null);
-        fixed (char* cls = "CamStudioHotkeyWindow")
+        fixed (char* cls = "NiwCamHotkeyWindow")
         {
             var wc = new WNDCLASSEXW
             {

@@ -1,9 +1,9 @@
-// camstudio-dshow-consumer: opens the "Cam Studio" camera through DirectShow
+// niwcam-dshow-consumer: opens the "NiwCam" camera through DirectShow
 // (ksproxy), the way Discord's capture code does, and keeps the graph running
 // without reacting when the camera goes away. Used to reproduce the virtual
 // camera getting refused (0x80070005) after a source switch.
 //
-//   camstudio-dshow-consumer [--seconds N] [--grab [--fourcc YUY2]]
+//   niwcam-dshow-consumer [--seconds N] [--grab [--fourcc YUY2]]
 //
 // --grab: no window; the frames go through a SampleGrabber into a null renderer, and once a
 // second the picture is measured (mean and spread of luma, change since the last look). Checks
@@ -55,7 +55,7 @@ static ComPtr<IBaseFilter> FindCamStudio(std::wstring& name)
             VARIANT v;
             VariantInit(&v);
             if (SUCCEEDED(bag->Read(L"FriendlyName", &v, nullptr)) && v.vt == VT_BSTR &&
-                std::wstring(v.bstrVal).rfind(L"Cam Studio", 0) == 0)
+                (std::wstring(v.bstrVal).rfind(L"NiwCam", 0) == 0 || std::wstring(v.bstrVal).rfind(L"Cam Studio", 0) == 0))
             {
                 name = v.bstrVal;
                 VariantClear(&v);
@@ -84,7 +84,7 @@ int wmain(int argc, wchar_t** argv)
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     std::wstring name;
     ComPtr<IBaseFilter> camera = FindCamStudio(name);
-    if (!camera) { wprintf(L"Cam Studio not found in DirectShow\n"); return 1; }
+    if (!camera) { wprintf(L"NiwCam not found in DirectShow\n"); return 1; }
     wprintf(L"Opened %s via DirectShow\n", name.c_str());
 
     ComPtr<IGraphBuilder> graph;
@@ -92,7 +92,7 @@ int wmain(int argc, wchar_t** argv)
     CoCreateInstance(CLSID_FilterGraph, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&graph));
     CoCreateInstance(CLSID_CaptureGraphBuilder2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&builder));
     builder->SetFiltergraph(graph.Get());
-    graph->AddFilter(camera.Get(), L"Cam Studio");
+    graph->AddFilter(camera.Get(), L"NiwCam");
     ComPtr<ISampleGrabberQ> grabber;
     ComPtr<IBaseFilter> grabberFilter, sink;
     if (grab)

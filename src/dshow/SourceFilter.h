@@ -1,4 +1,4 @@
-// DirectShow source filter "Cam Studio" for Windows 10, which has no virtual camera API
+// DirectShow source filter "NiwCam" for Windows 10, which has no virtual camera API
 // (docs/windows10.md). It runs inside the app that uses the camera and reads the host's frames
 // from the local shared-memory channel (CAMSTUDIO_LOCAL_MAPPING_NAME), the same NV12 slots the
 // Windows 11 media source reads. Written without the DirectShow base classes (not in the SDK):
@@ -25,8 +25,8 @@
 inline constexpr GUID CLSID_CamStudioDShow =
     { 0x7d2b9c41, 0x3a6e, 0x4f58, { 0xb0, 0xd1, 0x9e, 0x4c, 0x2f, 0x6a, 0x8b, 0x13 } };
 
-// The same name as the Windows 11 camera: apps show one "Cam Studio" either way.
-#define CAMSTUDIO_DSHOW_FRIENDLY_NAME L"Cam Studio"
+// The same name as the Windows 11 camera: apps show one "NiwCam" either way.
+#define CAMSTUDIO_DSHOW_FRIENDLY_NAME L"NiwCam"
 
 // FOURCC subtypes (uuids.h has some of them under names that vary between SDKs).
 inline constexpr GUID FourccSubtype(uint32_t fourcc)

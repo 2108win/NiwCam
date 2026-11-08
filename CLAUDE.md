@@ -1,10 +1,10 @@
-# Cam Studio — notes for Claude Code
+# NiwCam — notes for Claude Code
 
 > **Unfinished work (2026-10-18): read [docs/HANDOFF.md](docs/HANDOFF.md) first.** It says what is
 > not tested yet, the user's decisions, and the next steps.
 
 A Camo Studio–like app: external cameras (USB webcams, Android phones, iPhones) published as a Windows 11
-virtual camera **"Cam Studio"** at each source's **native resolution**. User-facing docs: [README.md](README.md)
+virtual camera **"NiwCam"** at each source's **native resolution**. User-facing docs: [README.md](README.md)
 (Vietnamese). Wire protocol shared by all three sides: [docs/protocol.md](docs/protocol.md).
 
 ## Ground rules
@@ -15,6 +15,22 @@ virtual camera **"Cam Studio"** at each source's **native resolution**. User-fac
 - Phone apps are **native per platform** (Kotlin/Camera2, Swift/AVFoundation). They share only the
   protocol spec and the test vectors, not code.
 - Keep the PC app light: no per-frame work when nobody consumes the virtual camera.
+- **Renamed to NiwCam (0.1.14, 2026-11-08).** The app was "Cam Studio" before. On the PC everything visible is NiwCam: the exe
+  (`NiwCam.exe`), the C# namespace and project, `NiwCamEngine.dll`, the `niwcam-*` tools, the installer, the data folder
+  `%LOCALAPPDATA%\NiwCam`, the settings `HKCU\Software\NiwCam`, the `Run` value, the repo `2108win/NiwCam`. `AppData.Init` (first thing
+  in `Main`) moves the old folder whole, copies the old settings and rewrites the Run value; if the move fails the old folder keeps being
+  used and the engine gets the choice through `CAMSTUDIO_DATA_DIR` (never create an empty new folder: every phone would ask for its
+  code again). The installer deletes `App\CamStudio.*` and kills both exe names. Existing installs keep `C:\Program Files\CamStudio`.
+  **These stay `CamStudio` on purpose, do not "finish" the rename:** the Inno `AppId`, the COM DLL file names `CamStudioVCam.dll` /
+  `CamStudioDShow*.dll` (their registration is in old uninstall logs), CLSIDs, `CAMSTUDIO_*` macros and kernel object names, the
+  single-instance key, `_camstudio._tcp` and the TXT keys, every crypto/HKDF label, the Android `vn.camstudio.phone` id and package,
+  the iOS bundle ids, Xcode project names and keychain group, and the icon font family "Cam Studio Icons" (must match the name inside
+  the .ttf). Releases carry the setup and the APK under both names: builds before 0.1.14 only look for `CamStudio-Setup-<v>.exe` and
+  `CamStudio-<v>-android.apk` (docs/updates.md). `IsOurVirtualCamera` also knows the old camera name.
+- **In-use red dot (0.1.14, `MainWindow.InUse.cs`, `TaskbarOverlay.cs`):** while an app uses the camera (`ConsumerActive`, held 4 s so a
+  restarting app does not blink) the tray icon is `NiwCam-live.ico` (lens + red dot), the taskbar button gets `NiwCam-dot.ico` as an
+  overlay badge, the tray tooltip names the app (`CameraUsage`), and with the window hidden one silent balloon says so (Settings ›
+  Thông báo). `scripts\make-icon.ps1` draws all the icons.
 - **Git: one branch only, `main`** (the user's rule, 2026-10-18):
   - Work and commit directly on `main` in the main checkout. Push only `main`.
   - Create no other branch and no worktree. Do not start sessions or agents in a worktree
@@ -30,14 +46,14 @@ virtual camera **"Cam Studio"** at each source's **native resolution**. User-fac
 | Engine (C++, Media Foundation capture, H.264/HEVC decode, phone link, C API) | `src/engine` | Windows only | `scripts\build.ps1` (CMake + MSVC) |
 | Virtual camera media source (COM DLL loaded by Frame Server, **Windows 11**) | `src/vcam` | Windows only | same; install with `scripts\register.ps1` (admin) |
 | DirectShow source filter (**Windows 10**, loaded inside the capturing app; x64 + x86) | `src/dshow` | Windows only | `scripts\build.ps1` builds both; see [docs/windows10.md](docs/windows10.md) |
-| Windows installer (Inno Setup: one `CamStudio-Setup-<ver>.exe`, Vietnamese/English UI) | `packaging/windows/CamStudio.iss` | Windows only | `scripts\package-release.ps1` (needs `winget install JRSoftware.InnoSetup`) |
+| Windows installer (Inno Setup: one `NiwCam-Setup-<ver>.exe`, Vietnamese/English UI) | `packaging/windows/NiwCam.iss` | Windows only | `scripts\package-release.ps1` (needs `winget install JRSoftware.InnoSetup`) |
 | Shared PC headers (shared memory, NV12 ops, MF devices) | `src/common` | Windows only | — |
 | PC app (WinUI 3, C#, .NET 10, unpackaged) | `app/` | Windows only | `scripts\build.ps1` |
 | Verify tool, protocol test, fake phone | `src/verify`, `tools/` | Windows only | `scripts\build.ps1` |
 | Fake PC (tests a phone app end to end: pair, caps, stream, decode, PNGs) | `tools/fake_pc.swift` | **macOS** | `scripts/fake-pc.sh --lens all` (`--usb`: iPhone over the cable) |
-| USB transport check (lists phones on a cable, opens a tunnel, exchanges `hello`, probes a port) | `tools/usb_check.cpp` + `src/engine/UsbTransport.cpp` | Windows, **macOS** | Windows: `camstudio-usb-check`; Mac: `clang++ -std=c++20 -o build/usb-check tools/usb_check.cpp src/engine/UsbTransport.cpp` |
-| Framing check ("Tự căn khung": the shot for some faces, easing, zoom limit, grey copy) | `tools/framing_check.cpp` (header only: `AutoFrame.h`) | Windows, **macOS** | Windows: `camstudio-framing-check`; Mac: `clang++ -std=c++20 -O1 -Wall -Wextra -o build/framing-check tools/framing_check.cpp && build/framing-check` |
-| Picture check (camera size rule, fit with black bars, BGRA ⇄ NV12) | `tools/frame_check.cpp` (headers only: `ImageSettings.h`, `Nv12.h`) | Windows, **macOS** | Windows: `camstudio-frame-check`; Mac (SSE2, so x86_64 under Rosetta): `clang++ -std=c++20 -arch x86_64 -O1 -Wall -Wextra -o build/frame-check tools/frame_check.cpp && build/frame-check` |
+| USB transport check (lists phones on a cable, opens a tunnel, exchanges `hello`, probes a port) | `tools/usb_check.cpp` + `src/engine/UsbTransport.cpp` | Windows, **macOS** | Windows: `niwcam-usb-check`; Mac: `clang++ -std=c++20 -o build/usb-check tools/usb_check.cpp src/engine/UsbTransport.cpp` |
+| Framing check ("Tự căn khung": the shot for some faces, easing, zoom limit, grey copy) | `tools/framing_check.cpp` (header only: `AutoFrame.h`) | Windows, **macOS** | Windows: `niwcam-framing-check`; Mac: `clang++ -std=c++20 -O1 -Wall -Wextra -o build/framing-check tools/framing_check.cpp && build/framing-check` |
+| Picture check (camera size rule, fit with black bars, BGRA ⇄ NV12) | `tools/frame_check.cpp` (headers only: `ImageSettings.h`, `Nv12.h`) | Windows, **macOS** | Windows: `niwcam-frame-check`; Mac (SSE2, so x86_64 under Rosetta): `clang++ -std=c++20 -arch x86_64 -O1 -Wall -Wextra -o build/frame-check tools/frame_check.cpp && build/frame-check` |
 | Android app (Kotlin, Camera2 + MediaCodec) | `android/` | Windows, **macOS**, Linux | `cd android && ./gradlew assembleRelease` (JDK 17, Android SDK 36) |
 | iPhone app (Swift, AVFoundation + VideoToolbox + Network.framework) | `ios/` | **macOS** (Xcode via XcodeGen), or Linux/WSL via xtool (no screen sharing) | `scripts/ios-run.sh` (tests, build, install, launch); `scripts/ios-archive.sh` (TestFlight); see [ios/README.md](ios/README.md) |
 | iPhone screen sharing (ReplayKit broadcast upload extension) | `ios/CamStudioScreen` | **macOS** (Xcode only) | built and embedded with the app |
@@ -59,7 +75,7 @@ platform, RFC 5869) and AES‑256‑GCM with strict per-direction counters. Reco
 The phone sends `caps` (every lens with its controls, every encoder-supported mode). The PC builds its
 UI from caps and sends `set` messages, and the phone streams `state`/`stats`. Bitrate adapts.
 Every crypto implementation must match `docs/protocol-vectors.json` byte for byte:
-- PC: `build\Release\camstudio-protocol-test.exe` (run from repo root).
+- PC: `build\Release\niwcam-protocol-test.exe` (run from repo root).
 - Android: `./gradlew testDebugUnitTest` (`CryptoTest`).
 - iOS: `CryptoTests`, scheme `CryptoTestsMac` runs it on the Mac itself:
   `xcodebuild test -project ios/CamStudio.xcodeproj -scheme CryptoTestsMac -destination platform=macOS`.
@@ -68,7 +84,7 @@ Every crypto implementation must match `docs/protocol-vectors.json` byte for byt
 ## Status (2026-10-17)
 
 Verified on real hardware:
-- USB webcam (OBSBOT Meet SE) 1920×1080@100 through the virtual camera, checked with `camstudio-verify`.
+- USB webcam (OBSBOT Meet SE) 1920×1080@100 through the virtual camera, checked with `niwcam-verify`.
 - Redmi 9T (MIUI, Android) over Wi‑Fi: discovery, pairing, streaming, auto-rotation.
   - Lens chips in the PC overlay: **0.6×** (ultra-wide, hidden camera id 4), **1×** (id 0), **Macro**
     (hidden id 3), and the front camera (id 1). All four stream; the virtual camera delivered native
@@ -113,8 +129,8 @@ USB cable (2026-10-18), on the Mac with the iPhone 14 plugged in:
 ### Windows build and the Redmi over USB (2026-10-18, on the user's PC)
 
 Everything written on the Mac compiles with MSVC and `dotnet build`, no warnings.
-`camstudio-protocol-test` ALL PASS, `camstudio-frame-check` 307/0, Android `testDebugUnitTest`
-passes. The Android app (0.1.3) is installed on the Redmi. Verified with `camstudio-verify --hold`:
+`niwcam-protocol-test` ALL PASS, `niwcam-frame-check` 307/0, Android `testDebugUnitTest`
+passes. The Android app (0.1.3) is installed on the Redmi. Verified with `niwcam-verify --hold`:
 - **Redmi over adb:** "Redmi 9T (USB)", 1080p30, lens chips 0.6×/1×/Macro, the Wi‑Fi pairing key
   reused. Switching Redmi ↔ lenses ↔ OBSBOT under a reader: 7999 frames, 0 no-signal, 0 size errors,
   longest gap 16 ms; Macro (1440×1080) fitted with bars while the reader held 1920×1080.
@@ -134,7 +150,7 @@ passes. The Android app (0.1.3) is installed on the Redmi. Verified with `camstu
   (Macro fitted with bars), Ctrl+1/Ctrl+2 webcam ↔ phone, the phone's screen off with the power
   button and locked for minutes: 30 fps throughout. Caveats: the phone was charging on the cable
   (no Doze), and with the cable in, Ctrl+2 picks the cable entry (cable preferred).
-- While Discord streams, a second reader (`camstudio-verify`, any mode) gets `0xC00D3704`
+- While Discord streams, a second reader (`niwcam-verify`, any mode) gets `0xC00D3704`
   from Frame Server. Open: check whether OBS + Discord together work.
 
 Fixed while testing:
@@ -191,14 +207,14 @@ Gotchas:
   `SolidColorBrush`es WinUI already holds (a theme round trip does not). Overriding
   `AccentFillColorDefaultBrush` in App.xaml reaches only our own XAML.
 - **Crash log:** `%LOCALAPPDATA%\CamStudio\crash.txt` (App.UnhandledException).
-- **Icons:** our own come from `app/Assets/Fonts/CamStudioIcons-{Regular,Filled}.ttf` (Fluent UI
+- **Icons:** our own come from `app/Assets/Fonts/NiwCamIcons-{Regular,Filled}.ttf` (Fluent UI
   System Icons, MIT, cut to ~40 icons by `tools/make_icon_font.py`, which also writes `Icons.xaml`
   and `Icons.cs`): add a row there and rerun. The script scales each icon to fill 87.5 % of the
   em (Fluent leaves 2 px of air at 16 px: they looked small next to Segoe Fluent Icons) and
   drops Fluent's 9 % line gap (it set every icon ~1 px off-centre). Use `Glyph="{StaticResource IconAdd}"` with
   `FontFamily="{StaticResource IconFont}"`. Never an implicit FontIcon style: WinUI's own
   templates (Expander chevron, InfoBar…) draw MDL2 glyphs through FontIcon.
-- **Khởi động lại** (left pane, tray): starts `CamStudio.exe --after <pid>` and exits (engine given
+- **Khởi động lại** (left pane, tray): starts `NiwCam.exe --after <pid>` and exits (engine given
   4 s). `Program.Main` waits for that pid (kills it after 10 s), else the single-instance key would
   hand the new process to the old one. Apps using the camera lose it and must turn it on again.
   `UpdateStatus` → `UpdateOverlayVisibility` must not call `UpdatePaneActivity` (it calls
@@ -225,7 +241,7 @@ Windows 11.
   Windows 10.
 - `tools/dshow-consumer --grab [--fourcc YUY2|I420]` measures the delivered frames (no window).
 - **Tested** on Windows 11 only, through the forced path: x64 and x86 filters deliver live
-  NV12/YUY2/I420 (consumer `--grab`), and the MF path still passes `camstudio-verify` (180/180 live).
+  NV12/YUY2/I420 (consumer `--grab`), and the MF path still passes `niwcam-verify` (180/180 live).
   **Not tested on a real Windows 10 PC**, but **published in v0.1.6** (installer built here and
   installed on the user's Win11 PC; the iPhone then streamed 2K/60). **v0.1.7** (2026-10-19: new PC
   interface, colour presets, restart button, face framing) is installed on the user's PC and
@@ -265,17 +281,17 @@ Windows 11.
   - Since 2026-10-18 the camera lives as long as the app, so there is no
     "fail at once" any more: a source that fails before the camera was published publishes it and
     waits. The lens-switch revert works from `Waiting` (switching back). See the PC subsection below.
-  - Tested on 2026-10-17 by killing and restarting `camstudio-fake-phone` while Discord was using the camera.
+  - Tested on 2026-10-17 by killing and restarting `niwcam-fake-phone` while Discord was using the camera.
 - **`E_ACCESSDENIED` (0x80070005) from `IMFVirtualCamera::Start`:**
   - Cause: a **DirectShow** app (Discord loads `ksproxy`/`quartz`) keeps its graph on the old virtual camera
     after we recreate it (source/size change). Frame Server then refuses the new instance until that app
     lets go or Frame Server restarts.
-  - Reproduce with `camstudio-dshow-consumer` (`tools/dshow_consumer.cpp`).
+  - Reproduce with `niwcam-dshow-consumer` (`tools/dshow_consumer.cpp`).
   - Fix: `Pipeline::End` calls `IMFVirtualCamera::Remove()` before `Shutdown()`, and `Begin` retries a denied
     `Start` with a fresh registration. Verified on 2026-10-17: switching webcam ↔ phone while the DirectShow
     consumer held the camera.
   - The error bar still offers "Khởi động lại dịch vụ camera" as a last resort.
-- **Testing the virtual camera like an app does:** `camstudio-verify` options:
+- **Testing the virtual camera like an app does:** `niwcam-verify` options:
   - `--mode N`: read a given format (e.g. 30 fps like Discord);
   - `--hold S`: stay open, logging every 2 s;
   - `--reopen S`: reopen whenever it disappears.
@@ -411,7 +427,7 @@ Windows 11.
   but not published (`framesSkipped`, `lagMs` in `CsStatus`, "Trễ mạng" in Chi tiết); the capture
   thread and the vcam worker run above normal; the vcam follows the source's cadence when its rate
   is ≤ 1.2× the app's (`PaceUntilNextFrame`, re-phased per frame, min spacing half an interval).
-  Tested on the PC with `camstudio-fake-phone --stall 250` (prints the PC's stats): 721/721 live
+  Tested on the PC with `niwcam-fake-phone --stall 250` (prints the PC's stats): 721/721 live
   frames at 30 fps through the installed 0.1.12 vcam, queueMs 260–340 in stall seconds. **Not
   tested:** the new vcam DLL's pacing (needs the installer), the "Trễ mạng" row on screen, any
   phone (Android APK built, tests pass; iOS not compiled: needs a Mac).
@@ -515,11 +531,11 @@ Windows 11.
   (noise down, edge kept, outside untouched). Not yet seen on a real face.
 - **Hot phone** (2026-10-20, `MainWindow.Thermal.cs`): `state.thermal` serious → the best mode of
   the same lens at ≤1080 (short side) and ≤30 fps, critical → ≤720; once per level and source,
-  the saved mode untouched, a warning bar. Tested with `camstudio-fake-phone --thermal serious`
+  the saved mode untouched, a warning bar. Tested with `niwcam-fake-phone --thermal serious`
   (it then offers 30 and 60 fps and sends the state 5 s into a stream): 720p60 → 720p30.
 - **Snapshot and recording** (2026-10-20, `Recorder.cpp`, `MainWindow.Record.cs`): what the camera
-  shows (settings, framing, colour), PNG to Pictures\Cam Studio, MP4 (H.264 through the GPU's MFT,
-  AAC from the default microphone, timed by sample count) to Videos\Cam Studio. Up to 60 fps (a
+  shows (settings, framing, colour), PNG to Pictures\NiwCam, MP4 (H.264 through the GPU's MFT,
+  AAC from the default microphone, timed by sample count) to Videos\NiwCam. Up to 60 fps (a
   100 fps webcam gives ~50). A recording or a snapshot keeps the source out of standby
   (`SourceWanted`); paused, the pause picture is recorded. The microphone thread is never shut
   down while it reads (that hung `Stop`): it gets 1 s to see the stop flag. Updates wait for a
@@ -541,7 +557,7 @@ Windows 11.
   Testing with injected keys (keybd_event): a remote-desktop app in front (UltraViewer on the
   user's PC) swallows Ctrl+Alt combos, so put a window of your own in front first. Zalo owns
   Ctrl+Alt+S. Verified 2026-10-20: hidden + standby, Ctrl+Alt+C woke the webcam and saved a PNG
-  in 2.4 s; with `camstudio-verify --hold` as the app on the camera, pause/resume/record kept
+  in 2.4 s; with `niwcam-verify --hold` as the app on the camera, pause/resume/record kept
   1350/1350 live frames.
 - **List order and forgetting** (2026-10-20): sources that work first, phones that can't be used
   now under "Chưa kết nối". Right-click a phone: "Quên ghép đôi…" (deletes the key, closes its
@@ -591,7 +607,7 @@ Windows 11.
    - the advanced phone control panel (focus, exposure, white balance, stabilization);
    - landscape rotation switching.
 3. TestFlight: on 2026-10-18, `scripts/ios-archive.sh --upload` sent 0.1.0 (20261018.0743) as
-   `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "Cam Studio"
+   `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "NiwCam"
    says version 1.0; the build says 0.1.0. Next: test the TestFlight install on the iPhone.
    **Latest: 0.1.0 (20261021.2339)**, uploaded 2026-10-21 from `main` at de6d98e (CryptoTests
    PASS, `nm -u`: only UserDefaults). New since 1756: "Tắt màn hình" (black cover, auto after

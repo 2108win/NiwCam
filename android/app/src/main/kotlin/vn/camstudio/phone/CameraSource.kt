@@ -30,7 +30,7 @@ class CameraSource(private val context: Context, private val ui: Session.Ui) : M
     override fun start(json: JSONObject, bitrate: Int, callbacks: StreamCallbacks): MediaSource.Started {
         stop()
         if (context.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            throw StreamError("permission", "Chưa cấp quyền Camera cho Cam Studio trên điện thoại")
+            throw StreamError("permission", "Chưa cấp quyền Camera cho NiwCam trên điện thoại")
         }
         val lens = caps.lens(json.optString("lens")) ?: throw StreamError("unsupported", "Không có ống kính ${json.optString("lens")}")
         val width = json.getInt("width")

@@ -1,5 +1,6 @@
 ﻿#include "PhoneLink.h"
 #include "UsbTransport.h"
+#include "../common/AppDataDir.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -34,9 +35,7 @@ struct WinsockInit
 
 std::wstring DataDir()
 {
-    wchar_t path[MAX_PATH];
-    GetEnvironmentVariableW(L"LOCALAPPDATA", path, MAX_PATH);
-    std::wstring dir = std::wstring(path) + L"\\CamStudio";
+    const std::wstring dir = AppDataDir();
     CreateDirectoryW(dir.c_str(), nullptr);
     CreateDirectoryW((dir + L"\\pairings").c_str(), nullptr);
     return dir;
@@ -86,7 +85,7 @@ SOCKET Dial(const Endpoint& endpoint, std::string& error)
     {
         closesocket(s);
         error = "Không kết nối được tới điện thoại " + endpoint.host + ":" + std::to_string(endpoint.port) +
-                ". Kiểm tra app Cam Studio trên điện thoại đang mở và cùng mạng Wi‑Fi.";
+                ". Kiểm tra app NiwCam trên điện thoại đang mở và cùng mạng Wi‑Fi.";
         return INVALID_SOCKET;
     }
     nonBlocking = 0;
@@ -144,7 +143,7 @@ void SavePairKey(const std::string& deviceId, const crypto::Bytes& key)
 {
     DATA_BLOB in{ static_cast<DWORD>(key.size()), const_cast<BYTE*>(key.data()) };
     DATA_BLOB out{};
-    if (!CryptProtectData(&in, L"Cam Studio pairing", nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) return;
+    if (!CryptProtectData(&in, L"NiwCam pairing", nullptr, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &out)) return;
     std::ofstream(PairFile(deviceId), std::ios::binary | std::ios::trunc).write(reinterpret_cast<char*>(out.pbData), out.cbData);
     LocalFree(out.pbData);
 }
@@ -249,7 +248,7 @@ bool PhoneLink::ConnectImpl(const Endpoint& endpoint, const PairingCallback& onP
     json::Value hello;
     if (!ReadHandshake(hello, 8000))
         // Over a cable a suspended iPhone app still accepts the connection, then never answers.
-        return fail(endpoint.Usb() ? "Điện thoại không trả lời qua cáp USB. Mở khóa điện thoại và mở app Cam Studio."
+        return fail(endpoint.Usb() ? "Điện thoại không trả lời qua cáp USB. Mở khóa điện thoại và mở app NiwCam."
                                    : "Điện thoại không trả lời đúng giao thức");
     if (hello["type"].Str() == "error")
     {
@@ -258,7 +257,7 @@ bool PhoneLink::ConnectImpl(const Endpoint& endpoint, const PairingCallback& onP
         return fail(hello["message"].Str(m_errorCode == "busy" ? "Điện thoại đang dùng với máy tính khác" : "Điện thoại từ chối kết nối"));
     }
     if (hello["type"].Str() != "hello") return fail("Điện thoại không trả lời đúng giao thức");
-    if (hello["v"].Int() != 1) return fail("Phiên bản app trên điện thoại không khớp với Cam Studio trên PC");
+    if (hello["v"].Int() != 1) return fail("Phiên bản app trên điện thoại không khớp với NiwCam trên PC");
     const std::string deviceId = hello["deviceId"].Str();
     {
         std::lock_guard lk(m_infoLock);

@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // Apps that Windows currently records as using a camera (the same data that
 // drives the privacy indicator). An entry is "in use" while its
 // LastUsedTimeStop is 0. This covers our virtual camera as well as physical
-// ones, so we leave out Cam Studio itself (it holds the physical camera).
+// ones, so we leave out NiwCam itself (it holds the physical camera).
 public static class CameraUsage
 {
     private const string Root = @"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\";

@@ -4,14 +4,14 @@
 // caps with one 1280x720@30 H.264 mode, and a moving test pattern encoded
 // with the Windows H.264 encoder MFT.
 //
-//   camstudio-fake-phone [--port 47321] [--thermal serious|critical] [--audio] [--stall MS]
+//   niwcam-fake-phone [--port 47321] [--thermal serious|critical] [--audio] [--stall MS]
 // --stall: every 3 s the stream stops for MS ms, then the held frames go out in a bunch (a Wi‑Fi
 // stall): the PC's "stats" (printed) should show queueMs rise, and the PC show the newest frame.
 // --audio: the caps offer a microphone; asked for it ("audio" in start, or "set"), the phone sends
 // a 440 Hz tone as AUDIO records (48 kHz mono 16-bit, 10 ms each), as the real apps send their mic.
 // --thermal: 5 s into a stream, "state" says the phone is that hot (the PC should then ask for
 // 30 fps or less, see MainWindow.Thermal.cs); the caps offer 30 and 60 fps for that.
-// Then in Cam Studio: "Thêm điện thoại theo địa chỉ IP…" -> 127.0.0.1:47321
+// Then in NiwCam: "Thêm điện thoại theo địa chỉ IP…" -> 127.0.0.1:47321
 
 #include "../src/engine/Crypto.h"
 #include "../src/engine/Json.h"

@@ -2,7 +2,9 @@
 
 Nguồn: bản phát hành mới nhất trên GitHub (`releases/latest`, bỏ qua bản nháp và pre-release).
 Tên file phải đúng như `scripts\package-release.ps1` tạo ra:
-`CamStudio-Setup-<x.y.z>.exe` và `CamStudio-<x.y.z>-android.apk`, tag `v<x.y.z>`.
+`NiwCam-Setup-<x.y.z>.exe` và `NiwCam-<x.y.z>-android.apk`, tag `v<x.y.z>`. Từ 0.1.14 mỗi bản đăng
+thêm hai file cùng nội dung với tên cũ (`CamStudio-Setup-…`, `CamStudio-…-android.apk`): các bản trước
+0.1.14 chỉ tìm đúng tên đó. Bản mới tìm tên NiwCam trước, rồi tên cũ.
 
 ## PC (`app/Services/Updater.cs`, `app/MainWindow.Update.cs`)
 
@@ -39,11 +41,11 @@ TestFlight / App Store tự cập nhật; app không cần làm gì.
 
 ## Phát hành một bản
 
-1. Tăng `<Version>` trong `app/CamStudio.App.csproj` và `versionName`/`versionCode` trong
+1. Tăng `<Version>` trong `app/NiwCam.App.csproj` và `versionName`/`versionCode` trong
    `android/app/build.gradle.kts`.
 2. `scripts\package-release.ps1` → `build\dist`.
 3. Thử thật trước khi đăng (đã làm cho 0.1.4): cài bản mới, build tạm một bản số cao hơn, phục vụ
    nó qua feed giả, mở bản đã cài với `CAMSTUDIO_UPDATE_FEED`, bấm Có ở UAC, xem app mở lại.
 4. `git tag -a v<x.y.z>` + push tag, rồi
-   `python -I scripts/publish-release.py v<x.y.z> "Cam Studio <x.y.z>" notes.md build/dist/*`
+   `python -I scripts/publish-release.py v<x.y.z> "NiwCam <x.y.z>" notes.md build/dist/*`
    (dùng tài khoản Git của máy; nháp → tải file → công bố). App sẽ tự thấy trong vòng 6 giờ.

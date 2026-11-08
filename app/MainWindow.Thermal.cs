@@ -1,9 +1,9 @@
 using System;
 using System.Text.Json;
-using CamStudio.Native;
+using NiwCam.Native;
 using Microsoft.UI.Xaml.Controls;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // A hot phone (its "state" says thermal serious / critical): before iOS or Android stops the
 // camera in the middle of a call, ask for less: 1080p30, then 720p30, on the same lens. Once per
@@ -62,6 +62,6 @@ public sealed partial class MainWindow
         ShowSaved(level >= 3 ? "Điện thoại quá nóng" : "Điện thoại đang nóng",
             $"Đã giảm xuống {mode} để camera không bị ngắt. Khi máy nguội, chọn lại chế độ ở trên.", null, InfoBarSeverity.Warning);
         _thermalShown = true;
-        HotkeyFeedback(level >= 3 ? "Điện thoại quá nóng" : "Điện thoại đang nóng", $"Cam Studio đã giảm xuống {mode}.");
+        HotkeyFeedback(level >= 3 ? "Điện thoại quá nóng" : "Điện thoại đang nóng", $"NiwCam đã giảm xuống {mode}.");
     }
 }

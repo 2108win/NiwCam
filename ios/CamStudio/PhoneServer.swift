@@ -82,7 +82,7 @@ final class PhoneServer {
                 self.port = listener.port?.rawValue ?? 0
                 self.onReady?(self.port)
             case .failed(let error):
-                self.onFailure?("Không quảng bá được trên Wi‑Fi: \(error). Kiểm tra quyền Mạng cục bộ cho Cam Studio.")
+                self.onFailure?("Không quảng bá được trên Wi‑Fi: \(error). Kiểm tra quyền Mạng cục bộ cho NiwCam.")
                 // Usually the socket was reclaimed in the background: try again shortly.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                     if self?.listener === listener { self?.listen() }

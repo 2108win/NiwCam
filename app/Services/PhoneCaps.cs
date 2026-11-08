@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // The phone's "caps" message (docs/protocol.md section 5), as far as the
 // UI needs it to build controls. Unknown fields are ignored.

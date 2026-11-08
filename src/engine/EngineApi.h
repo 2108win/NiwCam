@@ -1,4 +1,4 @@
-// Flat C API of CamStudioEngine.dll, consumed by the WinUI app via P/Invoke.
+// Flat C API of NiwCamEngine.dll, consumed by the WinUI app via P/Invoke.
 // All structs use natural alignment (pack 8); strings are UTF-16 unless
 // noted; JSON is UTF-8.
 #pragma once
@@ -259,7 +259,7 @@ CS_API int32_t cs_viewer_state(int32_t viewer, uint32_t* screenWidth, uint32_t* 
 CS_API void cs_viewer_close(int32_t viewer);
 
 // A window on this PC as the virtual camera's source (Windows.Graphics.Capture). Lists the
-// windows worth offering (visible, titled, not cloaked, not Cam Studio's) and returns the count.
+// windows worth offering (visible, titled, not cloaked, not NiwCam's) and returns the count.
 CS_API int32_t cs_list_windows();
 CS_API int32_t cs_window_title(int32_t index, wchar_t* buffer, int32_t capacity);
 CS_API int64_t cs_window_handle(int32_t index); // HWND, 0 for a bad index

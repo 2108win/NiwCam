@@ -117,7 +117,7 @@ class ScreenCapture(
         }, handler)
         onGl {
             setupEgl()
-            virtualDisplay = projection.createVirtualDisplay("Cam Studio", w, h, dpi,
+            virtualDisplay = projection.createVirtualDisplay("NiwCam", w, h, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, displaySurface, null, handler)
         }
         displays.registerDisplayListener(displayListener, handler)

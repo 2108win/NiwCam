@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // "Màu nhấn" (Settings › Chung): Windows' own accent, or one of a few of ours. WinUI's controls
 // draw with the SystemAccentColor ramp (dark theme: Light2, light theme: Dark1), so at launch a

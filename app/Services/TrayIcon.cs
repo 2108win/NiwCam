@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // Notification-area icon. WinUI 3 has no tray API, so this owns a hidden
 // Win32 window that receives the icon's callbacks.
@@ -18,15 +18,17 @@ public sealed unsafe partial class TrayIcon : IDisposable
     private readonly WndProcDelegate _wndProc;      // kept alive for the window's lifetime
     private readonly nint _hwnd;
     private readonly nint _icon;
+    private readonly nint _liveIcon;               // the same with a red dot: an app uses the camera
+    private bool _live;
     private readonly uint _taskbarCreated;
-    private string _tip = "Cam Studio";
+    private string _tip = "NiwCam";
     private bool _added;
 
-    public TrayIcon(string iconPath)
+    public TrayIcon(string iconPath, string? liveIconPath = null)
     {
         _wndProc = WndProc;
         nint inst = GetModuleHandleW(null);
-        fixed (char* cls = "CamStudioTrayWindow")
+        fixed (char* cls = "NiwCamTrayWindow")
         {
             var wc = new WNDCLASSEXW
             {
@@ -40,6 +42,8 @@ public sealed unsafe partial class TrayIcon : IDisposable
         }
         int size = GetSystemMetrics(49 /* SM_CXSMICON */);
         fixed (char* p = iconPath) _icon = LoadImageW(0, p, 1 /* IMAGE_ICON */, size, size, 0x10 /* LR_LOADFROMFILE */);
+        if (liveIconPath is not null)
+            fixed (char* p = liveIconPath) _liveIcon = LoadImageW(0, p, 1, size, size, 0x10);
         fixed (char* p = "TaskbarCreated") _taskbarCreated = RegisterWindowMessageW(p);
         Add();
     }
@@ -51,6 +55,18 @@ public sealed unsafe partial class TrayIcon : IDisposable
         var nid = NewData();
         nid.uFlags = NIF_TIP | NIF_SHOWTIP;
         CopyString(text, nid.szTip, 128);
+        Shell_NotifyIconW(NIM_MODIFY, &nid);
+    }
+
+    /// The red-dot icon while an app uses the camera.
+    public void SetLive(bool live)
+    {
+        if (live == _live || _liveIcon == 0) return;
+        _live = live;
+        if (!_added) return;
+        var nid = NewData();
+        nid.uFlags = NIF_ICON;
+        nid.hIcon = live ? _liveIcon : _icon;
         Shell_NotifyIconW(NIM_MODIFY, &nid);
     }
 
@@ -74,6 +90,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
             _added = false;
         }
         if (_icon != 0) DestroyIcon(_icon);
+        if (_liveIcon != 0) DestroyIcon(_liveIcon);
         if (_hwnd != 0) DestroyWindow(_hwnd);
     }
 
@@ -82,7 +99,7 @@ public sealed unsafe partial class TrayIcon : IDisposable
         var nid = NewData();
         nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_SHOWTIP;
         nid.uCallbackMessage = WM_APP_TRAY;
-        nid.hIcon = _icon;
+        nid.hIcon = _live && _liveIcon != 0 ? _liveIcon : _icon;
         CopyString(_tip, nid.szTip, 128);
         if (Shell_NotifyIconW(NIM_ADD, &nid) != 0)
         {

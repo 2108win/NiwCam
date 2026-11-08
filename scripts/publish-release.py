@@ -1,9 +1,9 @@
 # Creates the GitHub release for a tag as a draft, uploads the files, then publishes it.
 # The token comes from Git Credential Manager (the one `git push` uses) and is never printed.
-# Usage (repo root): python -I scripts/publish-release.py v0.1.5 "Cam Studio 0.1.5" notes.md build/dist/*
+# Usage (repo root): python -I scripts/publish-release.py v0.1.5 "NiwCam 0.1.5" notes.md build/dist/*
 import json, os, subprocess, sys, urllib.request
 
-REPO = "2108win/cam-studio"
+REPO = "2108win/NiwCam"
 tag, title, notes_path, files = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4:]
 
 out = subprocess.run(["git", "credential", "fill"], input="protocol=https\nhost=github.com\n\n",
@@ -17,7 +17,7 @@ def call(method, url, body=None, data=None, ctype="application/json"):
                                  (json.dumps(body).encode() if body is not None else None))
     req.add_header("Authorization", f"Bearer {token}")
     req.add_header("Accept", "application/vnd.github+json")
-    req.add_header("User-Agent", "cam-studio-release")
+    req.add_header("User-Agent", "niwcam-release")
     if body is not None or data is not None:
         req.add_header("Content-Type", ctype)
     with urllib.request.urlopen(req) as r:

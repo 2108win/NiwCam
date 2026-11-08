@@ -5,7 +5,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>Cam Studio</string>
+    <string>NiwCam</string>
     <key>UILaunchScreen</key>
     <dict/>
     <key>UIApplicationSupportsIndirectInputEvents</key>
@@ -38,12 +38,12 @@
     <key>CamStudioKeychainGroup</key>
     <string>$(AppIdentifierPrefix)vn.camstudio.shared</string>
     <key>NSCameraUsageDescription</key>
-    <string>Cam Studio gửi hình camera sang máy tính để dùng làm webcam.</string>
+    <string>NiwCam gửi hình camera sang máy tính để dùng làm webcam.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Cam Studio có thể gửi âm thanh sang máy tính.</string>
+    <string>NiwCam có thể gửi âm thanh sang máy tính.</string>
     <!-- Without these two, Bonjour advertising fails silently (docs/protocol.md 1). -->
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Cam Studio cần mạng cục bộ để máy tính trong nhà tìm và kết nối tới điện thoại.</string>
+    <string>NiwCam cần mạng cục bộ để máy tính trong nhà tìm và kết nối tới điện thoại.</string>
     <key>NSBonjourServices</key>
     <array>
         <string>_camstudio._tcp</string>

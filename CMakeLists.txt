@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(CamStudio LANGUAGES CXX)
+project(NiwCam LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,7 +30,7 @@ target_link_libraries(CamStudioDShow PRIVATE mfplat strmiids ole32 oleaut32 adva
 
 # Camera engine used by the WinUI app (app/): capture -> orient/crop/zoom/framing ->
 # shared memory, and the virtual camera registration. Flat C API.
-add_library(CamStudioEngine SHARED
+add_library(NiwCamEngine SHARED
     src/engine/EngineApi.cpp
     src/engine/CaptureEngine.cpp
     src/engine/VideoDecoder.cpp
@@ -47,34 +47,34 @@ add_library(CamStudioEngine SHARED
     src/engine/UsbTransport.cpp
     src/engine/Crypto.cpp)
 # mfsensorgroup (MFCreateVirtualCamera, Windows 11) is loaded at run time: see VirtualCameraApi().
-target_link_libraries(CamStudioEngine PRIVATE mfplat mfuuid mf mfreadwrite ole32 ws2_32 dnsapi bcrypt crypt32 cfgmgr32
+target_link_libraries(NiwCamEngine PRIVATE mfplat mfuuid mf mfreadwrite ole32 ws2_32 dnsapi bcrypt crypt32 cfgmgr32
     windowsapp d3d11 dxgi dwmapi d2d1 dwrite windowscodecs)
 # C++/WinRT is used in WindowSource.cpp (Windows.Graphics.Capture), FaceDetect.cpp (FaceTracker) and
 # Segmenter.cpp (Windows ML) only.
 set_source_files_properties(src/engine/WindowSource.cpp src/engine/FaceDetect.cpp src/engine/Segmenter.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
 
 # Stand-in phone for testing the PC side of the protocol without a device.
-add_executable(camstudio-fake-phone tools/fake_phone.cpp src/engine/Crypto.cpp)
-target_link_libraries(camstudio-fake-phone PRIVATE mfplat mfuuid ole32 ws2_32 bcrypt crypt32)
+add_executable(niwcam-fake-phone tools/fake_phone.cpp src/engine/Crypto.cpp)
+target_link_libraries(niwcam-fake-phone PRIVATE mfplat mfuuid ole32 ws2_32 bcrypt crypt32)
 
 # Phones on a USB cable: lists them (adb, usbmuxd) and exchanges "hello" through the tunnel.
-add_executable(camstudio-usb-check tools/usb_check.cpp src/engine/UsbTransport.cpp)
-target_link_libraries(camstudio-usb-check PRIVATE ws2_32 cfgmgr32)
+add_executable(niwcam-usb-check tools/usb_check.cpp src/engine/UsbTransport.cpp)
+target_link_libraries(niwcam-usb-check PRIVATE ws2_32 cfgmgr32)
 
 # Picture code: the virtual camera size rule, fit with black bars, BGRA <-> NV12 (also builds on a Mac).
-add_executable(camstudio-frame-check tools/frame_check.cpp)
+add_executable(niwcam-frame-check tools/frame_check.cpp)
 
 # Automatic framing: the shot for some faces, easing, the zoom limit (also builds on a Mac).
-add_executable(camstudio-framing-check tools/framing_check.cpp)
+add_executable(niwcam-framing-check tools/framing_check.cpp)
 
 # Protocol crypto against docs/protocol-vectors.json.
-add_executable(camstudio-protocol-test src/verify/protocol_test.cpp src/engine/Crypto.cpp)
+add_executable(niwcam-protocol-test src/verify/protocol_test.cpp src/engine/Crypto.cpp)
 
 # End-to-end check of resolution and live frames.
-add_executable(camstudio-verify src/verify/main.cpp)
-target_link_libraries(camstudio-verify PRIVATE mfplat mfuuid mf mfreadwrite ole32)
+add_executable(niwcam-verify src/verify/main.cpp)
+target_link_libraries(niwcam-verify PRIVATE mfplat mfuuid mf mfreadwrite ole32)
 
 # Opens the virtual camera through DirectShow (ksproxy) like Discord, and keeps
 # holding it when it goes away: reproduces consumers that never let go.
-add_executable(camstudio-dshow-consumer tools/dshow_consumer.cpp)
-target_link_libraries(camstudio-dshow-consumer PRIVATE strmiids ole32 oleaut32)
+add_executable(niwcam-dshow-consumer tools/dshow_consumer.cpp)
+target_link_libraries(niwcam-dshow-consumer PRIVATE strmiids ole32 oleaut32)

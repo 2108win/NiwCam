@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using CamStudio.Services;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // "Thành phần bổ sung": what a phone needs on this PC that Windows lacks (AddOns.cs), offered when
 // it matters (an iPhone plugged in, the phone's microphone turned on) and in Settings, and set up
@@ -47,14 +47,14 @@ public sealed partial class MainWindow
         ShowAddOn(AddOn.Apple, InfoBarSeverity.Informational, "iPhone đang cắm cáp",
             installed
                 ? "Để dùng iPhone qua cáp, cần bật Apple Devices (của Apple, đã có trên máy)."
-                : "Để dùng iPhone qua cáp, Windows cần app Apple Devices của Apple (miễn phí, Microsoft Store). Cam Studio cài giúp bạn.",
+                : "Để dùng iPhone qua cáp, Windows cần app Apple Devices của Apple (miễn phí, Microsoft Store). NiwCam cài giúp bạn.",
             installed ? "Bật" : "Cài tự động");
     }
 
     private void ShowCableAddOn() =>
         ShowAddOn(AddOn.Cable, InfoBarSeverity.Informational, "Cần VB-CABLE cho micro điện thoại",
             "Tiếng điện thoại vào cuộc gọi qua VB-CABLE của VB-Audio (www.vb-cable.com): miễn phí, ai thấy hữu ích có thể ủng hộ tác giả. " +
-            "Cam Studio tải bản chính thức và mở trình cài, bạn chỉ bấm \"Install Driver\".",
+            "NiwCam tải bản chính thức và mở trình cài, bạn chỉ bấm \"Install Driver\".",
             "Cài VB-CABLE");
 
     private void ShowAddOn(AddOn kind, InfoBarSeverity severity, string title, string message, string? button)
@@ -92,7 +92,7 @@ public sealed partial class MainWindow
             if (!AddOns.AppleDevicesInstalled())
             {
                 ShowAddOn(AddOn.Apple, InfoBarSeverity.Informational, "Đang cài Apple Devices…",
-                    "Từ Microsoft Store, mất khoảng một phút. Vẫn dùng Cam Studio bình thường trong lúc chờ.", null);
+                    "Từ Microsoft Store, mất khoảng một phút. Vẫn dùng NiwCam bình thường trong lúc chờ.", null);
                 string? error = await AddOns.InstallAppleDevicesAsync();
                 if (error is not null)
                 {
@@ -105,7 +105,7 @@ public sealed partial class MainWindow
             }
             AddOns.OpenAppleDevices();
             ShowAddOn(AddOn.Apple, InfoBarSeverity.Informational, "Còn một bước trong Apple Devices",
-                "Nếu Apple Devices hiện điều khoản của Apple, bấm Agree. Không cần bấm Trust. Cam Studio tự nhận iPhone khi xong.", null);
+                "Nếu Apple Devices hiện điều khoản của Apple, bấm Agree. Không cần bấm Trust. NiwCam tự nhận iPhone khi xong.", null);
             var until = DateTime.UtcNow.AddMinutes(10);
             while (DateTime.UtcNow < until)
             {

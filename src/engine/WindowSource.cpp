@@ -39,7 +39,7 @@ std::vector<WindowInfo> ListCaptureWindows()
         if (GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) return TRUE;
         DWORD pid = 0;
         GetWindowThreadProcessId(hwnd, &pid);
-        if (pid == GetCurrentProcessId()) return TRUE; // Cam Studio's own windows
+        if (pid == GetCurrentProcessId()) return TRUE; // NiwCam's own windows
         BOOL cloaked = FALSE;
         DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked));
         if (cloaked) return TRUE;

@@ -192,7 +192,7 @@ public:
     {
         const HRESULT hr = vcam->Remove();
         wchar_t msg[96];
-        swprintf_s(msg, L"[CamStudioEngine] IMFVirtualCamera::Remove 0x%08X\n", static_cast<unsigned>(hr));
+        swprintf_s(msg, L"[NiwCamEngine] IMFVirtualCamera::Remove 0x%08X\n", static_cast<unsigned>(hr));
         OutputDebugStringW(msg);
     }
 
@@ -402,7 +402,7 @@ private:
             hr = VirtualCameraApi()(MFVirtualCameraType_SoftwareCameraSource,
                 MFVirtualCameraLifetime_Session, MFVirtualCameraAccess_CurrentUser,
                 CAMSTUDIO_VCAM_FRIENDLY_NAME, CAMSTUDIO_VCAM_CLSID_STRING, nullptr, 0, &m_vcam);
-            if (FAILED(hr)) { m_failure = L"Không tạo được camera ảo (hãy cài lại Cam Studio bằng file CamStudio-Setup)"; return hr; }
+            if (FAILED(hr)) { m_failure = L"Không tạo được camera ảo (hãy cài lại NiwCam bằng file NiwCam-Setup)"; return hr; }
             MFSetAttributeSize(m_vcam.Get(), CAMSTUDIO_ATTR_NATIVE_SIZE, width, height);
             MFSetAttributeRatio(m_vcam.Get(), CAMSTUDIO_ATTR_NATIVE_FPS, m_fpsNum, m_fpsDen);
             hr = m_vcam->Start(nullptr);

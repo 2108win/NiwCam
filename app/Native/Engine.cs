@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CamStudio.Native;
+namespace NiwCam.Native;
 
 // Mirrors src/engine/EngineApi.h. Keep the layouts in sync.
 
@@ -126,7 +126,7 @@ public enum EngineState
 
 internal static unsafe partial class Engine
 {
-    private const string Dll = "CamStudioEngine.dll";
+    private const string Dll = "NiwCamEngine.dll";
 
     [LibraryImport(Dll)] public static partial int cs_init();
     [LibraryImport(Dll)] public static partial int cs_init_delayed(int delayMs);

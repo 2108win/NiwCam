@@ -132,11 +132,11 @@ final class Session {
         if next["type"] as? String == "pairStart" {
             guard ui?.canPair == true else {
                 try connection.writeHandshake(["type": "error", "code": "notPaired",
-                                               "message": "Hãy ghép đôi máy tính này trong app Cam Studio trên iPhone trước"])
+                                               "message": "Hãy ghép đôi máy tính này trong app NiwCam trên iPhone trước"])
                 throw WireError.protocolError("pairing is not possible here")
             }
             guard ui?.inForeground == true else {
-                try connection.writeHandshake(["type": "error", "code": "background", "message": "Hãy mở app Cam Studio trên iPhone để ghép đôi"])
+                try connection.writeHandshake(["type": "error", "code": "background", "message": "Hãy mở app NiwCam trên iPhone để ghép đôi"])
                 throw WireError.protocolError("pairing while in background")
             }
             let accepted = ui?.confirmPairing(pcName: pcName, code: Crypto.sas(t)) ?? false
@@ -216,7 +216,7 @@ final class Session {
     private func startStream(_ json: [String: Any]) {
         stopStream()
         guard !source.needsForeground || ui?.inForeground == true || source.keepsRunningInBackground else {
-            return sendError("background", "Hãy mở app Cam Studio trên iPhone: iOS chỉ cho dùng camera khi app đang mở")
+            return sendError("background", "Hãy mở app NiwCam trên iPhone: iOS chỉ cho dùng camera khi app đang mở")
         }
         targetBitrate = (json["bitrateKbps"] as? Int ?? 8000) * 1000
         currentBitrate = targetBitrate
@@ -256,7 +256,7 @@ final class Session {
     func appBackgrounded() {
         guard streaming, source.needsForeground, !source.keepsRunningInBackground else { return }
         stopStream()
-        sendError("background", "App Cam Studio trên iPhone đã bị ẩn: hãy mở lại app")
+        sendError("background", "App NiwCam trên iPhone đã bị ẩn: hãy mở lại app")
     }
 
     // MARK: - sending

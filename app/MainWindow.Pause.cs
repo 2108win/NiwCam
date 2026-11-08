@@ -1,10 +1,11 @@
 using System;
 using System.IO;
-using CamStudio.Native;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // What apps see while the picture is paused (Settings › Camera ảo): the last picture blurred with
 // "Quay lại ngay" by default, a card with the text, the person's own image, or the camera's
@@ -84,7 +85,7 @@ public sealed partial class MainWindow
         {
             var file = await picker.PickSingleFileAsync();
             if (file is null) return;
-            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CamStudio");
+            string dir = AppData.Dir;
             Directory.CreateDirectory(dir);
             string copy = Path.Combine(dir, "pause-image" + Path.GetExtension(file.Path).ToLowerInvariant());
             foreach (string old in Directory.GetFiles(dir, "pause-image.*")) File.Delete(old);

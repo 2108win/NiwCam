@@ -4,13 +4,13 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using CamStudio.Native;
-using CamStudio.Services;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // The phone's manual controls (inspector, Camera tab): built when the tab shows or the lens
 // changes, from what this phone and lens actually support (caps), with live values from "state".

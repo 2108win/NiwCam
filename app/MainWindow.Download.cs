@@ -1,6 +1,6 @@
 using System;
 using System.Text;
-using CamStudio.Services;
+using NiwCam.Services;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,13 +8,13 @@ using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // Getting the phone app: one QR code per platform. Android: the release page (the APK is there).
 // iPhone: the public TestFlight link (the same one as on winlax.id.vn/camstudio).
 public sealed partial class MainWindow
 {
-    private const string AndroidAppUrl = "https://github.com/2108win/cam-studio/releases/latest";
+    private const string AndroidAppUrl = "https://github.com/2108win/NiwCam/releases/latest";
     private const string IphoneAppUrl = "https://testflight.apple.com/join/h3NKXEjD";
 
     // The code as one vector path (no seams between modules at any scale) on white, with the
@@ -55,15 +55,15 @@ public sealed partial class MainWindow
 
     private void SetupPhoneAppCode()
     {
-        PlaceholderQrAndroid.Child = QrImage(AndroidAppUrl, 96, "Mã QR tải app Cam Studio cho Android");
-        PlaceholderQrIphone.Child = QrImage(IphoneAppUrl, 96, "Mã QR tải app Cam Studio cho iPhone");
+        PlaceholderQrAndroid.Child = QrImage(AndroidAppUrl, 96, "Mã QR tải app NiwCam cho Android");
+        PlaceholderQrIphone.Child = QrImage(IphoneAppUrl, 96, "Mã QR tải app NiwCam cho iPhone");
     }
 
     // One platform in the dialog: its code, what it needs, how to install, and the link for this PC's browser.
     private static FrameworkElement PhoneAppColumn(string platform, string requirement, string steps, string url, string link)
     {
         var column = new StackPanel { Spacing = 8 };
-        var code = QrImage(url, 160, $"Mã QR tải app Cam Studio cho {platform}");
+        var code = QrImage(url, 160, $"Mã QR tải app NiwCam cho {platform}");
         code.HorizontalAlignment = HorizontalAlignment.Left;
         column.Children.Add(code);
         column.Children.Add(new StackPanel
@@ -90,7 +90,7 @@ public sealed partial class MainWindow
         codes.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         codes.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var android = PhoneAppColumn("Android", "Android 8.0 trở lên",
-            "Quét mã bằng camera điện thoại, tải file CamStudio-…-android.apk rồi mở để cài.",
+            "Quét mã bằng camera điện thoại, tải file NiwCam-…-android.apk rồi mở để cài.",
             AndroidAppUrl, "Mở trang tải");
         var iphone = PhoneAppColumn("iPhone", "iOS 17 trở lên, qua TestFlight",
             "Cài app TestFlight của Apple từ App Store, rồi quét mã và bấm tham gia để cài.",
@@ -111,7 +111,7 @@ public sealed partial class MainWindow
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
-            Title = "Cài app Cam Studio trên điện thoại",
+            Title = "Cài app NiwCam trên điện thoại",
             Content = content,
             CloseButtonText = "Đóng",
             DefaultButton = ContentDialogButton.Close,

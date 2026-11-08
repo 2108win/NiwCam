@@ -161,7 +161,7 @@ private:
 };
 
 // This PC's identity and pairing keys (DPAPI-protected files under
-// %LOCALAPPDATA%\CamStudio).
+// %LOCALAPPDATA%\NiwCam, or what the app chose: AppDataDir.h).
 std::string ClientId();
 std::string ClientName();
 crypto::Bytes LoadPairKey(const std::string& deviceId);

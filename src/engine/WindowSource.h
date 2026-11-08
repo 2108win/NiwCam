@@ -20,7 +20,7 @@ struct WindowInfo
 };
 
 // Top-level windows worth offering: visible, titled, not cloaked (another virtual desktop, a
-// suspended Store app), not tool windows, and not Cam Studio's own.
+// suspended Store app), not tool windows, and not NiwCam's own.
 std::vector<WindowInfo> ListCaptureWindows();
 
 // The window's size on screen without its shadow (what capture frames will be), even.

@@ -1,4 +1,4 @@
-# Builds into build\Release. Usage: .\scripts\build.ps1 [-Config Debug] [-Target camstudio-verify]
+# Builds into build\Release. Usage: .\scripts\build.ps1 [-Config Debug] [-Target niwcam-verify]
 param([string]$Config = "Release", [string]$Target = "")
 $ErrorActionPreference = "Stop"
 
@@ -23,13 +23,13 @@ if ($Target -ne "app") {
     if (-not $Target -or $Target -eq "CamStudioDShow") {
         cmake -S $root -B "$root\build-x86" -G "Visual Studio 17 2022" -A Win32
         if ($LASTEXITCODE) { exit $LASTEXITCODE }
-        cmake --build "$root\build-x86" --config $Config --parallel --target CamStudioDShow camstudio-dshow-consumer
+        cmake --build "$root\build-x86" --config $Config --parallel --target CamStudioDShow niwcam-dshow-consumer
         if ($LASTEXITCODE) { exit $LASTEXITCODE }
     }
 }
 
-# WinUI 3 app (copies build\<Config>\CamStudioEngine.dll next to CamStudio.exe).
+# WinUI 3 app (copies build\<Config>\NiwCamEngine.dll next to NiwCam.exe).
 if (-not $Target -or $Target -eq "app") {
-    dotnet build "$root\app\CamStudio.App.csproj" -c $Config -p:Platform=x64
+    dotnet build "$root\app\NiwCam.App.csproj" -c $Config -p:Platform=x64
     exit $LASTEXITCODE
 }

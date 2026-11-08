@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // A small QR code encoder (ISO/IEC 18004): byte mode, error correction level M, versions 1–10
 // (up to 213 bytes), the mask with the lowest penalty. Enough for a download link; no library.

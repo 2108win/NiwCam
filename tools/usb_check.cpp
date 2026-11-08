@@ -1,5 +1,5 @@
 // Checks the USB transport (src/engine/UsbTransport.cpp) against real phones on a cable, on
-// Windows (camstudio-usb-check.exe) and on a Mac:
+// Windows (niwcam-usb-check.exe) and on a Mac:
 //   clang++ -std=c++20 -Wall -Wextra -o build/usb-check tools/usb_check.cpp src/engine/UsbTransport.cpp
 //
 //   usb-check list                       phones on a cable, from adb and usbmuxd

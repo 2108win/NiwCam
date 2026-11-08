@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using Microsoft.Win32;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
-// Persisted under HKCU\Software\CamStudio (same key the earlier Win32 app used).
+// Persisted under HKCU\Software\NiwCam (copied from HKCU\Software\CamStudio by AppData.Init).
 public sealed class AppSettings
 {
-    private const string KeyPath = @"Software\CamStudio";
+    private const string KeyPath = @"Software\NiwCam";
 
-    /// Best-effort dump to %LOCALAPPDATA%\CamStudio (e.g. the phone's last caps), for troubleshooting.
+    /// Best-effort dump to %LOCALAPPDATA%\NiwCam (e.g. the phone's last caps), for troubleshooting.
     public static void WriteDiagnostic(string name, string text)
     {
         try
         {
-            string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CamStudio");
+            string dir = AppData.Dir;
             System.IO.Directory.CreateDirectory(dir);
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, name), text);
         }
@@ -49,15 +49,16 @@ public sealed class AppSettings
     public int OutputSize { get; set; }    // "Kích thước camera ảo": 0 auto, 1 4K, 2 1080p, 3 720p
     public int PauseKind { get; set; } = 2;  // what apps see while paused: 0 no signal, 1 card, 2 blurred last picture, 3 image
     public string PauseText { get; set; } = "Quay lại ngay";
-    public string PauseImage { get; set; } = ""; // a copy in %LOCALAPPDATA%\CamStudio
+    public string PauseImage { get; set; } = ""; // a copy in %LOCALAPPDATA%\NiwCam
     public bool RecordMicrophone { get; set; } = true; // "Ghi hình" with the default microphone
     public int BackgroundMode { get; set; }            // "Nền": 0 off, 1 blur, 2 image
     public int LastBackgroundMode { get; set; } = 1;   // what Ctrl+Alt+B turns back on
     public int BackgroundStrength { get; set; } = 60;  // blur, 0..100
-    public string BackgroundImage { get; set; } = "";  // a copy in %LOCALAPPDATA%\CamStudio
+    public string BackgroundImage { get; set; } = "";  // a copy in %LOCALAPPDATA%\NiwCam
     public int SkinSmoothing { get; set; }              // "Làm mịn da": 0 off, 1..100
     public bool PhoneMic { get; set; }                  // "Micro điện thoại": the phone's sound to the PC
     public string PhoneAudioOutput { get; set; } = "";  // its output device's endpoint id ("": VB-Audio's cable)
+    public bool InUseNotice { get; set; } = true; // hidden in the tray: a quiet notice when an app starts using the camera
     public bool AutoUpdate { get; set; } = true; // download new versions and install when no camera is in use
     public string AutoInstalledVersion { get; set; } = ""; // the version last installed by itself (never twice)
     // The mode last used per source (by its engine id): "lens|width|height|fpsMilli", 0 = native.
@@ -108,6 +109,7 @@ public sealed class AppSettings
         s.PhoneMic = Int("PhoneMic", 0) != 0;
         s.PhoneAudioOutput = key.GetValue("PhoneAudioOutput") as string ?? "";
         s.AutoUpdate = Int("AutoUpdate", 1) != 0;
+        s.InUseNotice = Int("InUseNotice", 1) != 0;
         s.AutoInstalledVersion = key.GetValue("AutoInstalledVersion") as string ?? "";
         using (var modes = key.OpenSubKey("Modes"))
         {
@@ -163,6 +165,7 @@ public sealed class AppSettings
         key.SetValue("PhoneMic", PhoneMic ? 1 : 0, RegistryValueKind.DWord);
         key.SetValue("PhoneAudioOutput", PhoneAudioOutput);
         key.SetValue("AutoUpdate", AutoUpdate ? 1 : 0, RegistryValueKind.DWord);
+        key.SetValue("InUseNotice", InUseNotice ? 1 : 0, RegistryValueKind.DWord);
         key.SetValue("AutoInstalledVersion", AutoInstalledVersion);
         using (var modes = key.CreateSubKey("Modes"))
             foreach (var (id, mode) in Modes) modes.SetValue(id, mode);
@@ -175,7 +178,7 @@ public sealed class AppSettings
 public static class Autostart
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "CamStudio";
+    private const string ValueName = "NiwCam";
 
     public static bool IsEnabled
     {

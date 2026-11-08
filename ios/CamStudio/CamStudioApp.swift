@@ -3,7 +3,7 @@ import ReplayKit
 import SwiftUI
 import UIKit.UIGestureRecognizerSubclass
 
-/// The iPhone side of Cam Studio. The PC picks lens, size and controls;
+/// The iPhone side of NiwCam. The PC picks lens, size and controls;
 /// this screen shows status, the address for "add by IP" and the pairing
 /// code, in two parts: the camera and the screen. iOS stops the camera of
 /// background apps, except in a Picture in Picture window (BackgroundCamera),
@@ -204,7 +204,7 @@ struct ContentView: View {
                 VStack(spacing: 16) {
                     HStack(spacing: 10) {
                         Image(systemName: "video.fill").foregroundStyle(.blue)
-                        Text("Cam Studio").bold()
+                        Text("NiwCam").bold()
                     }
                     .font(.title)
                     .foregroundStyle(.white)
@@ -271,7 +271,7 @@ struct ContentView: View {
                     ? "Rời app trong lúc phát: hình camera thu vào một khung nổi nhỏ và vẫn gửi sang máy tính."
                     : "Giữ ứng dụng này mở trong lúc dùng camera.")
                  : "iPhone này không cho camera chạy khi rời app: giữ ứng dụng này mở trong lúc dùng camera.")
-            Hint("Trên PC: mở Cam Studio, chọn iPhone này trong danh sách camera. Nếu không thấy, chọn \"Thêm điện thoại theo địa chỉ IP\" và nhập địa chỉ ở trên, hoặc cắm cáp USB.")
+            Hint("Trên PC: mở NiwCam, chọn iPhone này trong danh sách camera. Nếu không thấy, chọn \"Thêm điện thoại theo địa chỉ IP\" và nhập địa chỉ ở trên, hoặc cắm cáp USB.")
         }
     }
 
@@ -409,7 +409,7 @@ private struct CameraPreview: UIViewRepresentable {
 }
 
 /// The system broadcast picker, the only way to start a screen broadcast: it lists the
-/// CamStudioScreen extension ("Cam Studio") and asks the person to start. Kept in the view tree
+/// CamStudioScreen extension ("NiwCam") and asks the person to start. Kept in the view tree
 /// (a tiny host) and opened by tapping its own button from ours.
 enum BroadcastPicker {
     private static let view: RPSystemBroadcastPickerView = {

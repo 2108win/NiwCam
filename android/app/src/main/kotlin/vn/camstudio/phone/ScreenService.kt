@@ -107,7 +107,7 @@ class ScreenService : Service(), Session.Ui {
         val stop = PendingIntent.getService(this, 1, Intent(this, ScreenService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Cam Studio đang chia sẻ màn hình")
+            .setContentTitle("NiwCam đang chia sẻ màn hình")
             .setContentText(text)
             .setStyle(Notification.BigTextStyle().bigText(text))
             .setContentIntent(open)

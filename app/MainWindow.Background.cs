@@ -2,12 +2,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using CamStudio.Native;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // "Nền" (inspector): the person stays sharp, the background is blurred or replaced by an image.
 // Runs on this PC for any camera (webcam, Android, iPhone), never for a screen or a window, and
@@ -62,7 +63,7 @@ public sealed partial class MainWindow
         }
         Engine.cs_get_background(out var state);
         bool camera = _windowSource is null && _camera >= 0 && _camera < _kinds.Count && _kinds[_camera] != 2;
-        BackgroundHint.Text = !File.Exists(BackgroundModel) ? "Thiếu tệp mô hình (Assets\\Models): hãy cài lại Cam Studio."
+        BackgroundHint.Text = !File.Exists(BackgroundModel) ? "Thiếu tệp mô hình (Assets\\Models): hãy cài lại NiwCam."
             : state.Available == 0 ? "Máy này không chạy được (thiếu Windows ML)."
             : state.Available < 0 ? "Đã dừng vì lỗi. Tắt rồi bật lại để thử lại."
             : !camera ? "Chỉ cho camera: màn hình và cửa sổ không bị làm mờ."
@@ -133,7 +134,7 @@ public sealed partial class MainWindow
         {
             var file = await picker.PickSingleFileAsync();
             if (file is null) return;
-            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CamStudio");
+            string dir = AppData.Dir;
             Directory.CreateDirectory(dir);
             string copy = Path.Combine(dir, "background-image" + Path.GetExtension(file.Path).ToLowerInvariant());
             foreach (string old in Directory.GetFiles(dir, "background-image.*")) File.Delete(old);

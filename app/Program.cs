@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using NiwCam.Services;
 
-namespace CamStudio;
+namespace NiwCam;
 
-// Custom entry point (DISABLE_XAML_GENERATED_MAIN) so only one Cam Studio
+// Custom entry point (DISABLE_XAML_GENERATED_MAIN) so only one NiwCam
 // runs: a second launch hands its activation to the first one and exits.
 public static partial class Program
 {
@@ -25,6 +26,9 @@ public static partial class Program
             return 0;
         }
 
+        // After the single-instance check: only the instance that stays moves the old data over.
+        AppData.Init();
+
         Application.Start(p =>
         {
             var context = new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread());
@@ -34,7 +38,7 @@ public static partial class Program
         return 0;
     }
 
-    // "--after <pid>" (Khởi động lại): the old Cam Studio is still closing. Wait for it, so this one
+    // "--after <pid>" (Khởi động lại): the old NiwCam is still closing. Wait for it, so this one
     // becomes the instance instead of handing its activation to the old one. One that hangs is
     // ended: that is what the restart is for.
     private static void WaitForPrevious(string[] args)

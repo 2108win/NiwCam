@@ -159,7 +159,7 @@ class Session(
             }
             if (!ui.canAskPairing) {
                 io.write(JSONObject().put("type", "error").put("code", "background")
-                    .put("message", "Hãy mở app Cam Studio trên điện thoại để ghép đôi"))
+                    .put("message", "Hãy mở app NiwCam trên điện thoại để ghép đôi"))
                 throw ProtocolException("pairing while in background")
             }
             val accepted = ui.confirmPairing(pcName, Crypto.sas(t))
@@ -228,7 +228,7 @@ class Session(
     private fun startStream(json: JSONObject) {
         stopStream()
         if (source.needsForeground && !ui.inForeground) {
-            return sendError("background", "Hãy mở app Cam Studio trên điện thoại: Android chỉ cho dùng camera khi app đang mở")
+            return sendError("background", "Hãy mở app NiwCam trên điện thoại: Android chỉ cho dùng camera khi app đang mở")
         }
         targetBitrate = json.optInt("bitrateKbps", 8000) * 1000
         currentBitrate = targetBitrate

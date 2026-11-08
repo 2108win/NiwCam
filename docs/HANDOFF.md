@@ -1,8 +1,9 @@
 # Handoff: unfinished work
 
-> **Tóm tắt (2026-10-30):** bản 0.1.12 (PC nhẹ và mượt hơn) đã đăng trên GitHub (PC + Android).
-> iOS 0.1.0 (20261021.2339) đã lên TestFlight. Còn một lỗi micro phía PC (mục 3) và các bài thử
-> cần người cầm máy.
+> **Tóm tắt (2026-11-09):** app đã đổi tên thành **NiwCam** (bản 0.1.14, đã đẩy lên `main`, **chưa đăng
+> release**). Việc của người dùng: build iOS trên Mac, đẩy TestFlight, đổi tên bản ghi trên App Store
+> Connect (xem "iOS và TestFlight" ở mục 3). Bản đã đăng gần nhất: 0.1.12 (PC + Android); iOS 0.1.0
+> (20261021.2339) trên TestFlight. Còn một lỗi micro phía PC (mục 3) và các bài thử cần người cầm máy.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first ("Windows build and the
 Redmi over USB" says what was verified). Update this file in the same commit as each step; delete
@@ -65,6 +66,18 @@ it once everything is tested.
 - Git: only `main` (see CLAUDE.md, Ground rules).
 
 ## 3. Next steps (need someone at the phone or PC)
+
+- **Rename to NiwCam (0.1.14, built 2026-11-09, NOT published).** Display text everywhere; on the PC also the exe (`NiwCam.exe`), namespace, `NiwCamEngine.dll`, `niwcam-*` tools, installer, `%LOCALAPPDATA%\NiwCam`, `HKCU\Software\NiwCam`, the `Run` value; repo renamed by the user to `2108win/NiwCam` (GitHub redirects the old API URL with a 301: checked, `releases/latest` answers; installed 0.1.12 builds still use the old URL). What stays `CamStudio` is in CLAUDE.md. Version 0.1.14 (versionCode 16) also carries the 0.1.13 low-latency work. Logo = a lens on a deep-blue tile (`scripts/make-icon.ps1`: .ico, tray icon with a red dot, taskbar badge, iOS 1024 px, site icon; Android vectors by hand). New: red dot while an app uses the camera (tray icon, taskbar badge, tooltip names the app, silent balloon when hidden, switch in Settings). Release assets go up under BOTH names (`package-release.ps1`), because builds before 0.1.14 only look for `CamStudio-Setup-<v>.exe` and `CamStudio-<v>-android.apk`.
+  **Tested on the user's PC (real context):** the installer over the previous layout: `CamStudio.*` gone, `NiwCam.exe` back up, the real data folder moved whole (client id f612b066, 4 pairing keys, phones.txt unchanged), the 37 settings and the 5 per-phone modes copied to `HKCU\Software\NiwCam` (the old key stays), the `Run` value rewritten to `NiwCam.exe --tray`, no crash log; `niwcam-verify` 361/361 live at 30 fps, gaps 32-34 ms. Backup of the real data before the test: `build/realstate/backup` (git-ignored).
+  **GOTCHA for whoever tests next:** the Claude desktop app is a packaged (MSIX) app and its shell tools see a VIRTUALISED `%LOCALAPPDATA%` and `HKCU` (writes go to `...\Packages\Claude_...\LocalCache\Local`). An app launched from there migrates and writes into that copy, not the user's real folder. Run real-context checks through Explorer: `Start-Process explorer.exe <script.cmd>` (see `build/realstate/*.cmd`). Program Files, HKLM and the installer's work are real.
+  **Not tested:** the red dot and the title-bar / tray / taskbar / Start icons on screen (the user declined screen access: look at them), a phone reconnecting without a code after the move (open the phone app), the Android update path and the iOS build (Swift, needs a Mac), Windows 10, Discord after the rename (pick "NiwCam" again; pinned taskbar shortcuts to the old exe break).
+  **Left:** committed and pushed to `main` on 2026-11-09 (no tag, no release). Ask the user, then tag v0.1.14 and run `scripts/publish-release.py` with all four files of `build/dist` (rebuild with `scripts\package-release.ps1` first: `build/dist` is not in git); winlax-v2 (site text, links and icon changed, tests pass, NOT committed or pushed: it deploys publicly); the user renames the GitHub repo description. iOS and TestFlight: next item.
+- **iOS và TestFlight (người dùng làm trên Mac, sau khi kéo `main` 0.1.14):** phần Swift đổi ở đây **chưa từng được biên dịch** (máy Windows không có Xcode).
+  - Đã đổi trong cây: `CFBundleDisplayName` = "NiwCam" ở `ios/Info.plist` và `ios/CamStudioScreen/Info.plist` (tên dưới icon, tên trong Trung tâm điều khiển), ba chuỗi quyền (camera, micro, mạng cục bộ), các câu báo lỗi trong `CamStudioApp.swift`, `CameraSource.swift`, `CameraStreamer.swift`, `PhoneServer.swift`, `Session.swift`, icon mới (ống kính, `ios/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png`, vẽ bằng `scripts\make-icon.ps1` trên Windows; `scripts/make-icon-ios.swift` đã xóa), `ios/README.md`.
+  - **Không đổi, cố ý:** bundle id (`CAMSTUDIO_BUNDLE_ID`, `vn.camstudio.phonewl` trên team riêng), tên target và project Xcode, keychain group, `_camstudio._tcp`, mọi nhãn mã hóa. Đổi sẽ tạo app mới, mất khóa ghép đôi và đường cập nhật TestFlight.
+  - **Trên Mac:** `git pull`; nếu Xcode viết lại `ios/Info.plist` thì `git checkout ios/Info.plist` (xem CLAUDE.md); chạy `xcodebuild test -project ios/CamStudio.xcodeproj -scheme CryptoTestsMac -destination platform=macOS` (CryptoTests phải PASS); `scripts/ios-run.sh` (xem tên "NiwCam" và icon trên máy, và màn hình chia sẻ trong Trung tâm điều khiển); `scripts/ios-archive.sh --upload` (số build mới; script hỏi trước khi dùng team).
+  - **App Store Connect (chỉ người dùng làm được):** bản ghi "Cam Studio" đổi tên thành "NiwCam" (tên phải còn trống trên App Store; nếu bị trùng, tên hiển thị dưới icon vẫn là "NiwCam"), tên và mô tả của nhóm beta TestFlight (trang tham gia vẫn ghi "Join the Cam Studio beta" cho tới khi đổi). Link công khai `testflight.apple.com/join/h3NKXEjD` giữ nguyên, nên mã QR trong app PC và trang winlax.id.vn/camstudio không phải đổi.
+  - Chưa thử trên máy: PiP và "Tắt màn hình" của build 20261021.2339, phần giảm trễ Wi‑Fi của 0.1.13 phía iOS (`MaxKeyFrameInterval`, `noDelay`), micro iPhone (chưa viết).
 
 - **Phone mic, still open (code review 2026-10-21, on the Mac):** `RunPhone` reads `audio` only
   from later messages, not from the first `started` (`CaptureEngine.cpp` ~1575: add

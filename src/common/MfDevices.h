@@ -124,8 +124,9 @@ inline std::wstring ToLower(std::wstring s)
 // Windows lists software cameras as "<name> (Windows Virtual Camera)".
 inline bool IsOurVirtualCamera(const CameraDevice& d)
 {
-    const std::wstring ours = CAMSTUDIO_VCAM_FRIENDLY_NAME;
-    return d.name == ours || d.name.rfind(ours + L" (", 0) == 0;
+    for (const std::wstring ours : { std::wstring(CAMSTUDIO_VCAM_FRIENDLY_NAME), std::wstring(CAMSTUDIO_VCAM_LEGACY_NAME) })
+        if (d.name == ours || d.name.rfind(ours + L" (", 0) == 0) return true;
+    return false;
 }
 
 // The same webcam in a fresh enumeration. After it was unplugged and plugged back in, the old

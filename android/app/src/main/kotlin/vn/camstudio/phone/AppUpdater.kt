@@ -16,13 +16,13 @@ import java.security.MessageDigest
  * Updates from the GitHub releases (docs/updates.md), same feed as the PC: the newest published
  * release with a CamStudio-<version>-android.apk whose size and SHA-256 (GitHub's "digest") match.
  * Android always asks the person to confirm the install (the first time also to allow installing
- * from Cam Studio); later updates may go through without asking on Android 12+. The new APK must be
+ * from NiwCam); later updates may go through without asking on Android 12+. The new APK must be
  * signed like the installed one, or Android refuses it.
  */
 object AppUpdater {
     data class Release(val version: String, val apkName: String, val size: Long, val sha256: String, val url: String)
 
-    private const val FEED = "https://api.github.com/repos/2108win/cam-studio/releases/latest"
+    private const val FEED = "https://api.github.com/repos/2108win/NiwCam/releases/latest"
     private const val ACTION_STATUS = "vn.camstudio.phone.UPDATE_STATUS"
 
     /** Install results that need the person's attention (failure text), on any thread. */
@@ -56,9 +56,11 @@ object AppUpdater {
             if (root.optBoolean("draft") || root.optBoolean("prerelease")) return null
             val tag = root.getString("tag_name").trimStart('v', 'V')
             if (tag.contains('-') || !isNewer(tag, current)) return null
-            val wanted = "CamStudio-$tag-android.apk"
+            // Since 0.1.14 the file is NiwCam-<version>-android.apk; the same bytes are also published as
+            // CamStudio-<version>-android.apk, the only name builds before 0.1.14 look for.
+            val names = listOf("NiwCam-$tag-android.apk", "CamStudio-$tag-android.apk")
             val assets = root.getJSONArray("assets")
-            for (i in 0 until assets.length()) {
+            for (wanted in names) for (i in 0 until assets.length()) {
                 val a = assets.getJSONObject(i)
                 if (a.getString("name") != wanted) continue
                 val digest = a.optString("digest")
@@ -118,7 +120,7 @@ object AppUpdater {
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(context.packageName)
             setSize(apk.length())
-            // Once Cam Studio installed itself, Android 12+ may update it without asking again.
+            // Once NiwCam installed itself, Android 12+ may update it without asking again.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
         }
         val id = installer.createSession(params)

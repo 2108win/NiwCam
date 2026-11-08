@@ -71,7 +71,7 @@ STDAPI DllRegisterServer()
     HKEY clsidKey = nullptr;
     LSTATUS st = RegCreateKeyExW(HKEY_LOCAL_MACHINE, kClsidKey, 0, nullptr, 0, KEY_WRITE, nullptr, &clsidKey, nullptr);
     if (st != ERROR_SUCCESS) return HRESULT_FROM_WIN32(st);
-    const wchar_t name[] = L"Cam Studio Virtual Camera";
+    const wchar_t name[] = L"NiwCam Virtual Camera";
     RegSetValueExW(clsidKey, nullptr, 0, REG_SZ, reinterpret_cast<const BYTE*>(name), sizeof(name));
 
     HKEY inproc = nullptr;

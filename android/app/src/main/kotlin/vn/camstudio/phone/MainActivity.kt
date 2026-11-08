@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 /**
- * The phone side of Cam Studio, in two parts. Camera: status, the address for
+ * The phone side of NiwCam, in two parts. Camera: status, the address for
  * manual pairing, the pairing code, and "Chạy nền" (CameraService keeps serving
  * the PC while the app is hidden; off, the camera stops when the app leaves).
  * Màn hình: screen sharing (ScreenService). The PC picks lens, size and
@@ -66,7 +66,7 @@ class MainActivity : Activity() {
         store = Store(this)
 
         val title = TextView(this).apply {
-            text = "Cam Studio"
+            text = "NiwCam"
             textSize = 26f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(Color.WHITE)
@@ -108,7 +108,7 @@ class MainActivity : Activity() {
             setTextColor(Color.rgb(0x88, 0x88, 0x88))
         }
         val cameraHint = hint(
-            "Trên PC: mở Cam Studio, chọn điện thoại này trong danh sách camera.\n" +
+            "Trên PC: mở NiwCam, chọn điện thoại này trong danh sách camera.\n" +
             "Nếu không thấy, chọn \"Thêm theo địa chỉ IP\" và nhập địa chỉ ở trên.")
         val camera = section("Camera").apply {
             addView(cameraStatus)
@@ -194,13 +194,13 @@ class MainActivity : Activity() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             wanted += Manifest.permission.CAMERA
         }
-        // The microphone, for when the PC asks for the phone's sound (Cam Studio on the PC,
+        // The microphone, for when the PC asks for the phone's sound (NiwCam on the PC,
         // Cài đặt › Micro điện thoại). Asked here: the PC may ask while the phone is locked.
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             wanted += Manifest.permission.RECORD_AUDIO
             micAsked = true
         }
-        // The notifications ("Cam Studio sẵn sàng làm camera", with Dừng) need this on Android 13+.
+        // The notifications ("NiwCam sẵn sàng làm camera", with Dừng) need this on Android 13+.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             wanted += Manifest.permission.POST_NOTIFICATIONS
@@ -261,7 +261,7 @@ class MainActivity : Activity() {
         if (grantResults.getOrNull(camera) == PackageManager.PERMISSION_GRANTED) {
             startCamera(askPermission = false)
         } else {
-            showCameraState(false, "Cần quyền Camera để gửi hình sang máy tính (Cài đặt → Ứng dụng → Cam Studio → Quyền)")
+            showCameraState(false, "Cần quyền Camera để gửi hình sang máy tính (Cài đặt → Ứng dụng → NiwCam → Quyền)")
         }
     }
 
@@ -381,9 +381,9 @@ class MainActivity : Activity() {
     }
 
     private fun downloadAndInstall(release: AppUpdater.Release) {
-        // The first time Android asks to allow installing apps from Cam Studio.
+        // The first time Android asks to allow installing apps from NiwCam.
         if (!packageManager.canRequestPackageInstalls()) {
-            showUpdate("Cho phép \"Cài ứng dụng không rõ nguồn\" cho Cam Studio, rồi quay lại bấm Cập nhật.")
+            showUpdate("Cho phép \"Cài ứng dụng không rõ nguồn\" cho NiwCam, rồi quay lại bấm Cập nhật.")
             startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
             return
         }

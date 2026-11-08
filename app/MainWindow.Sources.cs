@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using CamStudio.Native;
-using CamStudio.Services;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.System;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // Several sources at once: the engine keeps paired phones connected in the background, and
 // picking another source moves the virtual camera there without taking it down (cs_switch).

@@ -1,8 +1,8 @@
 <Window
-    x:Class="CamStudio.MainWindow"
+    x:Class="NiwCam.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Cam Studio">
+    Title="NiwCam">
 
     <Window.SystemBackdrop>
         <MicaBackdrop />
@@ -23,8 +23,8 @@
         <!-- ============ Title bar ============ -->
         <Grid x:Name="AppTitleBar" Grid.ColumnSpan="2" Padding="16,0,0,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="12">
-                <Image Source="Assets/CamStudio.png" Width="18" Height="18" />
-                <TextBlock Text="Cam Studio" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center" />
+                <Image Source="Assets/NiwCam.png" Width="18" Height="18" />
+                <TextBlock Text="NiwCam" Style="{StaticResource CaptionTextBlockStyle}" FontFamily="Cambria" FontWeight="SemiBold" CharacterSpacing="30" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
@@ -57,7 +57,7 @@
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem Text="Thêm điện thoại theo IP…" Click="AddPhone_Click"
-                                            ToolTipService.ToolTip="Khi điện thoại không tự hiện: nhập địa chỉ hiện trên app Cam Studio của điện thoại">
+                                            ToolTipService.ToolTip="Khi điện thoại không tự hiện: nhập địa chỉ hiện trên app NiwCam của điện thoại">
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon FontFamily="{StaticResource IconFont}" Glyph="{StaticResource IconPhone}" />
                                 </MenuFlyoutItem.Icon>
@@ -69,8 +69,8 @@
                         ToolTipService.ToolTip="Tìm lại thiết bị">
                     <FontIcon Glyph="{StaticResource IconRescan}" Style="{StaticResource ToolIconStyle}" />
                 </Button>
-                <Button Grid.Column="2" Style="{StaticResource ToolButtonStyle}" Click="Restart_Click" AutomationProperties.Name="Khởi động lại Cam Studio"
-                        ToolTipService.ToolTip="Khởi động lại Cam Studio: khi hình bị treo, giật, hoặc camera không nhận">
+                <Button Grid.Column="2" Style="{StaticResource ToolButtonStyle}" Click="Restart_Click" AutomationProperties.Name="Khởi động lại NiwCam"
+                        ToolTipService.ToolTip="Khởi động lại NiwCam: khi hình bị treo, giật, hoặc camera không nhận">
                     <FontIcon Glyph="{StaticResource IconRestart}" Style="{StaticResource ToolIconStyle}" />
                 </Button>
                 <Button Grid.Column="4" Style="{StaticResource SubtleButtonStyle}" Height="40" Padding="12,0" Click="Settings_Click"
@@ -110,7 +110,7 @@
                         <!-- Snapshot and recording of what the camera shows (MainWindow.Record.cs). -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <Button x:Name="SnapshotButton" Style="{StaticResource ToolButtonStyle}" Click="Snapshot_Click"
-                                    AutomationProperties.Name="Chụp ảnh" ToolTipService.ToolTip="Chụp ảnh (những gì camera ảo đang phát) vào Ảnh › Cam Studio">
+                                    AutomationProperties.Name="Chụp ảnh" ToolTipService.ToolTip="Chụp ảnh (những gì camera ảo đang phát) vào Ảnh › NiwCam">
                                 <FontIcon Glyph="{StaticResource IconCamera}" Style="{StaticResource ToolIconStyle}" />
                             </Button>
                             <Button x:Name="RecordButton" Style="{StaticResource ToolButtonStyle}" Width="NaN" MinWidth="40" Padding="12,0" Click="Record_Click"
@@ -158,7 +158,7 @@
                                 </StackPanel>
                                 <ToggleSwitch x:Name="VcamToggle" OnContent="" OffContent="" MinWidth="0" Margin="4,0,0,0"
                                               VerticalAlignment="Center" Toggled="VcamToggle_Toggled" AutomationProperties.Name="Phát hình qua camera ảo"
-                                              ToolTipService.ToolTip="Phát / tạm dừng hình. Camera ảo &quot;Cam Studio&quot; luôn có trong các ứng dụng khi Cam Studio chạy; khi tạm dừng, ứng dụng thấy &quot;không có tín hiệu&quot;" />
+                                              ToolTipService.ToolTip="Phát / tạm dừng hình. Camera ảo &quot;NiwCam&quot; luôn có trong các ứng dụng khi NiwCam chạy; khi tạm dừng, ứng dụng thấy &quot;không có tín hiệu&quot;" />
                             </StackPanel>
                         </Border>
 
@@ -199,7 +199,7 @@
                                            TextWrapping="Wrap" Style="{StaticResource SubtitleTextBlockStyle}" Foreground="#E6FFFFFF" />
                                 <TextBlock x:Name="PlaceholderHint" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
                                            Foreground="#B3FFFFFF" Visibility="Collapsed"
-                                           Text="Mở app Cam Studio trên điện thoại (Wi‑Fi hoặc cáp USB), hoặc cắm webcam." />
+                                           Text="Mở app NiwCam trên điện thoại (Wi‑Fi hoặc cáp USB), hoặc cắm webcam." />
                                 <!-- No source yet: scan to get the phone app, one code per platform (MainWindow.Download.cs). -->
                                 <StackPanel x:Name="PlaceholderQrRow" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center" Visibility="Collapsed">
                                     <StackPanel Spacing="4">
@@ -214,7 +214,7 @@
                                     </StackPanel>
                                     <TextBlock VerticalAlignment="Center" MaxWidth="160" TextWrapping="Wrap" Foreground="#B3FFFFFF"
                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                               Text="Chưa có app trên điện thoại? Quét mã đúng loại máy để tải app Cam Studio." />
+                                               Text="Chưa có app trên điện thoại? Quét mã đúng loại máy để tải app NiwCam." />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                     <Button x:Name="PlaceholderStart" Style="{StaticResource AccentButtonStyle}" Click="PlaceholderStart_Click">
@@ -765,7 +765,7 @@
                                         <TextBlock x:Name="InfoLag" Grid.Row="5" Grid.Column="1" Text="—" Style="{StaticResource InfoValueStyle}" Visibility="Collapsed" />
                                         <TextBlock Grid.Row="6" Text="Đang dùng camera" Style="{StaticResource InfoLabelStyle}" />
                                         <TextBlock x:Name="InfoConsumers" Grid.Row="6" Grid.Column="1" Text="—" Style="{StaticResource InfoValueStyle}" />
-                                        <TextBlock Grid.Row="7" Text="Cam Studio dùng" Style="{StaticResource InfoLabelStyle}" />
+                                        <TextBlock Grid.Row="7" Text="NiwCam dùng" Style="{StaticResource InfoLabelStyle}" />
                                         <TextBlock x:Name="InfoCpu" Grid.Row="7" Grid.Column="1" Text="—" Style="{StaticResource InfoValueStyle}" />
                                     </Grid>
                                     <StackPanel x:Name="PhoneInfoSection" Visibility="Collapsed">
@@ -835,9 +835,9 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="2" Margin="0,16,0,0">
                         <TextBlock Text="Phím tắt" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                        <Button Style="{StaticResource InfoButtonStyle}" AutomationProperties.Name="Giải thích: Phím tắt" ToolTipService.ToolTip="Dùng được cả khi Cam Studio ẩn ở khay hay đang ở ứng dụng khác (Discord, Zoom, Meet…). Bấm vào một tổ hợp để đổi.">
+                        <Button Style="{StaticResource InfoButtonStyle}" AutomationProperties.Name="Giải thích: Phím tắt" ToolTipService.ToolTip="Dùng được cả khi NiwCam ẩn ở khay hay đang ở ứng dụng khác (Discord, Zoom, Meet…). Bấm vào một tổ hợp để đổi.">
                             <FontIcon FontFamily="{StaticResource IconFont}" Glyph="{StaticResource IconInfo}" FontSize="14" />
-                            <Button.Flyout><Flyout><TextBlock Style="{StaticResource InfoTextStyle}" Text="Dùng được cả khi Cam Studio ẩn ở khay hay đang ở ứng dụng khác (Discord, Zoom, Meet…). Bấm vào một tổ hợp để đổi; Backspace để bỏ. Ctrl + 1…9 (chọn nguồn) chỉ dùng được khi cửa sổ Cam Studio đang mở." /></Flyout></Button.Flyout>
+                            <Button.Flyout><Flyout><TextBlock Style="{StaticResource InfoTextStyle}" Text="Dùng được cả khi NiwCam ẩn ở khay hay đang ở ứng dụng khác (Discord, Zoom, Meet…). Bấm vào một tổ hợp để đổi; Backspace để bỏ. Ctrl + 1…9 (chọn nguồn) chỉ dùng được khi cửa sổ NiwCam đang mở." /></Flyout></Button.Flyout>
                         </Button>
                     </StackPanel>
                     <!-- Built by BuildHotkeyRows (MainWindow.Hotkeys.cs). -->
@@ -887,10 +887,15 @@
                     <ToggleSwitch x:Name="RecordMicToggle" Header="Tiếng khi ghi hình" OnContent="Ghi kèm tiếng micro mặc định" OffContent="Chỉ ghi hình"
                                   Toggled="RecordMicToggle_Toggled" />
                     <StackPanel Orientation="Horizontal" Spacing="12">
-                        <Button Content="Mở thư mục Video › Cam Studio" Click="OpenVideos_Click" />
+                        <Button Content="Mở thư mục Video › NiwCam" Click="OpenVideos_Click" />
                     </StackPanel>
                     <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
-                               Text="Ảnh chụp lưu trong Ảnh › Cam Studio. Ảnh và đoạn ghi là đúng hình camera ảo đang phát (đã chỉnh màu, khung)." />
+                               Text="Ảnh chụp lưu trong Ảnh › NiwCam. Ảnh và đoạn ghi là đúng hình camera ảo đang phát (đã chỉnh màu, khung)." />
+
+                    <TextBlock Text="Thông báo" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+                    <ToggleSwitch x:Name="InUseNoticeToggle" Header="Báo khi có ứng dụng dùng camera"
+                                  OnContent="Bật (chấm đỏ ở khay và thanh tác vụ; thông báo nhỏ khi NiwCam đang ẩn)" OffContent="Chỉ hiện chấm đỏ, không thông báo"
+                                  Toggled="InUseNoticeToggle_Toggled" />
 
                     <TextBlock Text="Cập nhật" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
                     <ToggleSwitch x:Name="AutoUpdateToggle" Header="Tự động cập nhật"

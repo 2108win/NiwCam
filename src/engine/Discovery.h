@@ -1,4 +1,4 @@
-// Finds Cam Studio phones on the home network (DNS-SD _camstudio._tcp,
+// Finds NiwCam phones on the home network (DNS-SD _camstudio._tcp,
 // docs/protocol.md section 1), remembers phones added by IP, and lists phones on a
 // USB cable (adb, usbmuxd: docs/protocol.md 1.2).
 #pragma once
@@ -44,7 +44,7 @@ void StopDiscovery();
 // USB list is kept current in the background, nothing is asked here.
 std::vector<Endpoint> KnownPhones();
 
-// "Add by IP": remembered for this run and in %LOCALAPPDATA%\CamStudio\phones.txt.
+// "Add by IP": remembered for this run and in %LOCALAPPDATA%\NiwCam\phones.txt.
 void AddManual(const std::string& host, uint16_t port);
 void RemoveManual(const std::string& host, uint16_t port);
 

@@ -11,4 +11,4 @@ foreach ($svc in "FrameServerMonitor", "FrameServer") {
 
 $installDir = Join-Path $env:ProgramFiles "CamStudio"
 if (Test-Path $installDir) { Remove-Item $installDir -Recurse -Force }
-Write-Host "Cam Studio virtual camera unregistered."
+Write-Host "NiwCam virtual camera unregistered."

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using CamStudio.Native;
+using NiwCam.Native;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // A phone's shared screen in a window of its own, titled "<tên máy> · Màn hình", so a meeting
 // app can share exactly this window. Not the virtual camera: the engine's viewer has its own
@@ -63,7 +63,7 @@ public sealed unsafe partial class ScreenWindow : Window
         _root.SizeChanged += (_, _) => SendSize();
         Content = _root;
 
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "CamStudio.ico"));
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "NiwCam.ico"));
         double scale = GetDpiForWindow(_hwnd) / 96.0;
         AppWindow.ResizeClient(new SizeInt32((int)(400 * scale), (int)(820 * scale))); // a phone held upright
         AppWindow.Changed += (_, e) =>

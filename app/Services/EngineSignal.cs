@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // The engine posts Message to this message-only window (on the UI thread) when a preview frame is
 // ready, so the preview is drawn as frames arrive instead of on a timer (cs_set_notify).
@@ -17,7 +17,7 @@ public sealed unsafe partial class EngineSignal : IDisposable
     {
         _wndProc = WndProc;
         nint inst = GetModuleHandleW(null);
-        fixed (char* cls = "CamStudioEngineSignal")
+        fixed (char* cls = "NiwCamEngineSignal")
         {
             var wc = new WNDCLASSEXW
             {

@@ -1,6 +1,6 @@
-# Giao thức Cam Studio v1
+# Giao thức NiwCam v1
 
-Đây là hợp đồng **duy nhất** giữa app điện thoại (Android Kotlin, iOS Swift) và Cam Studio trên PC (C++). Khi đổi giao thức thì sửa file này trước, rồi sửa cả ba bên theo.
+Đây là hợp đồng **duy nhất** giữa app điện thoại (Android Kotlin, iOS Swift) và NiwCam trên PC (C++). Khi đổi giao thức thì sửa file này trước, rồi sửa cả ba bên theo.
 
 - **Vai trò:** điện thoại là **máy chủ**, PC là **máy khách**.
 - **Đường truyền:** Wi‑Fi trong nhà là mặc định. USB (adb cho Android, usbmux cho iPhone) chỉ là một đường ống TCP khác, chạy y nguyên giao thức này (mục 1.2).

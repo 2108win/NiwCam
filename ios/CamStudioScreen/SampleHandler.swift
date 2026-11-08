@@ -1,7 +1,7 @@
 import ReplayKit
 
 /// The broadcast upload extension behind "Chia sẻ màn hình". While the person shares the screen
-/// (from the Cam Studio app or Control Center) it runs its own small phone server on port 47322,
+/// (from the NiwCam app or Control Center) it runs its own small phone server on port 47322,
 /// advertised as "<name> · Màn hình", so the PC lists the screen as a separate source
 /// (docs/protocol.md 1). It has no screen to ask on, so it only serves a PC already paired in the app.
 final class SampleHandler: RPBroadcastSampleHandler, Session.UI {

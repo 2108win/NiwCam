@@ -1,6 +1,6 @@
 // Checks the portable picture code: the virtual camera size rule (PlanOutput), the "fit" layout
 // (ComputeLayout with a fixed output), moving the view (SetLayoutView), black bars, pitch-aware
-// scale/adjust into a rectangle, and BGRA <-> NV12. Builds on Windows (camstudio-frame-check.exe) and on a Mac. Nv12.h uses SSE2,
+// scale/adjust into a rectangle, and BGRA <-> NV12. Builds on Windows (niwcam-frame-check.exe) and on a Mac. Nv12.h uses SSE2,
 // so on Apple silicon build for x86_64 (runs under Rosetta):
 //   clang++ -std=c++20 -arch x86_64 -O1 -Wall -Wextra -o build/frame-check tools/frame_check.cpp && build/frame-check
 #include "../src/engine/ImageSettings.h"

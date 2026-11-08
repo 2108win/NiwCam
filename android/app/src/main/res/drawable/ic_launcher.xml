@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Same mark as the Windows app: white camera on a blue tile. -->
+<!-- Same mark as the Windows app (scripts/make-icon.ps1): a lens on a deep-blue tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="48dp" android:height="48dp"
     android:viewportWidth="100" android:viewportHeight="100">
-    <path android:fillColor="#FF0A6ED1"
-        android:pathData="M22,0h56a22,22 0 0 1 22,22v56a22,22 0 0 1 -22,22h-56a22,22 0 0 1 -22,-22v-56a22,22 0 0 1 22,-22z" />
-    <path android:fillColor="#FFFFFFFF"
-        android:pathData="M23,30h32a9,9 0 0 1 9,9v22a9,9 0 0 1 -9,9h-32a9,9 0 0 1 -9,-9v-22a9,9 0 0 1 9,-9z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M66,44L86,33L86,67L66,56z" />
-    <path android:fillColor="#FF0A6ED1"
-        android:pathData="M39,50m-11.5,0a11.5,11.5 0 1 1 23,0a11.5,11.5 0 1 1 -23,0" />
+    <path android:pathData="M22,0h56a22,22 0 0 1 22,22v56a22,22 0 0 1 -22,22h-56a22,22 0 0 1 -22,-22v-56a22,22 0 0 1 22,-22z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0"
+                android:endX="100" android:endY="100"
+                android:startColor="#FF162A5A" android:endColor="#FF070F26" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#00000000" android:strokeColor="#FFE9F0FF" android:strokeWidth="6"
+        android:pathData="M50,50m-33,0a33,33 0 1 1 66,0a33,33 0 1 1 -66,0" />
+    <path android:pathData="M50,50m-22,0a22,22 0 1 1 44,0a22,22 0 1 1 -44,0">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="44" android:centerY="43"
+                android:gradientRadius="30"
+                android:startColor="#FF6FB0FF" android:centerColor="#FF1B55D6" android:endColor="#FF0A1D66" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FF071236"
+        android:pathData="M50,50m-9,0a9,9 0 1 1 18,0a9,9 0 1 1 -18,0" />
+    <path android:fillColor="#E6FFFFFF"
+        android:pathData="M41,40m-4.5,0a4.5,4.5 0 1 1 9,0a4.5,4.5 0 1 1 -9,0" />
 </vector>

@@ -2,15 +2,15 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using CamStudio.Native;
+using NiwCam.Native;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // "Chụp ảnh" and "Ghi hình": what the virtual camera shows (settings, framing and colour
-// included), as a PNG in Pictures\Cam Studio and an MP4 in Videos\Cam Studio. Nothing runs while
+// included), as a PNG in Pictures\NiwCam and an MP4 in Videos\NiwCam. Nothing runs while
 // neither is used; a recording keeps the source open even with the window hidden.
 public sealed partial class MainWindow
 {
@@ -20,12 +20,23 @@ public sealed partial class MainWindow
 
     private static string Folder(Environment.SpecialFolder root)
     {
-        string dir = Path.Combine(Environment.GetFolderPath(root), "Cam Studio");
+        string parent = Environment.GetFolderPath(root);
+        string dir = Path.Combine(parent, "NiwCam");
+        // Before 0.1.14 the folder was "Cam Studio": carry the person's pictures and videos over.
+        string old = Path.Combine(parent, "Cam Studio");
+        try
+        {
+            if (!Directory.Exists(dir) && Directory.Exists(old)) Directory.Move(old, dir);
+        }
+        catch (Exception)
+        {
+            // Files in use or no rights: the old folder stays where it is.
+        }
         Directory.CreateDirectory(dir);
         return dir;
     }
 
-    private static string StampedName(string ext) => $"Cam Studio {DateTime.Now:yyyy-MM-dd HH.mm.ss}{ext}";
+    private static string StampedName(string ext) => $"NiwCam {DateTime.Now:yyyy-MM-dd HH.mm.ss}{ext}";
 
     private async void Snapshot_Click(object sender, RoutedEventArgs e) => await TakeSnapshotAsync();
 
@@ -43,7 +54,7 @@ public sealed partial class MainWindow
             return;
         }
         ShowSaved("Đã chụp ảnh", Path.GetFileName(path), path);
-        HotkeyFeedback("Đã chụp ảnh", "Lưu trong Ảnh › Cam Studio.");
+        HotkeyFeedback("Đã chụp ảnh", "Lưu trong Ảnh › NiwCam.");
     }
 
     private void Record_Click(object sender, RoutedEventArgs e) => _ = ToggleRecordingAsync();
@@ -79,7 +90,7 @@ public sealed partial class MainWindow
         else
             ShowSaved($"Đã lưu đoạn ghi ({length})", problem.Length > 0 ? problem : Path.GetFileName(_recordingPath!), _recordingPath,
                       problem.Length > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
-        HotkeyFeedback($"Đã lưu đoạn ghi ({length})", "Trong Video › Cam Studio.");
+        HotkeyFeedback($"Đã lưu đoạn ghi ({length})", "Trong Video › NiwCam.");
     }
 
     // Every status tick: the button shows the time while recording.
@@ -91,7 +102,7 @@ public sealed partial class MainWindow
         RecordIcon.Glyph = _recording ? Icons.Stop : Icons.Record;
         RecordIcon.FontFamily = Res<FontFamily>(_recording ? "IconFontFilled" : "IconFont");
         RecordIcon.Foreground = _recording ? Res<Brush>("LiveBrush") : Res<Brush>("TextFillColorPrimaryBrush");
-        string tip = _recording ? "Dừng ghi hình" : "Ghi hình (những gì camera ảo đang phát) vào Video › Cam Studio";
+        string tip = _recording ? "Dừng ghi hình" : "Ghi hình (những gì camera ảo đang phát) vào Video › NiwCam";
         ToolTipService.SetToolTip(RecordButton, tip + ShortcutHint("Record"));
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(RecordButton, _recording ? "Dừng ghi hình" : "Ghi hình");
     }

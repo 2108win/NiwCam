@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CamStudio.Services;
+using NiwCam.Services;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Windows.System;
 using Windows.UI.Core;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // System-wide shortcuts (Settings › Phím tắt): they work while the window is hidden and a meeting
 // app is in front, which Ctrl+1…9 (window only) cannot. Ctrl+Alt+letter by default; each can be
@@ -80,7 +80,7 @@ public sealed partial class MainWindow
         var list = QuickSources();
         if (list.Count == 0)
         {
-            HotkeyFeedback("Không có nguồn nào khác", "Mở app Cam Studio trên điện thoại hoặc cắm webcam.");
+            HotkeyFeedback("Không có nguồn nào khác", "Mở app NiwCam trên điện thoại hoặc cắm webcam.");
             return;
         }
         int at = list.IndexOf(_camera);

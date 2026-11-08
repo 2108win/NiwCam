@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using CamStudio.Native;
-using CamStudio.Services;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // Updates (Services/Updater.cs, docs/updates.md). When to install, so it never surprises:
 // - never while an app uses a camera (the installer restarts the Windows camera service, which
-//   drops every camera app, not only Cam Studio's);
-// - by itself only right after the user opened Cam Studio themselves, with an installer already
+//   drops every camera app, not only NiwCam's);
+// - by itself only right after the user opened NiwCam themselves, with an installer already
 //   downloaded (Windows then asks for admin rights: the user is there to answer). Started with
 //   Windows (--tray): no prompt at boot, only the tray balloon and menu item;
 // - otherwise when the user clicks "Cập nhật ngay" (bar, settings, tray menu).
@@ -72,7 +72,7 @@ public sealed partial class MainWindow
         if (!IsOnScreen && _balloonShownFor != version)
         {
             _balloonShownFor = version;
-            _tray.ShowBalloon($"Cam Studio {version} đã sẵn sàng", "Chuột phải biểu tượng ở khay → Cập nhật.");
+            _tray.ShowBalloon($"NiwCam {version} đã sẵn sàng", "Chuột phải biểu tượng ở khay → Cập nhật.");
         }
         // By itself: just opened by the user, the installer is already here, no camera in use.
         if (_updater.State == Updater.Phase.Ready && _settings.AutoUpdate && _manualLaunch &&
@@ -84,21 +84,21 @@ public sealed partial class MainWindow
         }
     }
 
-    // 15 s of notice: the user may have opened Cam Studio to join a call (closing the bar puts the
+    // 15 s of notice: the user may have opened NiwCam to join a call (closing the bar puts the
     // update off), and apps that had the camera open come back to it in that time.
     private async void AutoInstallSoon(Version version)
     {
         _autoCancelled = false;
         UpdateBar.Severity = InfoBarSeverity.Informational;
         UpdateBar.Title = $"Sẽ cập nhật lên {version} sau 15 giây";
-        UpdateBar.Message = "Windows sẽ hỏi quyền, Cam Studio đóng rồi tự mở lại (khoảng một phút). Đóng thông báo này nếu cần camera ngay.";
+        UpdateBar.Message = "Windows sẽ hỏi quyền, NiwCam đóng rồi tự mở lại (khoảng một phút). Đóng thông báo này nếu cần camera ngay.";
         UpdateBar.IsOpen = true;
         await System.Threading.Tasks.Task.Delay(TimeSpan.FromSeconds(15));
         if (_autoCancelled || _installing || _updater.State != Updater.Phase.Ready || !_settings.AutoUpdate) return;
         if (CamerasInUse().Count > 0)
         {
             UpdateBar.Title = $"Có bản mới {version}";
-            UpdateBar.Message = "Đã tải sẵn. Camera đang được dùng nên chưa cài: bấm Cập nhật ngay khi xong, hoặc để lần sau mở Cam Studio.";
+            UpdateBar.Message = "Đã tải sẵn. Camera đang được dùng nên chưa cài: bấm Cập nhật ngay khi xong, hoặc để lần sau mở NiwCam.";
             return;
         }
         // Never by itself twice for the same version (a click still installs it).
@@ -114,7 +114,7 @@ public sealed partial class MainWindow
     {
         var apps = CameraUsage.RunningAppsInUse();
         if (apps.Count == 0 && Engine.GetStatus().ConsumerActive != 0) apps.Add("một ứng dụng");
-        if (_recording) apps.Add("Cam Studio (đang ghi hình)");
+        if (_recording) apps.Add("NiwCam (đang ghi hình)");
         return apps;
     }
 
@@ -148,14 +148,14 @@ public sealed partial class MainWindow
             return;
         }
         ShowUpdateMessage($"Đang cập nhật lên {_updater.Latest?.Version}…",
-            "Bấm Có khi Windows hỏi quyền. Cam Studio sẽ tự đóng và mở lại.", InfoBarSeverity.Informational);
+            "Bấm Có khi Windows hỏi quyền. NiwCam sẽ tự đóng và mở lại.", InfoBarSeverity.Informational);
         // Setup closes this app. Still here when it ends: the user said no, or it failed.
         await setup.WaitForExitAsync();
         int code = setup.ExitCode;
         setup.Dispose();
         _installing = false;
         ShowUpdateMessage("Chưa cập nhật", code == 0
-            ? "Bộ cài đã chạy xong nhưng Cam Studio chưa được thay. Hãy thử lại."
+            ? "Bộ cài đã chạy xong nhưng NiwCam chưa được thay. Hãy thử lại."
             : "Đã hủy, hoặc Windows không cho quyền. Bấm Cập nhật để thử lại.", InfoBarSeverity.Warning);
         OnUpdateChanged();
     }

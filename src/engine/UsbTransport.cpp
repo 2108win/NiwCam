@@ -413,7 +413,7 @@ bool UsbmuxSend(Socket s, const std::string& messageType, const std::vector<std:
 {
     std::vector<std::pair<std::string, int64_t>> fields = integers;
     fields.emplace_back("kLibUSBMuxVersion", 3);
-    const std::string body = PlistDict({ { "MessageType", messageType }, { "ProgName", "CamStudio" }, { "ClientVersionString", "CamStudio" } }, fields);
+    const std::string body = PlistDict({ { "MessageType", messageType }, { "ProgName", "NiwCam" }, { "ClientVersionString", "NiwCam" } }, fields);
     uint8_t head[16];
     PutLE32(head, static_cast<uint32_t>(16 + body.size()));
     PutLE32(head + 4, 1);
@@ -468,7 +468,7 @@ bool DeviceFromProperties(const json::Value& props, uint32_t muxId, Device& d)
 // lockdownd frames: u32 big-endian length, then an XML plist.
 bool LockdownGet(Socket s, const std::string& key, std::string& value)
 {
-    const std::string body = PlistDict({ { "Label", "CamStudio" }, { "Request", "GetValue" }, { "Key", key } });
+    const std::string body = PlistDict({ { "Label", "NiwCam" }, { "Request", "GetValue" }, { "Key", key } });
     const uint32_t n = static_cast<uint32_t>(body.size());
     const uint8_t head[4] = { uint8_t(n >> 24), uint8_t(n >> 16), uint8_t(n >> 8), uint8_t(n) };
     uint8_t len[4];
@@ -481,9 +481,9 @@ bool LockdownGet(Socket s, const std::string& key, std::string& value)
     return !value.empty();
 }
 
-const char* kAppNotOpen = "Không kết nối được tới app Cam Studio trên điện thoại qua cáp USB. Hãy mở app trên điện thoại.";
+const char* kAppNotOpen = "Không kết nối được tới app NiwCam trên điện thoại qua cáp USB. Hãy mở app trên điện thoại.";
 // Nothing listens on the screen port unless the phone is sharing its screen.
-const char* kNotSharing = "Điện thoại chưa chia sẻ màn hình. Trong app Cam Studio trên điện thoại, bấm \"Chia sẻ màn hình sang "
+const char* kNotSharing = "Điện thoại chưa chia sẻ màn hình. Trong app NiwCam trên điện thoại, bấm \"Chia sẻ màn hình sang "
                           "máy tính\", rồi chọn lại nguồn này.";
 } // namespace
 
@@ -628,10 +628,10 @@ Socket OpenUsbmux(const std::string& udid, uint16_t port, std::string& error)
     const int result = UsbmuxConnect(phone->muxId, port, tunnel);
     if (result == 0) return tunnel;
     if (result == 3 && port == kScreenPort)
-        error = "iPhone chưa chia sẻ màn hình. Trong app Cam Studio trên iPhone, bấm \"Chia sẻ màn hình sang máy tính\" "
+        error = "iPhone chưa chia sẻ màn hình. Trong app NiwCam trên iPhone, bấm \"Chia sẻ màn hình sang máy tính\" "
                 "rồi Bắt đầu phát, sau đó chọn lại nguồn này.";
     else if (result == 3)
-        error = "Không kết nối được tới app Cam Studio trên iPhone qua cáp USB. Hãy mở app; nếu iPhone hỏi "
+        error = "Không kết nối được tới app NiwCam trên iPhone qua cáp USB. Hãy mở app; nếu iPhone hỏi "
                 "\"Tin cậy máy tính này?\", chọn Tin cậy.";
     else if (result < 0)
         error = "Dịch vụ thiết bị Apple không trả lời";
@@ -866,7 +866,7 @@ bool FileExists(const std::wstring& path) { return GetFileAttributesW(path.c_str
 
 std::wstring FindAdb()
 {
-    // 1. Shipped with the installer: App\adb\adb.exe, next to CamStudioEngine.dll.
+    // 1. Shipped with the installer: App\adb\adb.exe, next to NiwCamEngine.dll.
     HMODULE self = nullptr;
     wchar_t path[MAX_PATH];
     if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,

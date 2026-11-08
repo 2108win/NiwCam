@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CamStudio.Native;
-using CamStudio.Services;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-namespace CamStudio;
+namespace NiwCam;
 
 // "Micro điện thoại": the phone's microphone played into an output device, VB-Audio's "CABLE
 // Input" by default, so Discord or Zoom take "CABLE Output" as their microphone. Windows has no

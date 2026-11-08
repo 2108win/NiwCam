@@ -16,7 +16,7 @@ final class CameraSource: MediaSource {
 
     func start(_ json: [String: Any], bitrate: Int, callbacks: StreamCallbacks) throws -> (started: [String: Any], label: String) {
         guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
-            throw StreamError(code: "permission", message: "Chưa cấp quyền Camera cho Cam Studio (Cài đặt > Cam Studio > Camera)")
+            throw StreamError(code: "permission", message: "Chưa cấp quyền Camera cho NiwCam (Cài đặt > NiwCam > Camera)")
         }
         guard let lens = cameras.lens(json["lens"] as? String ?? "") else {
             throw StreamError(code: "unsupported", message: "Không có ống kính \(json["lens"] ?? "")")

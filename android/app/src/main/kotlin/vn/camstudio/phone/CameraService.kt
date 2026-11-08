@@ -167,7 +167,7 @@ class CameraService : Service(), Session.Ui {
         val stop = PendingIntent.getService(this, 2, Intent(this, CameraService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(if (streaming) "Cam Studio đang phát camera" else "Cam Studio sẵn sàng làm camera")
+            .setContentTitle(if (streaming) "NiwCam đang phát camera" else "NiwCam sẵn sàng làm camera")
             .setContentText(text)
             .setStyle(Notification.BigTextStyle().bigText(text))
             .setContentIntent(open)

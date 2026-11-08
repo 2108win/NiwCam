@@ -1,27 +1,27 @@
 <div align="center">
 
-<img src="app/Assets/CamStudio.png" width="96" alt="Cam Studio" />
+<img src="app/Assets/NiwCam.png" width="96" alt="NiwCam" />
 
-# Cam Studio
+# NiwCam
 
 **Biến webcam, điện thoại Android hay iPhone thành camera cho máy tính, ở đúng độ phân giải gốc của camera.**
 
-Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một camera tên **"Cam Studio"**.
+Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một camera tên **"NiwCam"**.
 
-[![Bản mới nhất](https://img.shields.io/github/v/release/2108win/cam-studio?label=b%E1%BA%A3n%20m%E1%BB%9Bi%20nh%E1%BA%A5t&color=0A6ED1)](https://github.com/2108win/cam-studio/releases/latest)
+[![Bản mới nhất](https://img.shields.io/github/v/release/2108win/NiwCam?label=b%E1%BA%A3n%20m%E1%BB%9Bi%20nh%E1%BA%A5t&color=0A6ED1)](https://github.com/2108win/NiwCam/releases/latest)
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows11&logoColor=white)
 ![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
 ![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)
 
-[**⬇ Tải cho Windows**](https://github.com/2108win/cam-studio/releases/latest) · [**⬇ Tải cho Android**](https://github.com/2108win/cam-studio/releases/latest) · [**⬇ Tải cho iPhone (TestFlight)**](https://testflight.apple.com/join/h3NKXEjD)
+[**⬇ Tải cho Windows**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho Android**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho iPhone (TestFlight)**](https://testflight.apple.com/join/h3NKXEjD)
 
-<img src="docs/images/pc-app-phone-screen.png" width="760" alt="Cam Studio trên Windows, đang phát màn hình một chiếc Redmi 9T" />
+<img src="docs/images/pc-app-phone-screen.png" width="760" alt="NiwCam trên Windows, đang phát màn hình một chiếc Redmi 9T" />
 
 </div>
 
 ---
 
-## Vì sao dùng Cam Studio
+## Vì sao dùng NiwCam
 
 - **Độ phân giải gốc:** camera ảo phát đúng kích thước camera thật cho ra (1080p, 4K…), không bị ép xuống 720p.
 - **Điện thoại làm webcam qua Wi‑Fi:** dùng được mọi ống kính của máy:
@@ -30,18 +30,18 @@ Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một ca
 - **Hoặc cắm cáp USB:** Android và iPhone dùng được qua cáp, không cần Wi‑Fi. Hình ổn định hơn, điện thoại vừa được sạc.
 - **Chia sẻ màn hình điện thoại:** màn hình Android hoặc iPhone hiện trên PC trong một cửa sổ riêng, để chia sẻ đúng cửa sổ đó trong Discord, Zoom, Meet. Hoặc dùng nó làm camera. Hình luôn đúng chiều khi xoay máy.
 - **Nhiều nguồn cùng lúc, chuyển liền mạch:** PC kết nối sẵn mọi điện thoại đã ghép đôi. Đổi từ webcam sang điện thoại (hay ngược lại) giữa cuộc gọi, Discord không rớt camera, chỉ đứng hình một chút.
-- **Một cửa sổ trên PC làm camera:** chọn bất kỳ cửa sổ nào (trình chiếu, trình duyệt…) làm nguồn cho camera "Cam Studio".
+- **Một cửa sổ trên PC làm camera:** chọn bất kỳ cửa sổ nào (trình chiếu, trình duyệt…) làm nguồn cho camera "NiwCam".
 - **Điều khiển ngay trên khung hình:**
   - đổi ống kính, zoom, đèn flash, bù sáng, chạm để lấy nét;
   - chỉnh tay ISO, tốc độ màn trập, cân bằng trắng.
 - **Chỉnh hình:** lật, xoay, cắt khung theo tỉ lệ, zoom số, chỉnh sáng, tương phản, độ bão hòa, nhiệt độ màu.
-- **Chụp ảnh và ghi hình:** đúng hình camera ảo đang phát (đã chỉnh màu, khung), ảnh PNG vào **Ảnh › Cam Studio**, video MP4 kèm tiếng micro vào **Video › Cam Studio**.
+- **Chụp ảnh và ghi hình:** đúng hình camera ảo đang phát (đã chỉnh màu, khung), ảnh PNG vào **Ảnh › NiwCam**, video MP4 kèm tiếng micro vào **Video › NiwCam**.
 - **Tạm dừng đẹp hơn:** khi tạm dừng, ứng dụng thấy hình cuối làm mờ với chữ "Quay lại ngay" (đổi được chữ, dùng ảnh riêng, hoặc màn hình "không có tín hiệu" như cũ).
 - **Phím tắt dùng cả khi đang ở app khác:** **Ctrl+Alt+P** tạm dừng/phát, **Ctrl+Alt+N** nguồn kế tiếp, **Ctrl+Alt+C** chụp ảnh, **Ctrl+Alt+R** ghi hình, **Ctrl+Alt+B** hiệu ứng nền. Đổi trong **Cài đặt › Phím tắt**.
 - **Micro điện thoại (Android):** tiếng micro điện thoại vào cuộc gọi trên PC. Cần cài [VB-Audio Virtual Cable](https://vb-audio.com/Cable/) (miễn phí), bật nút micro trên thanh camera, rồi trong Discord / Zoom chọn micro **CABLE Output**. Nên đeo tai nghe.
-- **Điện thoại nóng:** Cam Studio tự giảm xuống 1080p30 (quá nóng: 720p30) trước khi điện thoại tự tắt camera giữa cuộc gọi.
+- **Điện thoại nóng:** NiwCam tự giảm xuống 1080p30 (quá nóng: 720p30) trước khi điện thoại tự tắt camera giữa cuộc gọi.
 - **Rất nhẹ:** chỉ bật camera khi có ứng dụng dùng (xem [bên dưới](#nhẹ-và-tiết-kiệm)).
-- **Không bị rớt camera:** khi điện thoại tạm ẩn app, mất Wi‑Fi, hay khi rút cáp webcam hoặc điện thoại, Discord vẫn giữ camera "Cam Studio" và hình tự quay lại khi nguồn sẵn sàng.
+- **Không bị rớt camera:** khi điện thoại tạm ẩn app, mất Wi‑Fi, hay khi rút cáp webcam hoặc điện thoại, Discord vẫn giữ camera "NiwCam" và hình tự quay lại khi nguồn sẵn sàng.
 - **An toàn:**
   - ghép đôi bằng mã 6 số, so khớp trên cả hai máy;
   - mọi dữ liệu giữa điện thoại và PC đều mã hóa AES‑256‑GCM;
@@ -51,24 +51,24 @@ Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một ca
 
 | Thiết bị | Tải | Cài đặt |
 |---|---|---|
-| **Windows 11**, hoặc **Windows 10** phiên bản 2004 (build 19041) trở lên (64‑bit) | `CamStudio-Setup-<phiên bản>.exe` trong [Releases](https://github.com/2108win/cam-studio/releases/latest) | Bấm đúp file, bấm **Có** khi Windows hỏi quyền, rồi **Tiếp tục** đến hết. Không cần cài thêm .NET hay Visual C++. Trên Windows 10 camera ảo là bộ lọc DirectShow: Discord, OBS, Zoom, Chrome thấy nó; app Camera của Windows thì không ([chi tiết](docs/windows10.md)). |
-| **Android** 8.0 trở lên | `CamStudio-<phiên bản>-android.apk` | Chép sang điện thoại, mở file và cho phép cài. Cập nhật: cài đè lên bản cũ. |
+| **Windows 11**, hoặc **Windows 10** phiên bản 2004 (build 19041) trở lên (64‑bit) | `NiwCam-Setup-<phiên bản>.exe` trong [Releases](https://github.com/2108win/NiwCam/releases/latest) | Bấm đúp file, bấm **Có** khi Windows hỏi quyền, rồi **Tiếp tục** đến hết. Không cần cài thêm .NET hay Visual C++. Trên Windows 10 camera ảo là bộ lọc DirectShow: Discord, OBS, Zoom, Chrome thấy nó; app Camera của Windows thì không ([chi tiết](docs/windows10.md)). |
+| **Android** 8.0 trở lên | `NiwCam-<phiên bản>-android.apk` | Chép sang điện thoại, mở file và cho phép cài. Cập nhật: cài đè lên bản cũ. |
 | **iPhone** iOS 17 trở lên | [TestFlight](https://testflight.apple.com/join/h3NKXEjD) | Cài app **TestFlight** của Apple từ App Store, rồi mở link trên iPhone và bấm tham gia. Build từ mã nguồn: xem [ios/README.md](ios/README.md). |
 
 > [!NOTE]
 > Ứng dụng chưa có chữ ký số, nên Windows có thể hiện **"Windows protected your PC"**. Bấm **More info** rồi **Run anyway**.
 
-Gỡ cài đặt trong **Settings › Apps › Installed apps › Cam Studio**.
+Gỡ cài đặt trong **Settings › Apps › Installed apps › NiwCam**.
 
 ## Bắt đầu nhanh
 
 **Webcam USB hoặc capture card**
-1. Mở **Cam Studio**, chọn camera ở góc trên bên trái.
-2. Trong Discord, Zoom, OBS…: chọn camera **Cam Studio**.
+1. Mở **NiwCam**, chọn camera ở góc trên bên trái.
+2. Trong Discord, Zoom, OBS…: chọn camera **NiwCam**.
 
-Camera **"Cam Studio"** luôn có trong các ứng dụng khi Cam Studio đang chạy (kể cả khi ẩn ở khay). Chưa có nguồn thì ứng dụng thấy "không có tín hiệu"; có nguồn là hình hiện ngay. Công tắc **Camera ảo** chỉ để tạm dừng hình, camera vẫn còn.
+Camera **"NiwCam"** luôn có trong các ứng dụng khi NiwCam đang chạy (kể cả khi ẩn ở khay). Chưa có nguồn thì ứng dụng thấy "không có tín hiệu"; có nguồn là hình hiện ngay. Công tắc **Camera ảo** chỉ để tạm dừng hình, camera vẫn còn.
 
-Lỡ rút cáp webcam: camera "Cam Studio" vẫn còn trong Discord, hình tự quay lại khi cắm lại (cổng USB khác cũng được).
+Lỡ rút cáp webcam: camera "NiwCam" vẫn còn trong Discord, hình tự quay lại khi cắm lại (cổng USB khác cũng được).
 
 **Điện thoại làm camera**
 1. Cài app lên điện thoại. Điện thoại và máy tính phải dùng chung một mạng Wi‑Fi.
@@ -83,11 +83,11 @@ Lỡ rút cáp webcam: camera "Cam Studio" vẫn còn trong Discord, hình tự 
    - cắm cáp vào PC, rồi chọn **Cho phép** khi điện thoại hỏi "Cho phép gỡ lỗi USB?".
 
    **iPhone:** cài app **Apple Devices** (Microsoft Store) hoặc iTunes trên PC. Cắm cáp, mở khóa iPhone, chọn **Tin cậy** nếu iPhone hỏi.
-2. Mở app Cam Studio trên điện thoại. Trên PC, chọn **"<tên máy> (USB)"** trong danh sách camera. Muốn chia sẻ màn hình qua cáp thì bật chia sẻ màn hình trên điện thoại (xem dưới), rồi chọn **"<tên máy> · Màn hình (USB)"**.
+2. Mở app NiwCam trên điện thoại. Trên PC, chọn **"<tên máy> (USB)"** trong danh sách camera. Muốn chia sẻ màn hình qua cáp thì bật chia sẻ màn hình trên điện thoại (xem dưới), rồi chọn **"<tên máy> · Màn hình (USB)"**.
 3. Đã ghép đôi qua Wi‑Fi thì không phải ghép lại. Chưa ghép thì làm như bước 3 ở trên.
-4. Rút cáp giữa chừng: camera ảo vẫn giữ, hình tự quay lại khi cắm lại. Cam Studio không tự chuyển sang Wi‑Fi: muốn dùng Wi‑Fi thì chọn nguồn **"(Wi‑Fi)"**.
+4. Rút cáp giữa chừng: camera ảo vẫn giữ, hình tự quay lại khi cắm lại. NiwCam không tự chuyển sang Wi‑Fi: muốn dùng Wi‑Fi thì chọn nguồn **"(Wi‑Fi)"**.
 
-<img src="docs/images/android-app.png" width="360" align="right" alt="App Cam Studio trên Android" />
+<img src="docs/images/android-app.png" width="360" align="right" alt="App NiwCam trên Android" />
 
 **Chia sẻ màn hình điện thoại**
 1. **Android:** trong app, bấm **Chia sẻ màn hình sang máy tính**, rồi bấm **Bắt đầu ngay**.
@@ -107,7 +107,7 @@ Lỡ rút cáp webcam: camera "Cam Studio" vẫn còn trong Discord, hình tự 
 - **Cài đặt › Kích thước camera ảo:**
   - **Tự động (nét nhất):** theo cỡ gốc của nguồn. Đang có cuộc gọi mà đổi nguồn khác cỡ thì camera giữ nguyên cỡ (để không rớt camera), hình mới được co vừa và thêm viền đen; gọi xong tự về cỡ gốc.
   - **4K**, **1080p**, **720p:** cỡ cố định cho mọi nguồn.
-- Khi mở máy (chạy cùng Windows), Cam Studio chọn nguồn theo thứ tự: nguồn bạn chọn lần trước, điện thoại qua cáp, điện thoại qua Wi‑Fi, webcam USB, rồi camera có sẵn của máy. Nguồn tốt hơn xuất hiện sau thì tự chuyển, nhưng không bao giờ chuyển giữa cuộc gọi.
+- Khi mở máy (chạy cùng Windows), NiwCam chọn nguồn theo thứ tự: nguồn bạn chọn lần trước, điện thoại qua cáp, điện thoại qua Wi‑Fi, webcam USB, rồi camera có sẵn của máy. Nguồn tốt hơn xuất hiện sau thì tự chuyển, nhưng không bao giờ chuyển giữa cuộc gọi.
 
 > [!NOTE]
 > Nhiều nguồn cùng lúc, cửa sổ màn hình điện thoại, cửa sổ trên máy tính và camera luôn có là tính năng mới, **chưa được kiểm tra trên Windows**.
@@ -122,16 +122,16 @@ Lỡ rút cáp webcam: camera "Cam Studio" vẫn còn trong Discord, hình tự 
 
 ## Nhẹ và tiết kiệm
 
-Camera ảo luôn có khi Cam Studio chạy. Bạn không cần tự bật hay tắt:
+Camera ảo luôn có khi NiwCam chạy. Bạn không cần tự bật hay tắt:
 
-- **Không có ứng dụng nào dùng camera và cửa sổ Cam Studio đang ẩn:**
+- **Không có ứng dụng nào dùng camera và cửa sổ NiwCam đang ẩn:**
   - nguồn hình đóng hẳn: webcam tắt đèn, điện thoại ngừng mã hóa và gửi hình;
-  - camera "Cam Studio" vẫn có sẵn để ứng dụng khác chọn.
+  - camera "NiwCam" vẫn có sẵn để ứng dụng khác chọn.
 - **Khi Discord, Zoom… mở camera:** nguồn tự bật lại sau khoảng 0,5–2 giây.
 - **Khi ứng dụng đó tắt camera:** 5 giây sau nguồn tự đóng.
 - **Khi thu xuống khay:** bộ nhớ được trả lại cho Windows.
 - **Điện thoại kết nối sẵn:** khi chưa phát, kết nối gần như không tốn gì (một tin nhắn nhỏ mỗi 15 giây), điện thoại không bật camera.
-- **Khi chạy cùng Windows:** Cam Studio đợi 20 giây rồi mới tìm điện thoại, để máy khởi động xong trước.
+- **Khi chạy cùng Windows:** NiwCam đợi 20 giây rồi mới tìm điện thoại, để máy khởi động xong trước.
 
 Đo trên PC thật, webcam 1920×1080 @ 100 fps:
 
@@ -141,16 +141,16 @@ Camera ảo luôn có khi Cam Studio chạy. Bạn không cần tự bật hay t
 | **Ẩn xuống khay, không ứng dụng nào dùng** | **~0,1%** | **~45 MB** | **tắt** |
 | Ẩn, phát màn hình điện thoại, chưa ai dùng | ~0,3% | ~47 MB | điện thoại không mã hóa |
 
-Điện thoại Android qua cáp cần `adb` (có sẵn trong bộ cài). Cam Studio chỉ chạy nó khi có điện thoại bật Gỡ lỗi USB đang cắm vào. Nó tắt khoảng một phút sau khi rút điện thoại, hoặc khi thoát Cam Studio.
+Điện thoại Android qua cáp cần `adb` (có sẵn trong bộ cài). NiwCam chỉ chạy nó khi có điện thoại bật Gỡ lỗi USB đang cắm vào. Nó tắt khoảng một phút sau khi rút điện thoại, hoặc khi thoát NiwCam.
 
-Nếu muốn Cam Studio luôn sẵn sàng: bật **Chạy cùng Windows** khi cài, hoặc trong **Cài đặt** của app. App sẽ chạy ẩn ở khay.
+Nếu muốn NiwCam luôn sẵn sàng: bật **Chạy cùng Windows** khi cài, hoặc trong **Cài đặt** của app. App sẽ chạy ẩn ở khay.
 
 ## Câu hỏi thường gặp
 
 <details>
-<summary><b>Discord, Zoom không thấy camera "Cam Studio"</b></summary>
+<summary><b>Discord, Zoom không thấy camera "NiwCam"</b></summary>
 
-Mở Cam Studio (camera chỉ có khi Cam Studio đang chạy; bật **Chạy cùng Windows** để luôn có). Sau đó chọn lại camera trong Discord hoặc Zoom (có ứng dụng phải tắt camera rồi bật lại mới thấy camera mới).
+Mở NiwCam (camera chỉ có khi NiwCam đang chạy; bật **Chạy cùng Windows** để luôn có). Sau đó chọn lại camera trong Discord hoặc Zoom (có ứng dụng phải tắt camera rồi bật lại mới thấy camera mới).
 </details>
 
 <details>
@@ -188,7 +188,7 @@ Bấm nút **Lật ngang** ở thanh công cụ. Một số ứng dụng (Discor
 <details>
 <summary><b>Điện thoại Xiaomi/Redmi thiếu ống kính siêu rộng hoặc macro</b></summary>
 
-Cam Studio tự tìm các ống kính mà MIUI giấu đi. Ống kính nào điện thoại không cho mở thì sẽ không hiện, để tránh lỗi.
+NiwCam tự tìm các ống kính mà MIUI giấu đi. Ống kính nào điện thoại không cho mở thì sẽ không hiện, để tránh lỗi.
 </details>
 
 ## Dành cho nhà phát triển
@@ -198,8 +198,8 @@ flowchart LR
     W[Webcam USB] --> E
     A[App Android<br/>Camera2 · MediaProjection] -- "Wi‑Fi hoặc cáp (adb), mã hóa<br/>H.264 / HEVC" --> E
     I[App iPhone<br/>AVFoundation · ReplayKit] -- "Wi‑Fi hoặc cáp (usbmux), mã hóa<br/>H.264 / HEVC" --> E
-    E[CamStudioEngine.dll<br/>C++ · Media Foundation] -- "bộ nhớ chung NV12" --> V[CamStudioVCam.dll<br/>camera ảo, chạy trong Frame Server]
-    U[CamStudio.exe<br/>WinUI 3 · C#] -- C API --> E
+    E[NiwCamEngine.dll<br/>C++ · Media Foundation] -- "bộ nhớ chung NV12" --> V[CamStudioVCam.dll<br/>camera ảo, chạy trong Frame Server]
+    U[NiwCam.exe<br/>WinUI 3 · C#] -- C API --> E
     V --> D[Discord · Zoom · OBS…]
 ```
 
@@ -240,15 +240,15 @@ powershell -ExecutionPolicy Bypass -File scripts\package-release.ps1  # → buil
 <summary><b>Kiểm thử</b></summary>
 
 ```powershell
-build\Release\camstudio-protocol-test.exe                        # mật mã khớp từng byte với docs/protocol-vectors.json
-build\Release\camstudio-verify.exe --device obsbot               # camera ảo có đúng độ phân giải gốc, hình có thật không
-build\Release\camstudio-verify.exe --expect 1280x720 --mode 1    # đọc ở 30 fps như Discord; in số khung "no signal", nhịp khung
-build\Release\camstudio-verify.exe --hold 60                     # giữ camera như một cuộc gọi
-build\Release\camstudio-fake-phone.exe                           # điện thoại giả để thử PC không cần máy thật
-build\Release\camstudio-dshow-consumer.exe                       # mở camera qua DirectShow như Discord
-build\Release\camstudio-usb-check.exe list                       # điện thoại trên cáp USB (adb, Apple), tên máy
-build\Release\camstudio-usb-check.exe hello <serial|UDID>        # mở đường ống qua cáp tới app, đổi "hello"
-build\Release\camstudio-frame-check.exe                          # quy tắc kích thước camera ảo, co vừa có viền, BGRA ⇄ NV12
+build\Release\niwcam-protocol-test.exe                        # mật mã khớp từng byte với docs/protocol-vectors.json
+build\Release\niwcam-verify.exe --device obsbot               # camera ảo có đúng độ phân giải gốc, hình có thật không
+build\Release\niwcam-verify.exe --expect 1280x720 --mode 1    # đọc ở 30 fps như Discord; in số khung "no signal", nhịp khung
+build\Release\niwcam-verify.exe --hold 60                     # giữ camera như một cuộc gọi
+build\Release\niwcam-fake-phone.exe                           # điện thoại giả để thử PC không cần máy thật
+build\Release\niwcam-dshow-consumer.exe                       # mở camera qua DirectShow như Discord
+build\Release\niwcam-usb-check.exe list                       # điện thoại trên cáp USB (adb, Apple), tên máy
+build\Release\niwcam-usb-check.exe hello <serial|UDID>        # mở đường ống qua cáp tới app, đổi "hello"
+build\Release\niwcam-frame-check.exe                          # quy tắc kích thước camera ảo, co vừa có viền, BGRA ⇄ NV12
 ```
 - **Android:** `gradlew testDebugUnitTest`
 - **iOS:** scheme `CryptoTestsMac`
@@ -258,8 +258,8 @@ build\Release\camstudio-frame-check.exe                          # quy tắc kí
 <summary><b>Dòng lệnh và gỡ lỗi</b></summary>
 
 ```powershell
-CamStudio.exe --device obsbot     # chọn sẵn camera và bật camera ảo
-CamStudio.exe --tray              # chạy ẩn ở khay
+NiwCam.exe --device obsbot     # chọn sẵn camera và bật camera ảo
+NiwCam.exe --tray              # chạy ẩn ở khay
 ```
 - **Cài đặt:** lưu ở `HKCU\Software\CamStudio`.
 - **Khóa ghép đôi điện thoại:** lưu ở `%LOCALAPPDATA%\CamStudio`, được bảo vệ bằng DPAPI.

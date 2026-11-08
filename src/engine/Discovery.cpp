@@ -1,5 +1,6 @@
 #include "Discovery.h"
 #include "UsbTransport.h"
+#include "../common/AppDataDir.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -129,9 +130,7 @@ void CALLBACK OnBrowse(DWORD status, PVOID, PDNS_RECORD records)
 
 std::wstring ManualFile()
 {
-    wchar_t path[MAX_PATH];
-    GetEnvironmentVariableW(L"LOCALAPPDATA", path, MAX_PATH);
-    std::wstring dir = std::wstring(path) + L"\\CamStudio";
+    const std::wstring dir = AppDataDir();
     CreateDirectoryW(dir.c_str(), nullptr);
     return dir + L"\\phones.txt";
 }

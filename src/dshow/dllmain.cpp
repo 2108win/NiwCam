@@ -133,7 +133,7 @@ STDAPI DllRegisterServer()
     HKEY clsidKey = nullptr;
     LSTATUS st = RegCreateKeyExW(root, kClsidKey, 0, nullptr, 0, KEY_WRITE, nullptr, &clsidKey, nullptr);
     if (st != ERROR_SUCCESS) return HRESULT_FROM_WIN32(st);
-    SetString(clsidKey, nullptr, L"Cam Studio DirectShow Camera");
+    SetString(clsidKey, nullptr, L"NiwCam DirectShow Camera");
     HKEY inproc = nullptr;
     st = RegCreateKeyExW(clsidKey, L"InprocServer32", 0, nullptr, 0, KEY_WRITE, nullptr, &inproc, nullptr);
     if (st == ERROR_SUCCESS)

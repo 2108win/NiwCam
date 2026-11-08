@@ -1,10 +1,10 @@
 // Verifies step 1 end to end, the way a consumer app (Zoom, OBS...) sees it:
-//   1. the "Cam Studio" virtual camera exists,
+//   1. the "NiwCam" virtual camera exists,
 //   2. its largest format equals the physical camera's native resolution,
 //   3. 30 frames can be read at that size, and they are live video rather
 //      than the "no signal" pattern.
 //
-//   camstudio-verify [--device <idx|name>] [--frames N]
+//   niwcam-verify [--device <idx|name>] [--frames N]
 // Exit code 0 = PASS.
 
 #include "../common/MfDevices.h"
@@ -157,7 +157,7 @@ int wmain(int argc, wchar_t** argv)
         }
         else
         {
-            fwprintf(stderr, L"Usage: camstudio-verify [--device <index|name> | --expect WxH] [--mode N] [--frames N | --hold seconds | --reopen seconds] [--dump frame.bmp]\n");
+            fwprintf(stderr, L"Usage: niwcam-verify [--device <index|name> | --expect WxH] [--mode N] [--frames N | --hold seconds | --reopen seconds] [--dump frame.bmp]\n");
             return 2;
         }
     }
@@ -201,7 +201,7 @@ int wmain(int argc, wchar_t** argv)
 
     const CameraDevice* vcam = nullptr;
     for (const auto& c : cams) if (IsOurVirtualCamera(c)) vcam = &c;
-    if (!vcam) return Fail(L"\"Cam Studio\" virtual camera not found (is CamStudio.exe running?)");
+    if (!vcam) return Fail(L"\"NiwCam\" virtual camera not found (is NiwCam.exe running?)");
 
     ComPtr<IMFMediaSource> source;
     if (FAILED(vcam->activate->ActivateObject(IID_PPV_ARGS(&source)))) return Fail(L"cannot open virtual camera");

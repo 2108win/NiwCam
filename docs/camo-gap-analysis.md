@@ -1,4 +1,4 @@
-# Cam Studio so với Camo Studio: tính năng còn thiếu và lộ trình
+# NiwCam so với Camo Studio: tính năng còn thiếu và lộ trình
 
 Ngày 2026-10-18. Bản Camo được xem: **Camo Studio 2.9.0 (build 25534) cho macOS**, cài ở `/Applications/Camo Studio.app`.
 
@@ -11,7 +11,7 @@ Theo quy tắc trong `CLAUDE.md`, Camo chỉ được nghiên cứu ở **mức 
   - không dịch ngược file thực thi hay framework (class-dump, Ghidra, Hopper, `strings`);
   - không cài skill "REA" hay công cụ dịch ngược nào;
   - không đụng tới cơ chế cấp phép của Camo Pro.
-- **Không mang dữ liệu của Camo vào repo:** LUT `.cube`, `presets.json`, `devices.json`, file `.camoscene`, ảnh nền, prompt nền AI. Nếu Cam Studio cần preset hay LUT, ta tự làm từ đầu.
+- **Không mang dữ liệu của Camo vào repo:** LUT `.cube`, `presets.json`, `devices.json`, file `.camoscene`, ảnh nền, prompt nền AI. Nếu NiwCam cần preset hay LUT, ta tự làm từ đầu.
 
 "Có được tính năng như Camo Pro" ở đây nghĩa là **tự xây tính năng tương đương**, không phải mở khóa Camo.
 
@@ -22,12 +22,12 @@ Theo quy tắc trong `CLAUDE.md`, Camo chỉ được nghiên cứu ở **mức 
    - **Bản Pro:** từ 1080p tới 4K, tới 60 fps, ghi hình độ phân giải siêu cao, dùng được trên 2 máy.
 
    Các bài review cũ (2023) lại xếp xóa phông, mọi ống kính, đèn flash và việc bỏ watermark vào Pro. Hai nguồn này mâu thuẫn nhau; tài liệu này lấy trang giá hiện tại làm chuẩn.
-2. **Cam Studio đã miễn phí đúng phần Camo thu tiền:** độ phân giải gốc (4K30 HEVC, 1080p60, webcam 1080p100), mọi ống kính (kể cả ống MIUI giấu đi), đèn flash, và không có watermark.
+2. **NiwCam đã miễn phí đúng phần Camo thu tiền:** độ phân giải gốc (4K30 HEVC, 1080p60, webcam 1080p100), mọi ống kính (kể cả ống MIUI giấu đi), đèn flash, và không có watermark.
 3. **Vậy khoảng cách nằm ở tính năng, không ở gói cước:** hiệu ứng nền, tự căn khung, bộ lọc màu, ghi hình, âm thanh, cảnh/lớp, phát trực tiếp, điều khiển từ bên ngoài.
 
 ## Kiến trúc Camo trên Mac (mức cao) và tương đương trên Windows
 
-| Thành phần trong gói Camo | Vai trò | Cam Studio trên Windows |
+| Thành phần trong gói Camo | Vai trò | NiwCam trên Windows |
 |---|---|---|
 | CoreMediaIO camera system extension | camera ảo | `IMFVirtualCamera` + `src/vcam` (đã có) |
 | `XPCServices/DAL Proxy.xpc` | camera cho app cũ dùng DAL | Frame Server đã phục vụ cả app DirectShow (Discord), không cần thêm |
@@ -50,7 +50,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Nguồn hình và chất lượng
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Điện thoại iOS/Android làm camera | Free | **Có** | — | — |
 | Webcam, capture card, DSLR | Free | **Có** (Media Foundation) | — | — |
@@ -63,7 +63,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Điều khiển camera
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Mọi ống kính | bài cũ ghi Pro | **Có**, cả ống MIUI giấu đi | — | — |
 | Đèn flash | bài cũ ghi Pro | **Có** | — | — |
@@ -75,7 +75,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Hiệu ứng nền
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Xóa phông (có thanh độ mạnh) | trang tổng quan: Free | **Một phần**: iPhone qua bảng hiệu ứng hệ thống (PC không chỉnh độ mạnh được) và chế độ Điện ảnh; Android và webcam: chưa | điện thoại trước (xem lộ trình), webcam trên PC | M–L |
 | Thay nền bằng ảnh/video | trang tổng quan: Free | **Một phần**: iPhone iOS 18 qua bảng hệ thống; còn lại chưa | như trên | M–L |
@@ -86,7 +86,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Khung hình
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Tự căn khung (theo mặt, có hoặc không zoom) | không rõ | **Chưa** cho Android/webcam; iPhone có Center Stage qua bảng hệ thống | PC: `Windows.Media.FaceAnalysis.FaceTracker` lái zoom/tâm đã có, chạy cho mọi nguồn | M |
 | Center Stage của Apple | không rõ | **Một phần** (bảng hệ thống) | iPhone: bật/tắt trực tiếp từ PC qua `set` | S |
@@ -94,7 +94,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Màu sắc
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Sáng, tương phản, bão hòa, nhiệt độ màu | không rõ | **Có** | — | — |
 | Hue, gamma, độ nét, vibrance | không rõ | **Chưa** | PC, cùng chỗ `Nv12ColorAdjust` | S |
@@ -103,7 +103,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Âm thanh
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Micro điện thoại thành micro trên máy tính | không rõ | **Chưa** | Camo cho Windows 2.8 đã có "Camo Microphone" (trộn tiếng, lọc ồn, EQ): có nhu cầu thật. Gửi tiếng qua giao thức thì dễ; **micro ảo trên Windows cần driver có chữ ký** | XL |
 | Lọc ồn | không rõ | **Chưa** | điện thoại: iOS voice processing, Android `NoiseSuppressor` (gần như miễn phí) | S (khi đã có tiếng) |
@@ -111,7 +111,7 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Ghi hình và chụp ảnh
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Ghi hình H.264/HEVC | Pro: ghi độ phân giải siêu cao | **Chưa** | PC, hai kiểu:<br>• **Ghi luồng gốc từ điện thoại:** đóng gói lại H.264/HEVC đã nhận vào `.mp4`, không mã hóa lại, gần như 0% CPU, giữ nguyên 4K. File **không có** cắt khung, zoom/pan, xoay hay chỉnh màu của PC; hướng điện thoại phải ghi vào ma trận xoay của MP4; chất lượng theo bitrate tự thích ứng.<br>• **Ghi đúng hình camera ảo đang phát** (và mọi webcam): phải mã hóa, dùng bộ mã hóa phần cứng Media Foundation | M |
 | Chụp ảnh khung hình (PNG) | không rõ | **Chưa** | PC: lấy khung NV12 → WIC PNG. Có thể thêm: điện thoại chụp ảnh tĩnh độ phân giải đầy đủ | S |
@@ -119,15 +119,15 @@ Ký hiệu: **Có**, **Một phần**, **Chưa**. Gói Camo "không rõ" là ch�
 
 ### Cảnh, lớp, phát trực tiếp
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
-| Cảnh, lớp (chữ, ảnh, web, chat, PiP, mặt nạ, biến) | không rõ | **Chưa** | **không nên làm đầy đủ**: Cam Studio đã chạy trong OBS. Tối đa: một lớp chữ/ảnh (bảng tên, logo) | S–M (bản tối thiểu), XL (đầy đủ) |
+| Cảnh, lớp (chữ, ảnh, web, chat, PiP, mặt nạ, biến) | không rõ | **Chưa** | **không nên làm đầy đủ**: NiwCam đã chạy trong OBS. Tối đa: một lớp chữ/ảnh (bảng tên, logo) | S–M (bản tối thiểu), XL (đầy đủ) |
 | Hai nguồn cùng lúc (PiP, cạnh nhau) | không rõ | **Chưa** | PC, cần ghép hai luồng: nặng hơn hẳn | L |
 | Phát RTMP (YouTube, Twitch, Facebook, Instagram), nhiều nền tảng, chat | không rõ | **Chưa** | **không nên**: để OBS lo | — |
 
 ### Điều khiển từ bên ngoài và cài đặt
 
-| Tính năng Camo | Gói Camo | Cam Studio | Nên làm ở đâu | Công sức |
+| Tính năng Camo | Gói Camo | NiwCam | Nên làm ở đâu | Công sức |
 |---|---|---|---|---|
 | Phím tắt hệ thống / URL scheme | không rõ | **Chưa** | PC: `camstudio://` hoặc CLI nhỏ qua named pipe (đổi nguồn, ống kính, zoom, preset, bật/tắt camera ảo) và phím tắt toàn cục | S–M |
 | Stream Deck | không rõ | **Chưa** | dựa trên CLI/URL scheme ở trên | M |
@@ -166,7 +166,7 @@ Giữ ba khung hiện có, Mica và màu xanh riêng. Không dùng bố cục t�
 - Chip hồ sơ đầu ra cạnh trạng thái camera ảo: "Họp · 1080p30", "Quay · 4K30", "Tự động".
 - Nút ghi thành viên thuốc đỏ có đồng hồ khi đang ghi.
 - Thêm thẻ **Hiệu ứng** vào bảng bên phải.
-- **Riêng của Cam Studio:** mỗi hiệu ứng có nhãn nơi chạy ("Chạy trên điện thoại" / "PC · chỉ khi có app dùng"). Sự nhẹ là bản sắc, nên cho người dùng thấy.
+- **Riêng của NiwCam:** mỗi hiệu ứng có nhãn nơi chạy ("Chạy trên điện thoại" / "PC · chỉ khi có app dùng"). Sự nhẹ là bản sắc, nên cho người dùng thấy.
 
 ## Nguồn
 

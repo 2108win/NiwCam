@@ -1,10 +1,10 @@
-# Cam Studio trên Windows 10
+# NiwCam trên Windows 10
 
 > Yêu cầu Windows 10 phiên bản 2004 (build 19041) trở lên, 64-bit. Engine nạp mDNS
 > (`DnsServiceBrowse`/`Resolve`, có từ build 18362) nên không chạy trên 1809/1903 cũ hơn.
 
 Windows 11 (build 22000 trở lên) có API camera ảo (`MFCreateVirtualCamera`): mọi ứng dụng đều thấy
-"Cam Studio". Windows 10 không có API này, nên ở đó Cam Studio dùng một **bộ lọc DirectShow**
+"NiwCam". Windows 10 không có API này, nên ở đó NiwCam dùng một **bộ lọc DirectShow**
 (`src/dshow`, DLL `CamStudioDShow64.dll` và `CamStudioDShow32.dll`) thay cho camera ảo của hệ thống.
 
 ## Cùng một dòng khung hình
@@ -44,4 +44,4 @@ App WinUI: `TargetPlatformMinVersion` 10.0.19041.0.
 - Nguồn "Cửa sổ trên máy tính" cần Windows 10 1903 trở lên (Windows.Graphics.Capture).
 - Đã đăng trong v0.1.6 (installer dựng trên máy này, đã cài trên PC Windows 11 của người dùng).
   Chưa thử trên máy Windows 10 thật; trên Windows 11 đã thử bằng `CAMSTUDIO_FORCE_DSHOW=1` và
-  `camstudio-dshow-consumer` (xem CLAUDE.md).
+  `niwcam-dshow-consumer` (xem CLAUDE.md).

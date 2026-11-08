@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using Windows.Devices.Enumeration;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // What some phones need on the PC that Windows lacks, and how the app gets it for the person in
 // one click instead of a hunt for downloads:
@@ -138,13 +138,13 @@ internal static class AddOns
     // ran; the caller then looks for the new "CABLE Input".
     public static async Task<string?> InstallVbCableAsync(IProgress<string> progress)
     {
-        string dir = Path.Combine(Path.GetTempPath(), "CamStudio", "vbcable");
+        string dir = Path.Combine(Path.GetTempPath(), "NiwCam", "vbcable");
         try
         {
             if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
             Directory.CreateDirectory(dir);
             using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("CamStudio");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("NiwCam");
 
             progress.Report("Đang tải VB-CABLE từ vb-audio.com…");
             string url = VbCableFallback;

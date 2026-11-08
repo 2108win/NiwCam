@@ -23,7 +23,9 @@ inline constexpr GUID CAMSTUDIO_ATTR_NATIVE_SIZE =
 inline constexpr GUID CAMSTUDIO_ATTR_NATIVE_FPS =
     { 0xa653111f, 0xe52f, 0x433f, { 0x82, 0x8f, 0x0a, 0xc1, 0x65, 0xd9, 0x65, 0xf2 } };
 
-#define CAMSTUDIO_VCAM_FRIENDLY_NAME L"Cam Studio"
+#define CAMSTUDIO_VCAM_FRIENDLY_NAME L"NiwCam"
+// What the camera was called before 0.1.14; still recognised as ours (an old build, a stale entry).
+#define CAMSTUDIO_VCAM_LEGACY_NAME L"Cam Studio"
 
 // Kernel object names. "Global\" is required: the reader runs in session 0
 // and cannot see the host's session-local namespace.

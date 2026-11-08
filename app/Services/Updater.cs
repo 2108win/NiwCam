@@ -10,11 +10,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 
-namespace CamStudio.Services;
+namespace NiwCam.Services;
 
 // Updates from the GitHub releases (docs/updates.md):
 // - looks 90 s after launch, then every 6 h (one small request; ETag, so mostly "304");
-// - downloads the newer CamStudio-Setup-<version>.exe in the background and checks its size and
+// - downloads the newer NiwCam-Setup-<version>.exe in the background and checks its size and
 //   the SHA-256 that GitHub lists for it, refusing it otherwise;
 // - installs only when asked (the app decides when: a click, or a manual launch with no camera in
 //   use). The installer asks for admin rights itself (UAC) and opens the app again.
@@ -25,7 +25,7 @@ public sealed class Updater
 
     public sealed record Release(Version Version, string Tag, string PageUrl, string SetupName, long SetupSize, string SetupSha256, string SetupUrl);
 
-    private const string DefaultFeed = "https://api.github.com/repos/2108win/cam-studio/releases/latest";
+    private const string DefaultFeed = "https://api.github.com/repos/2108win/NiwCam/releases/latest";
     private const string UninstallKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{6E3C8C2A-3F0B-4B8E-9C61-5A2D7F1E9B44}_is1";
     private static readonly TimeSpan FirstCheck = TimeSpan.FromSeconds(90);
     private static readonly TimeSpan Every = TimeSpan.FromHours(6);
@@ -50,7 +50,7 @@ public sealed class Updater
     /// Raised on a worker thread whenever State, Progress or Latest change.
     public event Action? Changed;
 
-    public static string Folder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CamStudio", "updates");
+    public static string Folder => Path.Combine(AppData.Dir, "updates");
 
     public Updater()
     {
@@ -61,7 +61,7 @@ public sealed class Updater
         _feed = _testFeed ? feed! : DefaultFeed;
         CanInstall = IsInstalledCopy();
         _http = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All }) { Timeout = Timeout.InfiniteTimeSpan };
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd($"CamStudio/{Current}");
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd($"NiwCam/{Current}");
     }
 
     /// soon: the user opened the app themselves, so look within seconds (an installer downloaded
@@ -127,10 +127,16 @@ public sealed class Updater
         string tag = root.GetProperty("tag_name").GetString() ?? "";
         if (!TryParseVersion(tag, out var version)) throw new InvalidDataException($"Phiên bản lạ: {tag}");
         string page = root.TryGetProperty("html_url", out var h) ? h.GetString() ?? "" : "";
-        string wanted = $"CamStudio-Setup-{version}.exe";
-        foreach (var asset in root.GetProperty("assets").EnumerateArray())
+        // Since 0.1.14 the installer is NiwCam-Setup-<version>.exe. The same file is also published as
+        // CamStudio-Setup-<version>.exe, the only name builds before 0.1.14 look for.
+        string[] names = { $"NiwCam-Setup-{version}.exe", $"CamStudio-Setup-{version}.exe" };
+        string wanted = names[0];
+        var assets = root.GetProperty("assets").EnumerateArray().ToList();
+        foreach (string candidate in names)
         {
-            if (!string.Equals(asset.GetProperty("name").GetString(), wanted, StringComparison.OrdinalIgnoreCase)) continue;
+            var asset = assets.FirstOrDefault(a => string.Equals(a.GetProperty("name").GetString(), candidate, StringComparison.OrdinalIgnoreCase));
+            if (asset.ValueKind != JsonValueKind.Object) continue;
+            wanted = candidate;
             string digest = asset.TryGetProperty("digest", out var dg) ? dg.GetString() ?? "" : "";
             if (!digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) || digest.Length != 7 + 64)
                 throw new InvalidDataException("Bản cập nhật không có mã kiểm tra SHA-256");
@@ -197,7 +203,7 @@ public sealed class Updater
     }
 
     /// Runs the verified installer (silent, with its own progress window). Inno Setup asks for admin
-    /// rights itself, closes Cam Studio and opens it again ("tray": hidden in the tray).
+    /// rights itself, closes NiwCam and opens it again ("tray": hidden in the tray).
     /// Returns the setup process, or null with Error set.
     public async Task<Process?> InstallAsync(bool relaunchInTray)
     {

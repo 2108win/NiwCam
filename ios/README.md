@@ -1,4 +1,4 @@
-# Cam Studio cho iPhone
+# NiwCam cho iPhone
 
 App Swift (AVFoundation + VideoToolbox + Network.framework), cài đặt đúng theo [docs/protocol.md](../docs/protocol.md).
 
@@ -33,7 +33,7 @@ open CamStudio.xcodeproj
   xcodebuild test -project CamStudio.xcodeproj -scheme CryptoTestsMac -destination platform=macOS
   ```
 
-**Icon app:** giống logo bản PC và Android (máy quay trắng trên nền xanh), nằm ở [Resources/Assets.xcassets](Resources/Assets.xcassets). Muốn vẽ lại thì chạy `swift scripts/make-icon-ios.swift` từ thư mục gốc. Script vẽ theo đúng tỉ lệ của `scripts/make-icon.ps1`. Bản build bằng xtool chưa có icon này.
+**Icon app:** giống logo bản PC và Android (ống kính trên nền xanh đêm), nằm ở [Resources/Assets.xcassets](Resources/Assets.xcassets). Muốn vẽ lại thì chạy `scripts\make-icon.ps1` trên Windows (nó cũng ghi file icon của PC). Bản build bằng xtool chưa có icon này.
 
 ## Đưa lên TestFlight
 
@@ -117,7 +117,7 @@ iPhone sẽ hỏi hai quyền: **Camera** và **Mạng cục bộ**. Phải cho 
 - **HDR:** HDR HLG 10‑bit (HEVC Main10) trên máy có hỗ trợ.
 - **Điều khiển từ PC:** zoom, lấy nét, phơi sáng (ISO, tốc độ màn trập, bù sáng), cân bằng trắng theo Kelvin, đèn flash, chống rung (kể cả điện ảnh), tăng sáng khi thiếu sáng.
 - **Hiệu ứng hệ thống** (Xóa phông, Ánh sáng studio, Center Stage, Thay nền): Apple không cho app tự bật các hiệu ứng này. Từ PC, bấm "Mở hiệu ứng hệ thống trên điện thoại"; bảng hiệu ứng sẽ hiện trên iPhone, bạn bật ở đó, và hiệu ứng áp dụng thẳng vào hình gửi sang PC.
-- **Chia sẻ màn hình sang PC:** trong app, bấm **Chia sẻ màn hình sang máy tính** rồi **Bắt đầu phát**. Cũng bật được từ Trung tâm điều khiển: giữ nút Ghi màn hình, chọn Cam Studio.
+- **Chia sẻ màn hình sang PC:** trong app, bấm **Chia sẻ màn hình sang máy tính** rồi **Bắt đầu phát**. Cũng bật được từ Trung tâm điều khiển: giữ nút Ghi màn hình, chọn NiwCam.
   - **Trên PC:** màn hình hiện thành một nguồn riêng, **"iPhone · Màn hình"**, chọn như một camera.
   - **Dùng app khác thoải mái:** khác với camera, việc chia sẻ vẫn chạy khi bạn chuyển sang app khác. Xoay máy thì hình trên PC xoay theo.
   - **Ghép đôi trước:** PC phải ghép đôi với iPhone (qua camera) ít nhất một lần, vì phần chia sẻ màn hình không tự hiện hộp thoại ghép đôi được.

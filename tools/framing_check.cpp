@@ -1,6 +1,6 @@
 // Checks automatic framing (src/engine/AutoFrame.h): the shot for some faces, the steady target,
 // easing, going wide when nobody is seen, the "Smart Zoom" limit, and the grey copy for the face
-// detector. No Windows code: builds on Windows (camstudio-framing-check.exe) and on a Mac:
+// detector. No Windows code: builds on Windows (niwcam-framing-check.exe) and on a Mac:
 //   clang++ -std=c++20 -O1 -Wall -Wextra -o build/framing-check tools/framing_check.cpp && build/framing-check
 #include "../src/engine/AutoFrame.h"
 

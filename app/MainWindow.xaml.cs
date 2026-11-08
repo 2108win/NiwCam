@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using CamStudio.Native;
-using CamStudio.Services;
+using NiwCam.Native;
+using NiwCam.Services;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -18,7 +18,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
 using Windows.UI;
 
-namespace CamStudio;
+namespace NiwCam;
 
 public sealed partial class MainWindow : Window
 {
@@ -93,7 +93,8 @@ public sealed partial class MainWindow : Window
         ApplyTheme();
         SetupSourceShortcuts();
 
-        _tray = new TrayIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "CamStudio.ico"));
+        _tray = new TrayIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "NiwCam.ico"),
+                             Path.Combine(AppContext.BaseDirectory, "Assets", "NiwCam-live.ico"));
         _tray.Activated += () => DispatcherQueue.TryEnqueue(ShowFromTray);
         _tray.BuildMenu = BuildTrayMenu;
         SetupHotkeys();
@@ -106,6 +107,7 @@ public sealed partial class MainWindow : Window
         LoadSettingsIntoUi();
         _loading = false;
         SetupUpdater(options.Tray, options.Updated);
+        SetupInUseIndicator();
 
         _statusTimer.Start();
         UpdatePreviewActivity(visible: !options.Tray);
@@ -163,7 +165,7 @@ public sealed partial class MainWindow : Window
         // Windows 10 draws its own caption buttons and ignores the title bar settings below.
         if (AppWindowTitleBar.IsCustomizationSupported())
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "CamStudio.ico"));
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "NiwCam.ico"));
 
         double scale = GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this)) / 96.0;
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
@@ -281,7 +283,7 @@ public sealed partial class MainWindow : Window
         UpdatePreviewActivity(visible: false);
         if (!_settings.TrayHintShown)
         {
-            _tray.ShowBalloon("Cam Studio vẫn đang chạy",
+            _tray.ShowBalloon("NiwCam vẫn đang chạy",
                 "Camera ảo vẫn hoạt động. Bấm biểu tượng ở khay để mở lại, chuột phải để Thoát.");
             _settings.TrayHintShown = true;
             _settings.Save();
@@ -310,6 +312,7 @@ public sealed partial class MainWindow : Window
         if (_recording) Engine.cs_record_stop(); // a finished file, not a broken one
         _hotkeys?.Dispose();
         _tray.Dispose();
+        _overlay?.Dispose();
         if (engineTimeoutMs < 0) Engine.cs_shutdown();
         else System.Threading.Tasks.Task.Run(Engine.cs_shutdown).Wait(engineTimeoutMs);
     }
@@ -321,7 +324,7 @@ public sealed partial class MainWindow : Window
             var ask = new ContentDialog
             {
                 XamlRoot = RootGrid.XamlRoot,
-                Title = "Khởi động lại Cam Studio?",
+                Title = "Khởi động lại NiwCam?",
                 Content = $"{(_consumers.Count > 0 ? string.Join(", ", _consumers) : "Ứng dụng đang dùng camera")} sẽ mất hình vài giây. Sau đó bật lại camera trong ứng dụng đó.",
                 PrimaryButtonText = "Khởi động lại",
                 CloseButtonText = "Hủy",
@@ -369,7 +372,7 @@ public sealed partial class MainWindow : Window
         bool paused = _paused;
         var items = new List<TrayIcon.MenuItem?>
         {
-            new("Mở Cam Studio", () => DispatcherQueue.TryEnqueue(ShowFromTray), IsDefault: true),
+            new("Mở NiwCam", () => DispatcherQueue.TryEnqueue(ShowFromTray), IsDefault: true),
             null,
         };
         // Quick switching: the sources ready right now.
@@ -396,7 +399,7 @@ public sealed partial class MainWindow : Window
             items.AddRange(update);
             items.Add(null);
         }
-        items.Add(new("Khởi động lại Cam Studio", () => DispatcherQueue.TryEnqueue(RestartApp)));
+        items.Add(new("Khởi động lại NiwCam", () => DispatcherQueue.TryEnqueue(RestartApp)));
         items.Add(new("Thoát", () => DispatcherQueue.TryEnqueue(ExitApp)));
         return items;
     }
@@ -651,7 +654,7 @@ public sealed partial class MainWindow : Window
 
     private async System.Threading.Tasks.Task AddPhoneByIpAsync()
     {
-        var box = new TextBox { PlaceholderText = "192.168.1.23", Header = "Địa chỉ IP hiện trong app Cam Studio trên điện thoại" };
+        var box = new TextBox { PlaceholderText = "192.168.1.23", Header = "Địa chỉ IP hiện trong app NiwCam trên điện thoại" };
         var problem = new TextBlock
         {
             Text = "Địa chỉ chưa đúng. Ví dụ: 192.168.1.23 (thêm :cổng nếu app hiện cổng khác 47321).",
@@ -1027,7 +1030,7 @@ public sealed partial class MainWindow : Window
                 AutoPickAsync(none: true, lost: false, consumer: false);
                 return;
             }
-            ShowWaiting("Chưa có nguồn hình: cắm webcam, hoặc mở app Cam Studio trên điện thoại");
+            ShowWaiting("Chưa có nguồn hình: cắm webcam, hoặc mở app NiwCam trên điện thoại");
             return;
         }
         if (EngineUp)
@@ -1752,7 +1755,8 @@ public sealed partial class MainWindow : Window
             EngineState.Waiting => ("Đang chờ nguồn hình…", "Đang chờ nguồn hình", StatusAmber),
             _ => ("Đang tắt", "Đã tắt", StatusGrey),
         };
-        _tray.SetTooltip($"Cam Studio · {pill}" + (running ? $" · {s.Width} × {s.Height}" : "") + (_recording ? " · đang ghi hình" : ""));
+        UpdateInUseIndicator(s, state);
+        _tray.SetTooltip(InUseTooltip(s) ?? $"NiwCam · {pill}" + (running ? $" · {s.Width} × {s.Height}" : "") + (_recording ? " · đang ghi hình" : ""));
 
         CheckPhoneHeat();
         UpdatePhoneAudioWanted();

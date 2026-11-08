@@ -1,9 +1,9 @@
 using System;
-using CamStudio.Services;
+using NiwCam.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 
-namespace CamStudio;
+namespace NiwCam;
 
 public partial class App : Application
 {
@@ -11,12 +11,12 @@ public partial class App : Application
 
     public App()
     {
-        // The last crash, for whoever looks into it: %LOCALAPPDATA%\CamStudio\crash.txt.
+        // The last crash, for whoever looks into it: %LOCALAPPDATA%\NiwCam\crash.txt.
         UnhandledException += (_, e) =>
         {
             try
             {
-                string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CamStudio");
+                string dir = NiwCam.Services.AppData.Dir;
                 System.IO.Directory.CreateDirectory(dir);
                 System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "crash.txt"), $"{DateTime.Now:O}\n{e.Message}\n{e.Exception}\n");
             }
