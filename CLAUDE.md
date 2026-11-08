@@ -609,10 +609,12 @@ Windows 11.
 3. TestFlight: on 2026-10-18, `scripts/ios-archive.sh --upload` sent 0.1.0 (20261018.0743) as
    `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "NiwCam"
    says version 1.0; the build says 0.1.0. Next: test the TestFlight install on the iPhone.
-   **Latest: 0.1.0 (20261021.2339)**, uploaded 2026-10-21 from `main` at de6d98e (CryptoTests
-   PASS, `nm -u`: only UserDefaults). New since 1756: "Tắt màn hình" (black cover, auto after
-   60 s), the `Store` key cleanup. Since 0743: probe-safe servers, PiP + `voip`, auto/busy/ping.
-   PiP and the black screen are not yet tested on a device. External testers need beta review, which may question `voip`.
+   **Latest: 0.1.0 (20261109.0023)**, uploaded 2026-11-09 from `main` at 96da585 (CryptoTests
+   PASS, `nm -u`: only UserDefaults; shows as "NiwCam", app and extension). New since 2339: the
+   NiwCam name and icon, Wi‑Fi latency (keyframes every 10 s, `noDelay`, `.interactiveVideo`,
+   two-level slow-down). Not run on the iPhone before upload (it was not plugged in).
+   Since 1756: "Tắt màn hình", the `Store` key cleanup. Since 0743: probe-safe servers, PiP + `voip`, auto/busy/ping.
+   PiP, the black screen and the latency changes are not yet tested on a device. External testers need beta review, which may question `voip`.
    Export compliance: `ITSAppUsesNonExemptEncryption = NO` in `ios/Info.plist` (the user's choice:
    all crypto is CryptoKit), so builds after 0743 skip the question; `ios-archive.sh` checks the key.
 4. USB transport (docs/protocol.md 1.2): the Redmi over adb works (2026-10-18). Left: the iPhone
