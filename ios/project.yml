@@ -16,7 +16,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.1.0"        # CFBundleShortVersionString, as the v0.1.0 release
+    MARKETING_VERSION: "1.0"          # CFBundleShortVersionString = the App Store Connect version
     CURRENT_PROJECT_VERSION: "1"      # CFBundleVersion: an extension must have one, equal to the app's
 targets:
   CamStudio:
@@ -35,7 +35,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(CAMSTUDIO_BUNDLE_ID)   # Signing.xcconfig
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1"        # iPhone only (App Store)
         # Same Info.plist as the xtool build (xtool.yml); Xcode merges in the standard keys.
         INFOPLIST_FILE: Info.plist
         GENERATE_INFOPLIST_FILE: YES
@@ -60,7 +60,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(CAMSTUDIO_BUNDLE_ID).screen
-        TARGETED_DEVICE_FAMILY: "1,2"
+        TARGETED_DEVICE_FAMILY: "1"        # iPhone only (App Store)
         INFOPLIST_FILE: CamStudioScreen/Info.plist
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: CamStudioScreen/CamStudioScreen.entitlements

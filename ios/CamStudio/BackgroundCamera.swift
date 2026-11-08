@@ -3,7 +3,8 @@ import AVKit
 import UIKit
 
 /// Keeps the camera streaming after the person leaves the app. iOS allows that only to a
-/// video-call style app: with the voip background mode (Info.plist, iOS 18+) AVCaptureSession
+/// video-call style app: with the voip background mode (iOS 18+; not in Info.plist since the App
+/// Store submission of 2026-11-09, so `supported` is false and the switch is hidden) AVCaptureSession
 /// offers multitasking camera access, and the capture session keeps running while the app shows
 /// a Picture in Picture window. The camera preview shown in the app moves into that window.
 final class BackgroundCamera: NSObject, AVPictureInPictureControllerDelegate {

@@ -14,22 +14,14 @@
     <true/>
     <key>UIStatusBarHidden</key>
     <true/>
+    <!-- iPhone only (App Store, 2026-11-09): an iPad runs it in iPhone mode. -->
     <key>UIDeviceFamily</key>
     <array>
         <integer>1</integer>
-        <integer>2</integer>
     </array>
     <key>UISupportedInterfaceOrientations</key>
     <array>
         <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <!-- iPad: every orientation, as Xcode requires (the stream follows the device, not the UI). -->
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
@@ -50,13 +42,10 @@
     </array>
     <key>UIRequiresPersistentWiFi</key>
     <true/>
-    <!-- Like a video call: with this mode (iOS 18+) AVCaptureSession allows multitasking camera
-         access, so the camera keeps streaming in a Picture in Picture window after the person
-         leaves the app (BackgroundCamera.swift). -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>voip</string>
-    </array>
+    <!-- No UIBackgroundModes voip (removed 2026-11-09 for App Review, guideline 2.5.4: no VoIP
+         calls here). With it back, iOS 18+ allows multitasking camera access and the camera keeps
+         streaming in a Picture in Picture window after the person leaves the app
+         (BackgroundCamera.swift); without it that switch is hidden. -->
     <!-- Export compliance, so App Store Connect does not ask for every build: the link to the PC
          is encrypted only with Apple's CryptoKit (P-256, AES-GCM, SHA-256/HMAC; HKDF is written
          on top of CryptoKit's HMAC), no algorithm of our own. -->

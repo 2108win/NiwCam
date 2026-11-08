@@ -263,14 +263,14 @@ struct ContentView: View {
                 }
                 .textSelection(.enabled)
             }
-            Toggle("Tiếp tục phát khi rời app", isOn: $model.backgroundCamera)
-                .disabled(!BackgroundCamera.supported)
-                .foregroundStyle(.white)
-            Hint(BackgroundCamera.supported
-                 ? (model.backgroundCamera
-                    ? "Rời app trong lúc phát: hình camera thu vào một khung nổi nhỏ và vẫn gửi sang máy tính."
-                    : "Giữ ứng dụng này mở trong lúc dùng camera.")
-                 : "iPhone này không cho camera chạy khi rời app: giữ ứng dụng này mở trong lúc dùng camera.")
+            // Only with the voip background mode (Info.plist), which the App Store build leaves out.
+            if BackgroundCamera.supported {
+                Toggle("Tiếp tục phát khi rời app", isOn: $model.backgroundCamera)
+                    .foregroundStyle(.white)
+            }
+            Hint(BackgroundCamera.supported && model.backgroundCamera
+                 ? "Rời app trong lúc phát: hình camera thu vào một khung nổi nhỏ và vẫn gửi sang máy tính."
+                 : "Giữ ứng dụng này mở trong lúc dùng camera: iOS tắt camera khi rời app.")
             Hint("Trên PC: mở NiwCam, chọn iPhone này trong danh sách camera. Nếu không thấy, chọn \"Thêm điện thoại theo địa chỉ IP\" và nhập địa chỉ ở trên, hoặc cắm cáp USB.")
         }
     }
