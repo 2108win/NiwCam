@@ -1,8 +1,8 @@
 # Handoff: unfinished work
 
 > **Tóm tắt (2026-11-09):** app đã đổi tên thành **NiwCam** (bản 0.1.14, đã đẩy lên `main`, **chưa đăng
-> release**). iOS 0.1.0 (20261109.0023, tên NiwCam) đã lên TestFlight. Việc của người dùng: đổi tên bản
-> ghi trên App Store Connect (xem "iOS và TestFlight" ở mục 3). Bản đã đăng gần nhất: 0.1.12 (PC + Android). Còn một lỗi micro phía PC (mục 3) và các bài thử cần người cầm máy.
+> release**). **iOS 1.0 đã gửi duyệt App Store** (9/11/2026, đang chờ Apple; xem CLAUDE.md "Open work" mục 3).
+> Bản đã đăng gần nhất: 0.1.12 (PC + Android). Còn một lỗi micro phía PC (mục 3) và các bài thử cần người cầm máy.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first ("Windows build and the
 Redmi over USB" says what was verified). Update this file in the same commit as each step; delete

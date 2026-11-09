@@ -609,7 +609,7 @@ Windows 11.
 3. TestFlight: on 2026-10-18, `scripts/ios-archive.sh --upload` sent 0.1.0 (20261018.0743) as
    `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "NiwCam"
    says version 1.0; the build says 0.1.0. Next: test the TestFlight install on the iPhone.
-   **App Store 1.0 (2026-11-09):** build 1.0 (20261109.0100), iPhone only, no `voip` (guideline
+   **App Store 1.0 (2026-11-09): submitted, Waiting for Review.** Build 1.0 (20261109.0100), iPhone only, no `voip` (guideline
    2.5.4: the PiP switch is hidden). Listing text and review notes: [docs/appstore.md](docs/appstore.md);
    privacy policy: [docs/privacy.md](docs/privacy.md). Free, 147 countries (no EU: no DSA trader
    status; no China: no ICP), not on Mac / Vision Pro, released manually after approval. Upload
@@ -617,6 +617,9 @@ Windows 11.
    Error … network connection was lost" while the network was fine, then passed; exporting to an
    .ipa (`destination=export`) still works then. The Claude app has no Local Network permission on
    this Mac, so `fake-pc` reaches the iPhone only over the cable.
+   Screenshots (3, 1206×2622): `scripts/appstore-shot.mjs` over real captures (streaming 4K, the
+   pairing code, the screen card). The Claude in Chrome extension may attach to the Windows PC's
+   Chrome: pick the Mac one (`select_browser`), where App Store Connect is signed in.
    0.1.0 (20261109.0023), uploaded 2026-11-09 from `main` at 96da585 (CryptoTests
    PASS, `nm -u`: only UserDefaults; shows as "NiwCam", app and extension). New since 2339: the
    NiwCam name and icon, Wi‑Fi latency (keyframes every 10 s, `noDelay`, `.interactiveVideo`,

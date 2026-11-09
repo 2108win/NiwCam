@@ -15,6 +15,7 @@
 //   build/fake-pc --screen                          the iPhone's shared screen (TXT src=screen) instead
 //   build/fake-pc --usb [--udid <udid>]             over the USB cable (usbmuxd, docs/protocol.md 1.2), no Wi‑Fi
 //   build/fake-pc --forget                          drop saved pairing keys, pair again
+//   build/fake-pc --name "Máy tính Windows"         the PC name the phone shows (display only)
 //
 // The PC side of pairing is accepted automatically; the code is printed so it can be compared
 // with the one on the phone, where the person still has to press "Đồng ý".
@@ -44,6 +45,7 @@ struct Options {
     var usb = false
     var udid: String?
     var out = "build/fake-pc-out"
+    var name: String?
 
     static func parse() -> Options {
         var o = Options()
@@ -77,6 +79,7 @@ struct Options {
             case "--usb": o.usb = true
             case "--udid": o.usb = true; o.udid = value(a)
             case "--out": o.out = value(a)
+            case "--name": o.name = value(a)
             default: fail("unknown option \(a) (see the header of tools/fake_pc.swift)")
             }
         }
@@ -380,11 +383,14 @@ final class Channel {
 
 // MARK: - handshake and pairing (docs/protocol.md 3)
 
+/// What the phone shows as the PC's name (`--name`); pairing goes by clientId, not by name.
+var fakePcName = "Fake PC (\(Host.current().localizedName ?? "Mac"))"
+
 func handshake(_ link: Link, state: inout PcState) throws -> (Channel, deviceName: String) {
     let key = P256.KeyAgreement.PrivateKey()
     let pcPub = Crypto.encodePublic(key.publicKey)
     try link.sendHandshake([
-        "type": "hello", "v": 1, "clientId": state.clientId, "clientName": "Fake PC (\(Host.current().localizedName ?? "Mac"))",
+        "type": "hello", "v": 1, "clientId": state.clientId, "clientName": fakePcName,
         "commit": Crypto.sha256(pcPub).base64EncodedString(),
     ])
     let hello = try link.readHandshake()
@@ -713,6 +719,7 @@ func pickMode(_ caps: [String: Any], lens: String, o: Options) -> (Int, Int, Int
 struct FakePc {
     static func main() {
         let o = Options.parse()
+        if let name = o.name { fakePcName = name }
         var state = PcState.load()
         if o.forget { state.keys = [:]; state.save(); log("pairing keys forgotten") }
         let outDir = URL(fileURLWithPath: o.out, isDirectory: true)
