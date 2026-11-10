@@ -1,5 +1,7 @@
 # NiwCam trên App Store: nội dung đã điền
 
+Trên App Store từ 10/11/2026: https://apps.apple.com/app/niwcam/id6824100361
+
 Bản ghi App Store Connect: app id 6824100361, bundle id `vn.camstudio.phonewl`, team 2TLZSD8YW7.
 Ngôn ngữ chính: tiếng Việt. Sửa ở đây trước, rồi chép sang App Store Connect.
 

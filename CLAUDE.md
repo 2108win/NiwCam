@@ -543,8 +543,8 @@ Windows 11.
 - **Phone app QR** (2026-10-20, `QrCode.cs`, `MainWindow.Download.cs`): our own encoder (byte mode,
   level M, versions 1–10), checked against Thonky's HELLO WORLD Reed–Solomon codewords and the
   ISO format strings. Two codes: Android → the GitHub `releases/latest` page (the APK's name has
-  the version); iPhone → the public TestFlight link `testflight.apple.com/join/h3NKXEjD` (also on
-  winlax.id.vn/camstudio). "+" › "Tải app cho điện thoại…", and the empty preview with no source.
+  the version); iPhone → the App Store, `apps.apple.com/app/id6824100361` (since 2026-11-10;
+  before: TestFlight `join/h3NKXEjD`). "+" › "Tải app cho điện thoại…", and the empty preview with no source.
 - **Pause picture** (2026-10-20, `StillPicture.cpp`, `MainWindow.Pause.cs`): while paused, apps see
   the last picture blurred with "Quay lại ngay" (default), a card, the person's image (copied to
   `%LOCALAPPDATA%\CamStudio\pause-image.*`) or the old "no signal". The app calls
@@ -609,7 +609,8 @@ Windows 11.
 3. TestFlight: on 2026-10-18, `scripts/ios-archive.sh --upload` sent 0.1.0 (20261018.0743) as
    `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "NiwCam"
    says version 1.0; the build says 0.1.0. Next: test the TestFlight install on the iPhone.
-   **App Store 1.0 (2026-11-09): submitted, Waiting for Review.** Build 1.0 (20261109.0100), iPhone only, no `voip` (guideline
+   **App Store 1.0: live since 2026-11-10** (submitted 2026-11-09), https://apps.apple.com/app/niwcam/id6824100361.
+   README, the PC QR (next PC release) and winlax.id.vn/niwcam point there. Build 1.0 (20261109.0100), iPhone only, no `voip` (guideline
    2.5.4: the PiP switch is hidden). Listing text and review notes: [docs/appstore.md](docs/appstore.md);
    privacy policy: [docs/privacy.md](docs/privacy.md). Free, 147 countries (no EU: no DSA trader
    status; no China: no ICP), not on Mac / Vision Pro, released manually after approval. Upload

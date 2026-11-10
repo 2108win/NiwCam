@@ -13,7 +13,7 @@ Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một ca
 ![Android 8+](https://img.shields.io/badge/Android-8%2B-3DDC84?logo=android&logoColor=white)
 ![iOS 17+](https://img.shields.io/badge/iOS-17%2B-000000?logo=apple&logoColor=white)
 
-[**⬇ Tải cho Windows**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho Android**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho iPhone (TestFlight)**](https://testflight.apple.com/join/h3NKXEjD)
+[**⬇ Tải cho Windows**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho Android**](https://github.com/2108win/NiwCam/releases/latest) · [**⬇ Tải cho iPhone (App Store)**](https://apps.apple.com/app/niwcam/id6824100361)
 
 <img src="docs/images/pc-app-phone-screen.png" width="760" alt="NiwCam trên Windows, đang phát màn hình một chiếc Redmi 9T" />
 
@@ -53,7 +53,7 @@ Discord, Zoom, Teams, Google Meet, OBS và trình duyệt đều thấy một ca
 |---|---|---|
 | **Windows 11**, hoặc **Windows 10** phiên bản 2004 (build 19041) trở lên (64‑bit) | `NiwCam-Setup-<phiên bản>.exe` trong [Releases](https://github.com/2108win/NiwCam/releases/latest) | Bấm đúp file, bấm **Có** khi Windows hỏi quyền, rồi **Tiếp tục** đến hết. Không cần cài thêm .NET hay Visual C++. Trên Windows 10 camera ảo là bộ lọc DirectShow: Discord, OBS, Zoom, Chrome thấy nó; app Camera của Windows thì không ([chi tiết](docs/windows10.md)). |
 | **Android** 8.0 trở lên | `NiwCam-<phiên bản>-android.apk` | Chép sang điện thoại, mở file và cho phép cài. Cập nhật: cài đè lên bản cũ. |
-| **iPhone** iOS 17 trở lên | [TestFlight](https://testflight.apple.com/join/h3NKXEjD) | Cài app **TestFlight** của Apple từ App Store, rồi mở link trên iPhone và bấm tham gia. Build từ mã nguồn: xem [ios/README.md](ios/README.md). |
+| **iPhone** iOS 17 trở lên | [App Store](https://apps.apple.com/app/niwcam/id6824100361) | Miễn phí. Mở link trên iPhone, hoặc tìm **NiwCam** trong App Store. Build từ mã nguồn: xem [ios/README.md](ios/README.md). |
 
 > [!NOTE]
 > Ứng dụng chưa có chữ ký số, nên Windows có thể hiện **"Windows protected your PC"**. Bấm **More info** rồi **Run anyway**.

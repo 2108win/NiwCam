@@ -11,11 +11,11 @@ using Microsoft.UI.Xaml.Shapes;
 namespace NiwCam;
 
 // Getting the phone app: one QR code per platform. Android: the release page (the APK is there).
-// iPhone: the public TestFlight link (the same one as on winlax.id.vn/camstudio).
+// iPhone: the App Store page (since 2026-11-10; the short form keeps the code at version 3).
 public sealed partial class MainWindow
 {
     private const string AndroidAppUrl = "https://github.com/2108win/NiwCam/releases/latest";
-    private const string IphoneAppUrl = "https://testflight.apple.com/join/h3NKXEjD";
+    private const string IphoneAppUrl = "https://apps.apple.com/app/id6824100361";
 
     // The code as one vector path (no seams between modules at any scale) on white, with the
     // 4-module quiet zone scanners need.
@@ -92,9 +92,9 @@ public sealed partial class MainWindow
         var android = PhoneAppColumn("Android", "Android 8.0 trở lên",
             "Quét mã bằng camera điện thoại, tải file NiwCam-…-android.apk rồi mở để cài.",
             AndroidAppUrl, "Mở trang tải");
-        var iphone = PhoneAppColumn("iPhone", "iOS 17 trở lên, qua TestFlight",
-            "Cài app TestFlight của Apple từ App Store, rồi quét mã và bấm tham gia để cài.",
-            IphoneAppUrl, "Mở link TestFlight");
+        var iphone = PhoneAppColumn("iPhone", "iOS 17 trở lên, miễn phí trên App Store",
+            "Quét mã bằng camera iPhone, hoặc tìm “NiwCam” trong App Store.",
+            IphoneAppUrl, "Mở App Store");
         Grid.SetColumn(iphone, 1);
         codes.Children.Add(android);
         codes.Children.Add(iphone);

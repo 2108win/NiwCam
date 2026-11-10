@@ -1,7 +1,7 @@
 # Handoff: unfinished work
 
 > **Tóm tắt (2026-11-09):** app đã đổi tên thành **NiwCam** (bản 0.1.14, **đã đăng release v0.1.14** trên GitHub 9/11/2026,
-> PC + Android). **iOS 1.0 đã gửi duyệt App Store** (9/11/2026, đang chờ Apple; xem CLAUDE.md "Open work" mục 3).
+> PC + Android). **iOS 1.0 đã lên App Store** (10/11/2026). Mã QR iPhone trong app PC đã trỏ App Store từ bản PC kế tiếp (chưa build).
 > Bản đã đăng gần nhất: 0.1.14 (PC + Android). Còn một lỗi micro phía PC (mục 3) và các bài thử cần người cầm máy.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first ("Windows build and the
