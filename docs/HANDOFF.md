@@ -1,7 +1,7 @@
 # Handoff: unfinished work
 
 > **Tóm tắt (2026-11-22):** lõi PC (engine + camera ảo + DirectShow) đã viết lại bằng **Rust**, đang chạy thật trên máy
-> người dùng (bản dev **0.1.15**, chưa đăng release; bản đăng gần nhất vẫn là C++ 0.1.14). Lag ở 4K/60 đã sửa phía PC bằng
+> người dùng (**0.1.15 đã đăng release 2026-11-22**; bản C++ cuối là 0.1.14). Lag ở 4K/60 đã sửa phía PC bằng
 > giải mã GPU (cả C++ lẫn Rust). **iPhone ~40 khung/giây ở 4K60: đã tìm ra và sửa trên iPhone** (mục 0.2; phần PC viết trên Mac, chưa
 > biên dịch). Người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
 
@@ -29,7 +29,7 @@ For AI agents picking the work up on any machine. Read CLAUDE.md first, then thi
 | Rust port (`rust/`) | every crate ported and compared with the C++ (`xcheck/run.ps1` per crate, `engine/xcheck/{abi,engine}.ps1`); `cargo test --workspace` passes. See `rust/MAP.md`. |
 | Installed on the user's PC | **0.1.15 with the Rust core** (engine, Frame Server camera `CamStudioVCam.dll`; the DirectShow filters are in the installer but only installed on Windows 10). Built by `scripts\package-release.ps1 -Rust -SkipAndroid` -> `build\dist\NiwCam-Setup-0.1.15.exe` (git-ignored; the script wipes `build\dist`). Not published, not tagged. The optional models (MODNet, YuNet) are in `app\Assets\Models` via `scripts\fetch-models.ps1`. |
 | Rollback to the C++ build | reinstall the published `NiwCam-Setup-0.1.14.exe` from GitHub releases (`2108win/NiwCam`), or build C++: `scripts\package-release.ps1` without `-Rust`. The C++ `CamStudioVCam.dll` registration is restored by installing it; `rust\vcam\xcheck\frameserver.ps1 -Restore` (admin) only restores what that script saved. |
-| Last published release | v0.1.14 (C++). 0.1.15 (version bumped in `app\NiwCam.App.csproj`, Android `versionName` 0.1.15 / `versionCode` 17) is NOT released: shipping it means deciding to release the Rust core (see 0.4). |
+| Last published release | **v0.1.15 (Rust core, 2026-11-22, tag on a2b214b)**; assets under both names (setup + APK, 0.1.14 was the last C++). Rollback: reinstall `NiwCam-Setup-0.1.14.exe`. The updater will move every 0.1.14 install to the Rust core. Windows 10 (DirectShow filter) still untested on a real PC. |
 | iPhone app | App Store 1.0 (10/11/2026) is older than `main`. On the user's iPhone runs a **dev Release build** of `main` (installed from the Mac over Wi‑Fi, 2026-11-22) in place of the App Store one; reinstall from the App Store to go back. A new TestFlight/App Store build is the user's call. |
 
 ### 0.2 iPhone 4K60 at ~40 fps: cause found (2026-11-22, Mac)
