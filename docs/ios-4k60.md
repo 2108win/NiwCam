@@ -1,6 +1,6 @@
 # iPhone 4K60 chỉ ra ~40 fps: việc cho máy Mac
 
-(2026-11-22. Đọc cùng ADR-011 trong `rust/DECISIONS.md`.)
+(2026-11-22. Đọc `docs/HANDOFF.md` mục 0 trước, rồi ADR-011 trong `rust/DECISIONS.md`.)
 
 ## Đã biết (đo trên PC Windows, iPhone 14 cắm cáp USB, engine Rust, giải mã GPU)
 

@@ -26,9 +26,9 @@ bridge C++/C#.
 - The real WinUI app (`appin`) with the Rust engine DLL: tray idle 0.39 % CPU / 115 MB private (C++: 0.31 % / 115 MB), a consumer wakes the source the same way.
 - CPU with a consumer reading, engine driver, 3 runs: C++ 3.66 s, Rust 3.77 s over 22 s.
 
-**Not proven (needs hardware or the user):** OBSBOT and the Redmi/iPhone streaming through the Rust engine, a real
-Discord/OBS/Zoom call, the dshow filter in a real app, Windows 10. Until then the shipped build is the C++ one;
-`scripts\package-release.ps1` is not changed.
+**Since then (2026-11-22):** OBSBOT, Redmi and iPhone (USB) stream through the Rust engine; the user's PC runs the Rust core (0.1.15,
+`scripts\package-release.ps1 -Rust`, not published). **Not proven:** a real Discord/OBS/Zoom call at high resolution, Wi-Fi at 4K, the dshow
+filter in a real app, Windows 10. The last published release is still the C++ 0.1.14. Current state: `docs/HANDOFF.md` section 0.
 
 Sizes: engine ~13.5k lines C++ (CaptureEngine 2.0k, UsbTransport 0.9k, EngineApi 0.9k, SourceFilter 0.9k).
 

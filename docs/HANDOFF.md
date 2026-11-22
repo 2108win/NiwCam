@@ -1,14 +1,95 @@
 # Handoff: unfinished work
 
-> **Tóm tắt (2026-11-09):** app đã đổi tên thành **NiwCam** (bản 0.1.14, **đã đăng release v0.1.14** trên GitHub 9/11/2026,
-> PC + Android). **iOS 1.0 đã lên App Store** (10/11/2026). Mã QR iPhone trong app PC đã trỏ App Store từ bản PC kế tiếp (chưa build).
-> Bản đã đăng gần nhất: 0.1.14 (PC + Android). Còn một lỗi micro phía PC (mục 3) và các bài thử cần người cầm máy.
+> **Tóm tắt (2026-11-22):** lõi PC (engine + camera ảo + DirectShow) đã viết lại bằng **Rust**, đang chạy thật trên máy
+> người dùng (bản dev **0.1.15**, chưa đăng release; bản đăng gần nhất vẫn là C++ 0.1.14). Lag ở 4K/60 đã sửa phía PC bằng
+> giải mã GPU (cả C++ lẫn Rust). Còn lại: **iPhone chỉ đẩy ~40 khung/giây ở 4K** (việc cho máy Mac, mục 0.2), và
+> người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
 
-For AI agents picking the work up on any machine. Read CLAUDE.md first ("Windows build and the
-Redmi over USB" says what was verified). Update this file in the same commit as each step; delete
-it once everything is tested.
+For AI agents picking the work up on any machine. Read CLAUDE.md first, then this file, then `rust/MAP.md` and
+`rust/DECISIONS.md` (ADR-001..011). Update this file in the same commit as each step; delete it once everything is tested.
 
-## 1. What is not verified yet
+## 0. State on 2026-11-22
+
+### 0.1 What exists and what runs where
+
+| | State |
+|---|---|
+| `main` | up to date on GitHub (`origin/main`), one branch only (CLAUDE.md rule). Last code commits: `af163a0` (iPhone counters + `tune`), `f1213be` (GPU decode, 0.1.15), then this handoff. |
+| Rust port (`rust/`) | every crate ported and compared with the C++ (`xcheck/run.ps1` per crate, `engine/xcheck/{abi,engine}.ps1`); `cargo test --workspace` passes. See `rust/MAP.md`. |
+| Installed on the user's PC | **0.1.15 with the Rust core** (engine, Frame Server camera `CamStudioVCam.dll`; the DirectShow filters are in the installer but only installed on Windows 10). Built by `scripts\package-release.ps1 -Rust -SkipAndroid` -> `build\dist\NiwCam-Setup-0.1.15.exe` (git-ignored; the script wipes `build\dist`). Not published, not tagged. The optional models (MODNet, YuNet) are in `app\Assets\Models` via `scripts\fetch-models.ps1`. |
+| Rollback to the C++ build | reinstall the published `NiwCam-Setup-0.1.14.exe` from GitHub releases (`2108win/NiwCam`), or build C++: `scripts\package-release.ps1` without `-Rust`. The C++ `CamStudioVCam.dll` registration is restored by installing it; `rust\vcam\xcheck\frameserver.ps1 -Restore` (admin) only restores what that script saved. |
+| Last published release | v0.1.14 (C++). 0.1.15 (version bumped in `app\NiwCam.App.csproj`, Android `versionName` 0.1.15 / `versionCode` 17) is NOT released: shipping it means deciding to release the Rust core (see 0.4). |
+| iPhone app | App Store 1.0 (10/11/2026) is older than the `tune` + counters code on `main`, which has never been compiled (written on Windows). |
+
+### 0.2 iPhone 4K60 delivers ~40 fps: for the Mac session
+
+Full write-up and the test matrix: **[docs/ios-4k60.md](ios-4k60.md)**. In short:
+- Measured on the PC (iPhone 14 over USB, GPU decode): 1080p60 -> 60 fps, 4K30 -> 30, **4K60 / 4K50 / 4K48 -> ~38-40** (H.264 and
+  HEVC alike). The PC takes everything that arrives (0 skipped, 0 lost, queue 0 B, ~20 ms lag): the loss is inside the iPhone.
+- The phone also reports `thermal` serious after a few minutes (charging at 70 %); the PC then drops to 1080p30 (`MainWindow.Thermal.cs`).
+  **Cool the phone before measuring.**
+- On the Mac: `git pull origin main`, `scripts/ios-run.sh`, then `scripts/fake-pc.sh --usb ... --tune '<json>'` per the doc.
+  The new code (`StreamDiag` in `VideoEncoder.swift`, `didDrop` in `CameraStreamer.swift`, `start.tune`, `fake_pc --tune`) was **never compiled**.
+- Ask the user before installing on the iPhone (CLAUDE.md pitfalls). One PC per phone: a Mac test kicks the user's Windows PC off.
+- When the cause is known: fix the default for the heavy modes only, keep 1080p30/60 as they are, re-measure 4K60 >= 58 fps, run
+  `CryptoTests`, then ADR-012 + a TestFlight/App Store build (user's call).
+
+### 0.3 Discord still stutters at high resolution/rate (open, not reproduced by us)
+
+What we know (2026-11-22, Rust engine, Redmi/iPhone):
+- The PC chain is healthy at 4K60: fake phone replaying a 4K60 stream through the **real Frame Server**, read by `niwcam-verify`: mode 4K60 = 60.1 fps,
+  4K30 = 30.0, 1080p60 = 60.0, 0 no-signal, 0 size errors (frame gaps 8-25 ms at 4K60).
+- With the real iPhone the source itself is the weak part (0.2) and it overheats; the app's hot-phone rule steps down to 1080p30 and the
+  virtual camera size can stay 3840x2160 (an app holding the camera keeps its size, the picture is fitted): Discord then gets 4K frames.
+- Discord never sends 4K camera video; asking it for 4K60 only adds work on its side. Fixed output size 1080p is in Settings (the user's earlier choice for calls).
+- NOT done: watching a real Discord call at 4K while tracing. Do it: close NiwCam, start it from a shell with `NIWCAM_TRACE=1` and stderr redirected
+  (`Start-Process ... -RedirectStandardError`), join a call, read `[trace]` lines (decode+pipeline ms, `lag peak`, `skipped`, `lost`) and watch the
+  shared-memory write rate (a 20-line script reading `Global\CamStudioVCam_Frames_v2`, header `latest >> 2`, spin loop, not `sleep`).
+  A first reading at 4K Wi-Fi showed only ~13-17 frames/s written to the camera while the preview said 43: not explained yet.
+- Wi-Fi at 4K60 was never measured (the cable was always in; the app prefers the cable). Unplug it, then run `phone_perf --wifi`.
+
+### 0.4 Decisions open for the user
+
+- Ship the Rust core in a release? `package-release.ps1 -Rust` builds it (runs `fetch-models.ps1`, shows the two licence notices,
+  see `docs/third-party-models.md`). Needed first: a real Windows 10 PC for the DirectShow filter, iPhone/Wi-Fi runs, a real Discord/OBS/Zoom call.
+- The hot-phone rule (`MainWindow.Thermal.cs`) lowers the mode to <= 1080p30 / 720p: it works against "native resolution always". Option: make it a
+  setting, or warn only. Not changed.
+- HEVC for heavy iPhone modes (4K at > 30 fps) halves the bytes (good for Wi-Fi) but did not raise the frame rate; tried in `api.rs`, reverted. Cheap to redo.
+- C++ `AppDataDir.h` typo (`L"\NiwCam"` -> default folder `LocalNiwCam`), copied on purpose in `rust/phone/src/appdata.rs`; fix both together.
+
+### 0.5 How to measure (all built under `build\`)
+
+- `NIWCAM_TRACE=1` (Rust engine): per second on stderr, `decode+pipeline` avg/max ms, `lag peak`, `skipped`, `lost`, `pending B`, `pipeline fps`.
+  `NIWCAM_DECODER=software` forces the old software decode (both engines). Decode path and numbers: ADR-011.
+- `rust\engine\examples\phone_perf.rs` (`cargo build --release -p niwcam-engine --examples --target-dir build\rust-engine`):
+  `phone_perf --dll <NiwCamEngine.dll> --camera <name part> [--usb|--wifi] [--list] [--format 3840x2160@60] [--seconds N]` streams a real phone/webcam and
+  prints fps/lag/skips/CPU per second. Uses the real pairing keys (`CAMSTUDIO_DATA_DIR=%LOCALAPPDATA%\NiwCam`), session-local channel (does not touch the
+  installed camera). **Quit NiwCam first**: the phone serves one PC at a time and the app takes it back.
+- `build\Release\niwcam-fake-phone.exe --replay <gen_stream .bin> --size WxH --fps N --codec h264|hevc` (`tools/fake_phone.cpp`): any size/rate with no encoder
+  load. Streams from `build\media-xcheck\gen_stream.exe <h264|hevc> W H frames out.bin` (e.g. `build\bench\h264-4k.bin`). With
+  `rust\engine\examples\driver.rs --dll ... --phone <fake> --phone-args "--replay <ABSOLUTE path> ..." [--real]` (`--real` = Frame Server, then read it with
+  `niwcam-verify --expect WxH --mode N --hold S`; the fake phone runs with the data folder as cwd, so give an absolute stream path).
+- `rust\media\examples\decode_bench.rs`: `decode_bench <h264|hevc> W H stream.bin [rounds]`, hashes every frame (`PER_FRAME=1`, `DUMP_DIR=`): hardware = software.
+- `rust\media\xcheck\run.ps1 -Stage decode` runs with `NIWCAM_DECODER=software` on purpose (the C++ and the GPU path differ by one HEVC frame of latency).
+
+### 0.6 Pitfalls learned this session
+
+- `niwcam-verify` gets `0xC00D3704` while another app (Discord) holds the virtual camera. Check `HKCU\...\CapabilityAccessManager\ConsentStore\webcam` for `LastUsedTimeStop = 0`.
+- The computer-use tool refuses clicks when the desktop shell is frontmost: call `open_application NiwCam` first. NiwCam's mode menu: the first click can land on a different row if the list scrolled;
+  hover "Tất cả chế độ" first and take a screenshot before clicking.
+- Killing a running `package-release.ps1` leaves MSBuild node processes: harmless.
+- Writing Python patches through a bash heredoc breaks on `'` and `\` in the text: put the script in a file (the Write tool) and run it.
+- The Rust engine used for dev tests is `build\rust-engine\release\NiwCamEngine.dll`; what is installed (and what `-Rust` packs) comes from `build\rust-ship`.
+
+### 0.7 Verified vs not (this session)
+
+Verified: GPU decode correct (hash per frame = software, 640x480..4K, H.264/HEVC, size changes) and fast (2.7-2.8 ms per 4K frame); 4K60 through the engine
+28 -> 61 fps with a fake phone; real iPhone 4K30 = 30, 1080p60 = 60 via the cable; Redmi 1080p30 over USB; installed 0.1.15 starts, the camera lists 14 modes.
+Not verified: the new code on a Windows 10 PC; HEVC 10-bit / HLG through the GPU path (falls back to software by design, never exercised); Wi-Fi at 4K60;
+a real Discord/OBS/Zoom call with the Rust core; the rebuild-on-faster-source rule (`Pipeline::relayout`, both engines; compiled and reviewed, not run in the exact
+"same size, faster rate" case); every Swift change of 0.2.
+
+## 1. What is not verified yet (older notes, 2026-11-09)
 
 | Piece | Built | Tested on a device |
 |---|---|---|

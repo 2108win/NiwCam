@@ -1,6 +1,6 @@
 # NiwCam — notes for Claude Code
 
-> **Unfinished work (2026-10-18): read [docs/HANDOFF.md](docs/HANDOFF.md) first.** It says what is
+> **Unfinished work (2026-11-22): read [docs/HANDOFF.md](docs/HANDOFF.md) first (section 0 = current state).** It says what is
 > not tested yet, the user's decisions, and the next steps.
 
 > **iPhone 4K60 only gives ~40 fps (2026-11-22): [docs/ios-4k60.md](docs/ios-4k60.md)** has the measurements and what to run on a Mac with the iPhone.
