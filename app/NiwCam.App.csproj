@@ -9,7 +9,7 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>NiwCam</RootNamespace>
     <AssemblyName>NiwCam</AssemblyName>
-    <Version>0.1.15</Version>
+    <Version>0.1.16</Version>
     <Product>NiwCam</Product>
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
