@@ -81,3 +81,13 @@ working set 392 MB with it against 238 MB with PP-HumanSeg (the larger model in 
 with a soft edge (PP-HumanSeg loses the left side). Not shipped: the model file is not in the installer or the repo (a 26 MB addition and its
 Apache-2.0 notice are the user's call); a dev copy goes in `app\Assets\Models`.
 Still open: YuNet face detector + Kalman tracking for framing and skin smoothing; the matte flicker on a real moving person (needs a clip).
+
+### ADR-008 progress, step 3 (2026-11-22): faces
+`fx/src/yunet_detector.rs` (YuNet `face_detection_yunet_2026may.onnx`, MIT, 230 KB, from opencv_zoo) + `fx/src/face_backend.rs`: in high quality the
+engine's framing and skin smoothing use YuNet when the file is next to `pphumanseg.onnx`, else (or when it fails) Windows' FaceTracker. Runs through Windows
+ML on the GPU in 3.8 ms at 640x352 (looked at in grey, 10 times a second). Decoded as OpenCV's FaceDetectorYN does (strides 8/16/32, score sqrt(cls*obj),
+NMS 0.3). `fx/examples/face_compare.rs` on the one portrait Windows ships, at five shapes: YuNet's box agrees with the Windows tracker's within 1-2 %
+of the picture, no false face on a flat picture. First answer takes 0.6-1.5 s (the model loads on its own thread), the tracker 30-75 ms.
+NOT shown: any gain on several faces, small or turned faces (no such pictures here; YuNet's WIDER Face scores are the zoo's, not ours), and the Kalman
+tracking of the research (the framing code already eases and holds the shot, so it was left out until a real clip shows jitter).
+Engine with MODNet + YuNet + framing on: 29 fps held, 395-434 MB working set; nothing is loaded while the switch or the effects are off.

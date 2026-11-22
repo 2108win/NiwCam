@@ -39,9 +39,24 @@ use windows::Win32::System::Performance::{QueryPerformanceCounter, QueryPerforma
 
 use crate::capture_engine::{lock, BackgroundMode, Shared, State};
 use crate::fx_bridge::{
-    blend_background, blend_background_hq, load_image_fill, BackgroundScratch, FaceDetector,
+    blend_background, blend_background_hq, load_image_fill, BackgroundScratch, FaceBackend,
     HqScratch, MatteSegmenter, Segmenter, K_SIZE,
 };
+
+/// The face detector for the current quality setting: YuNet in high quality when its model file is
+/// next to the PP-HumanSeg one (`face_detection_yunet_2026may.onnx`), else Windows' own tracker.
+fn face_backend(engine: &Shared) -> FaceBackend {
+    let model = engine
+        .bg_quality
+        .load(Relaxed)
+        .then(|| {
+            std::path::Path::new(&lock(&engine.lock).bg_model)
+                .with_file_name("face_detection_yunet_2026may.onnx")
+        })
+        .filter(|p| p.exists())
+        .map(|p| p.to_string_lossy().into_owned());
+    FaceBackend::new(model.as_deref())
+}
 
 /// Source closed after this long with no app on the camera and no preview on screen (an app
 /// switching cameras or a quick glance should not reopen it).
@@ -183,7 +198,9 @@ fn planes_mut(
 struct Effects {
     // Automatic framing (apply_framing).
     framer: AutoFramer,
-    detector: Option<FaceDetector>,
+    detector: Option<FaceBackend>,
+    /// The quality the framing detector was made for (YuNet or Windows' own).
+    detector_quality: bool,
     faces: Vec<FaceRect>,
     framing_gen: u32,
     framed_shape: [u32; 5],
@@ -213,7 +230,8 @@ struct Effects {
     bg_reported: i32,
 
     // Skin smoothing (apply_smoothing).
-    smooth_detector: Option<FaceDetector>,
+    smooth_detector: Option<FaceBackend>,
+    smooth_quality: bool,
     smooth_faces: Vec<FaceRect>,
     smooth_faces_at: f64,
     smooth_gen: u32,
@@ -228,6 +246,7 @@ impl Effects {
         Effects {
             framer: AutoFramer::new(),
             detector: None,
+            detector_quality: false,
             faces: Vec::new(),
             framing_gen: 0,
             framed_shape: [0; 5],
@@ -248,6 +267,7 @@ impl Effects {
             bg_image_h: 0,
             bg_reported: 1,
             smooth_detector: None,
+            smooth_quality: false,
             smooth_faces: Vec::new(),
             smooth_faces_at: -1e9,
             smooth_gen: 0,
@@ -423,7 +443,14 @@ impl Effects {
     }
 
     fn apply_smoothing(&mut self, engine: &Shared, y: &mut [u8], pitch: usize, w: u32, h: u32) {
-        let detector = self.smooth_detector.get_or_insert_with(FaceDetector::new);
+        let quality = engine.bg_quality.load(Relaxed);
+        if quality != self.smooth_quality {
+            self.smooth_quality = quality;
+            self.smooth_detector = None; // made again for the other engine
+        }
+        let detector = self
+            .smooth_detector
+            .get_or_insert_with(|| face_backend(engine));
         let now = qpc_ms();
         if w != self.smooth_w || h != self.smooth_h {
             self.smooth_w = w;
@@ -496,7 +523,12 @@ impl Effects {
             self.framing_on = true;
             self.restart_framing();
         }
-        let detector = self.detector.get_or_insert_with(FaceDetector::new);
+        let quality = engine.bg_quality.load(Relaxed);
+        if quality != self.detector_quality {
+            self.detector_quality = quality;
+            self.detector = None;
+        }
+        let detector = self.detector.get_or_insert_with(|| face_backend(engine));
         let now = qpc_ms();
         if detector.due(now) {
             detector.offer(

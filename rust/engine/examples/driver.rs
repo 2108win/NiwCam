@@ -208,6 +208,15 @@ fn main() {
         println!("caps_len={len}");
 
         preview_enabled(1);
+        let autoframe = std::env::args().any(|a| a == "--autoframe");
+        if autoframe {
+            let set_auto_frame: FnSetI32 = api.f("cs_set_auto_frame");
+            set_auto_frame(1);
+            if hq {
+                let set_quality: FnSetI32 = api.f("cs_set_background_quality");
+                set_quality(1);
+            }
+        }
         if let Some(model) = &background {
             let set_background: unsafe extern "C" fn(i32, i32, *const u16, *const u16) =
                 api.f("cs_set_background");
@@ -349,6 +358,16 @@ fn main() {
             println!(
                 "background_state available={} active={} infer_ms={:.1}",
                 b.available, b.active, b.infer_ms
+            );
+        }
+        if autoframe {
+            let get_framing: unsafe extern "C" fn(*mut NiwCamEngine::abi::CsFraming) =
+                api.f("cs_get_framing");
+            let mut f: NiwCamEngine::abi::CsFraming = std::mem::zeroed();
+            get_framing(&mut f);
+            println!(
+                "framing_state available={} active={} faces={} camera_source={}",
+                f.available, f.active, f.faces, f.camera_source
             );
         }
         stop();
