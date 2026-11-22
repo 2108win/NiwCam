@@ -9,7 +9,7 @@
 > `niwcam-protocol-test` đều đạt. **iPhone 14 thật, 4K60 qua cáp USB: ~60 fps** (trước ~40): Rust engine 5 phút liền trung bình 59,9 fps, lag đỉnh 33 ms,
 > 7 khung bỏ/300 s, CPU ~77 % một lõi; C++ engine 60 fps nhưng nặng hơn (CPU ~100 %, bỏ 52 khung/15 s). Menu chế độ vẫn có 4K60/50/48 (HEVC), 4K30 vẫn H.264.
 > **Còn lại:** mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật); luật nóng máy của app chưa thử trong 5 phút (phone_perf không đọc `thermal`; fps không tụt);
-> `phone_perf` thoát với 0xC0000005 trong `dnsapi.dll` khi engine **Rust** tắt (engine C++ thoát 0; đã có từ 17:38, không thấy ở app NiwCam: nghi chuyện dọn mDNS lúc thoát, chưa tra);
+> Lỗi thoát 0xC0000005 trong `dnsapi.dll` (engine Rust, ở `cs_shutdown`): **đã sửa** (2026-11-22): `DnsServiceBrowse` nhận địa chỉ một biến cục bộ rồi bản sao mới được đem đi hủy; giờ cái handle nằm trong `Box` (như biến toàn cục của C++), `shutdown_probe` thoát 0. Chưa nằm trong v0.1.15 đã đăng.
 > TestFlight/App Store mới do người dùng quyết.
 >
 > **Wi‑Fi và app thật (2026-11-22, tối):** `phone_perf --wifi` 4K60 (HEVC), 30 s: 60 fps, lag 6–40 ms, 14 khung bỏ, CPU ~63 %. App NiwCam (bản sao của thư mục cài

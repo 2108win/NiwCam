@@ -99,7 +99,7 @@ struct State {
     /// by service instance name (UTF-16, like the C++ `std::wstring` ordering)
     found: BTreeMap<Vec<u16>, Endpoint>,
     manual: Vec<Endpoint>,
-    browse_cancel: Option<CancelHandle>,
+    browse_cancel: Option<Box<CancelHandle>>,
     browsing: bool,
     manual_loaded: bool,
     /// Its threads are joined in `stop_discovery`, never by a static destructor while the DLL unloads.
@@ -322,11 +322,13 @@ pub fn start_discovery_with(usb_watcher: bool, adb_starter: bool) {
         },
         pQueryContext: std::ptr::null_mut(),
     };
-    let mut cancel = DNS_SERVICE_CANCEL::default();
+    // The handle lives in a box that outlives the browse (the C++ keeps it in a global): dnsapi keeps the
+    // address it was given, so a stack local that was then copied crashed in dnsapi at the cancel.
+    let mut cancel = Box::new(CancelHandle(DNS_SERVICE_CANCEL::default()));
     // SAFETY: `req` and the query string are valid for the call (the API copies the name).
-    let r = unsafe { DnsServiceBrowse(&req, &mut cancel) };
+    let r = unsafe { DnsServiceBrowse(&req, &mut cancel.0) };
     st.browsing = r == DNS_REQUEST_PENDING;
-    st.browse_cancel = Some(CancelHandle(cancel));
+    st.browse_cancel = Some(cancel);
     if usb_watcher && st.usb.is_none() {
         let w = Arc::new(usb::Watcher::new());
         if adb_starter {
