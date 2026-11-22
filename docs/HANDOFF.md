@@ -3,11 +3,19 @@
 > **Tóm tắt (2026-11-22):** lõi PC (engine + camera ảo + DirectShow) đã viết lại bằng **Rust**, đang chạy thật trên máy
 > người dùng (bản dev **0.1.15**, chưa đăng release; bản đăng gần nhất vẫn là C++ 0.1.14). Lag ở 4K/60 đã sửa phía PC bằng
 > giải mã GPU (cả C++ lẫn Rust). **iPhone ~40 khung/giây ở 4K60: đã tìm ra và sửa trên iPhone** (mục 0.2; phần PC viết trên Mac, chưa
-> biên dịch), và
-> người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
+> biên dịch). Người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
+
+> **Việc tiếp theo trên PC Windows (theo thứ tự):**
+> 1. `git pull origin main`. Build cả hai engine (`scripts\build.ps1`, Rust: `cargo build --release` như mục 0.5). Sửa lỗi biên dịch nếu có
+>    ở `iphone_needs_hevc` (`rust/engine/src/api.rs`) và `IphoneNeedsHevc` (`src/engine/EngineApi.cpp`): viết trên Mac, chưa qua trình biên dịch.
+> 2. `cargo test --workspace`, `rust\engine\xcheck\engine.ps1` (so C++ với Rust), `niwcam-protocol-test`.
+> 3. iPhone cắm cáp (đang chạy bản thử có bản sửa, đừng cài lại từ App Store): `phone_perf --usb --format 3840x2160@60` với
+>    `NIWCAM_TRACE=1`: phải ~60 fps (trước: ~40). Windows phải có bộ giải mã HEVC (`has_hevc_decoder`), nếu không PC vẫn xin H.264 (~40).
+> 4. 5 phút 4K60 qua cáp, theo dõi `thermal` (cáp sạc máy; `serious` làm PC hạ xuống 1080p30 và che mất bản sửa).
+> 5. Rồi mới tới mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật). Ghi kết quả vào đây và ADR-012; bản TestFlight/App Store mới do người dùng quyết.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first, then this file, then `rust/MAP.md` and
-`rust/DECISIONS.md` (ADR-001..011). Update this file in the same commit as each step; delete it once everything is tested.
+`rust/DECISIONS.md` (ADR-001..012). Update this file in the same commit as each step; delete it once everything is tested.
 
 ## 0. State on 2026-11-22
 
@@ -15,7 +23,7 @@ For AI agents picking the work up on any machine. Read CLAUDE.md first, then thi
 
 | | State |
 |---|---|
-| `main` | up to date on GitHub (`origin/main`), one branch only (CLAUDE.md rule). Last code commits: `af163a0` (iPhone counters + `tune`), `f1213be` (GPU decode, 0.1.15), then this handoff. |
+| `main` | up to date on GitHub (`origin/main`), one branch only (CLAUDE.md rule). Last code commits: `828208b` (iPhone encoder rule, built and measured), `26d266a` (PC asks HEVC for heavy iPhone modes, NOT compiled), `987746c` (fake-pc per-frame CSV); before: `f1213be` (GPU decode, 0.1.15). |
 | Rust port (`rust/`) | every crate ported and compared with the C++ (`xcheck/run.ps1` per crate, `engine/xcheck/{abi,engine}.ps1`); `cargo test --workspace` passes. See `rust/MAP.md`. |
 | Installed on the user's PC | **0.1.15 with the Rust core** (engine, Frame Server camera `CamStudioVCam.dll`; the DirectShow filters are in the installer but only installed on Windows 10). Built by `scripts\package-release.ps1 -Rust -SkipAndroid` -> `build\dist\NiwCam-Setup-0.1.15.exe` (git-ignored; the script wipes `build\dist`). Not published, not tagged. The optional models (MODNet, YuNet) are in `app\Assets\Models` via `scripts\fetch-models.ps1`. |
 | Rollback to the C++ build | reinstall the published `NiwCam-Setup-0.1.14.exe` from GitHub releases (`2108win/NiwCam`), or build C++: `scripts\package-release.ps1` without `-Rust`. The C++ `CamStudioVCam.dll` registration is restored by installing it; `rust\vcam\xcheck\frameserver.ps1 -Restore` (admin) only restores what that script saved. |
