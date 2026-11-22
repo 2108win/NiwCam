@@ -301,7 +301,7 @@ Mọi thông điệp đều có trường `"type"`. Bên nhận **bỏ qua** nh�
 |---|---|---|
 | `caps` | mục 5 | Trả lời `getCaps`; gửi lại khi khả năng thay đổi |
 | `started` | `lens`, `width`, `height`, `fps`, `codec`, `hdr`, `orientation`, `audio` (khi PC xin, mục 5.1) | Đã bắt đầu phát với thông số **thực tế**. `orientation` = số độ **PC phải xoay ảnh theo chiều kim đồng hồ** để hình đứng thẳng (0/90/180/270). Điện thoại tính từ hướng cảm biến và hướng cầm máy, rồi gửi lại trong `state` mỗi khi người dùng xoay máy |
-| `state` | trạng thái hiện tại của mọi trường ở mục 4.3, cộng `iso`, `exposureMs`, `lensPosition`, `wbKelvin`, `thermal` (`nominal`/`fair`/`serious`/`critical`), `battery` (0–100), `charging`; iOS thêm số đo mỗi giây để tìm khung bị mất: `captureFps`, `droppedFps`, `dropReason`, `encodeInFps`, `encodeOutFps`, `encodeCallMs`, `encodeLatencyMs` | Gửi khi có thay đổi, tối đa 4 lần/giây |
+| `state` | trạng thái hiện tại của mọi trường ở mục 4.3, cộng `iso`, `exposureMs`, `lensPosition`, `wbKelvin`, `thermal` (`nominal`/`fair`/`serious`/`critical`), `battery` (0–100), `charging`; iOS thêm số đo mỗi giây để tìm khung bị mất: `captureFps`, `droppedFps`, `dropReason`, `encodeInFps`, `encodeOutFps`, `encodeCallMs`, `encodeLatencyMs`, `lowLatency` (bộ mã hóa đang ở chế độ độ trễ thấp) | Gửi khi có thay đổi, tối đa 4 lần/giây |
 | `stopped` | `reason` | Đã dừng: do PC, app bị ẩn, máy quá nóng… |
 | `error` | `code`, `message` (tiếng Việt, để hiện cho người dùng) | Lỗi |
 | `bitrate` | `kbps` | Bitrate hiện tại sau khi tự thích ứng |

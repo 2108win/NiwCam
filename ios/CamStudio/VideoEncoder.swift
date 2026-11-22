@@ -13,6 +13,7 @@ final class StreamDiag {
     private var captured = 0, dropped = 0, submitted = 0, completed = 0
     private var callNsMax: UInt64 = 0, latencyNsSum: UInt64 = 0
     private var lastReason = ""
+    var lowLatency = true                     // which rate control the session got (VideoEncoder.lowLatencyFits)
     private var windowStart = DispatchTime.now().uptimeNanoseconds
 
     func capture() { lock.lock(); captured += 1; lock.unlock() }
@@ -31,7 +32,7 @@ final class StreamDiag {
         let out: [String: Any] = [
             "captureFps": rate(captured), "droppedFps": rate(dropped), "encodeInFps": rate(submitted),
             "encodeOutFps": rate(completed), "encodeCallMs": (Double(callNsMax) / 1e5).rounded() / 10,
-            "encodeLatencyMs": (latency * 10).rounded() / 10, "dropReason": lastReason,
+            "encodeLatencyMs": (latency * 10).rounded() / 10, "dropReason": lastReason, "lowLatency": lowLatency,
         ]
         diagLog.info("capture \(self.captured, privacy: .public) dropped \(self.dropped, privacy: .public) (\(self.lastReason, privacy: .public)) encoder in \(self.submitted, privacy: .public) out \(self.completed, privacy: .public), call max \(Double(self.callNsMax) / 1e6, privacy: .public) ms, latency \(latency, privacy: .public) ms")
         captured = 0; dropped = 0; submitted = 0; completed = 0; callNsMax = 0; latencyNsSum = 0
@@ -59,8 +60,19 @@ final class VideoEncoder {
     private var lastFormat: CMFormatDescription? // VideoToolbox delivers one session's output in order
     let diag = StreamDiag()
 
+    /// Low-latency rate control encodes one frame at a time (the encode call returns once the frame is done), so it
+    /// cannot keep up when one frame takes longer than the frame interval. iPhone 14 (docs/ios-4k60.md, ADR-012):
+    /// ~26 ms per 4K frame, ~9.5 ms per 1080p frame: 4K60 gave 37.6 fps, 1080p120 108. For HEVC the normal hardware
+    /// encoder works on ~2 frames at once and keeps up (4K60: 60 fps, 39 ms instead of 26; 1080p120: 120 fps), but
+    /// at 4K30 it waits 77 ms, so lighter modes keep low latency. H.264 always keeps it: the normal H.264 encoder
+    /// reaches only ~50 fps at 4K60 and its queue grows to ~140 ms. The PC asks HEVC for these modes (same rule).
+    static func lowLatencyFits(width: Int32, height: Int32, fps: Int, codec: String) -> Bool {
+        codec != "hevc" || (fps <= 60 && Int(width) * Int(height) * fps <= 3840 * 2160 * 30)
+    }
+
     /// `tune` (the optional "tune" object of "start", for finding the cause of a slow mode; the defaults are the
-    /// shipped behaviour): `lowLatency` (bool, low-latency rate control), `realTime` (bool), `maxFrameDelay` (int).
+    /// shipped behaviour): `lowLatency` (bool, low-latency rate control, else `lowLatencyFits`), `realTime` (bool),
+    /// `maxFrameDelay` (int).
     init(width: Int32, height: Int32, fps: Int, codec: String, bitrate: Int, callbacks: StreamCallbacks,
          tune: [String: Any] = [:]) throws {
         self.width = width
@@ -70,13 +82,15 @@ final class VideoEncoder {
         self.callbacks = callbacks
 
         let codecType = codec.hasPrefix("hevc") ? kCMVideoCodecType_HEVC : kCMVideoCodecType_H264
-        let spec: CFDictionary? = (tune["lowLatency"] as? Bool ?? true)
+        let lowLatency = tune["lowLatency"] as? Bool ?? Self.lowLatencyFits(width: width, height: height, fps: fps, codec: codec)
+        let spec: CFDictionary? = lowLatency
             ? [kVTVideoEncoderSpecification_EnableLowLatencyRateControl: true] as CFDictionary : nil
         var session: VTCompressionSession?
         var status = VTCompressionSessionCreate(
             allocator: nil, width: width, height: height, codecType: codecType,
             encoderSpecification: spec, imageBufferAttributes: nil, compressedDataAllocator: nil,
             outputCallback: nil, refcon: nil, compressionSessionOut: &session)
+        diag.lowLatency = lowLatency && status == noErr
         if status != noErr {
             // The low-latency encoder does not take every codec/size on every
             // device: fall back to the default hardware encoder.

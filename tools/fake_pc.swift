@@ -859,7 +859,7 @@ struct FakePc {
                 + " orientation=\(st["orientation"] ?? "-") battery=\(st["battery"] ?? "-") thermal=\(st["thermal"] ?? "-")"
                 + "\n     phone side: capture=\(st["captureFps"] ?? "-") dropped=\(st["droppedFps"] ?? "-") (\(st["dropReason"] ?? "-"))"
                 + " encoder in=\(st["encodeInFps"] ?? "-") out=\(st["encodeOutFps"] ?? "-") callMaxMs=\(st["encodeCallMs"] ?? "-")"
-                + " latencyMs=\(st["encodeLatencyMs"] ?? "-")"
+                + " latencyMs=\(st["encodeLatencyMs"] ?? "-") lowLatency=\(st["lowLatency"] ?? "-")"
                 + (o.set.map { s in " | set " + s.keys.sorted().map { "\($0)=\(st[$0] ?? "-")" }.joined(separator: " ") } ?? "")
         }
     }
