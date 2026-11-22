@@ -102,11 +102,22 @@ bool HasHevcDecoder()
     return has;
 }
 
+// An iPhone delivers this mode at its full rate only in HEVC (ADR-012): its
+// low-latency encoder works one frame at a time (4K60 H.264: ~39 fps), and for
+// HEVC it then switches to the normal encoder (4K60: 60 fps). The same rule as
+// the phone's VideoEncoder.lowLatencyFits: keep them equal.
+bool IphoneNeedsHevc(int width, int height, int fps)
+{
+    const auto px = [](int v) { return static_cast<uint64_t>(std::max(v, 0)); };
+    return fps > 60 || px(width) * px(height) * px(fps) > 3840ull * 2160 * 30;
+}
+
 // Phone capabilities -> the format list: per lens (in the phone's order),
-// biggest first, every listed frame rate. HEVC when both ends support it
-// (better quality per Mbps over Wi‑Fi), else H.264.
+// biggest first, every listed frame rate. H.264, except HEVC where only HEVC
+// is offered or an iPhone needs it (ADR-012), when the HEVC extension is installed.
 std::vector<FormatOption> PhoneFormats(const json::Value& caps)
 {
+    const bool ios = caps["device"]["os"].Str() == "ios";
     std::map<std::string, std::pair<std::wstring, LensFacing>> lenses;
     std::vector<std::string> order;
     for (const auto& l : caps["lenses"].Items())
@@ -131,14 +142,17 @@ std::vector<FormatOption> PhoneFormats(const json::Value& caps)
                 hevc |= c.Str() == "hevc";
             }
             // H.264 first: it always decodes on Windows. HEVC only when the
-            // phone offers nothing else and the HEVC extension is installed.
-            const bool useHevc = hevc && !h264 && HasHevcDecoder();
-            if (!h264 && !useHevc) continue;
+            // phone offers nothing else, or for an iPhone's heavy modes, and
+            // the HEVC extension is installed.
+            const bool hevcOnly = hevc && !h264 && HasHevcDecoder();
+            if (!h264 && !hevcOnly) continue;
             std::vector<int> fpsList;
             for (const auto& f : m["fps"].Items()) fpsList.push_back(f.Int());
             std::sort(fpsList.rbegin(), fpsList.rend());
             for (int fps : fpsList)
             {
+                const bool useHevc = hevcOnly ||
+                    (ios && hevc && IphoneNeedsHevc(m["width"].Int(), m["height"].Int(), fps) && HasHevcDecoder());
                 FormatOption o;
                 o.native.index = static_cast<DWORD>(out.size());
                 o.native.width = static_cast<UINT32>(m["width"].Int());

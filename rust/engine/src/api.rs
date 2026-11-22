@@ -214,9 +214,18 @@ fn has_hevc_decoder() -> bool {
     })
 }
 
+/// An iPhone delivers this mode at its full rate only in HEVC (ADR-012): its low-latency encoder works one
+/// frame at a time (4K60 H.264: ~39 fps), and for HEVC it then switches to the normal encoder (4K60: 60 fps).
+/// The same rule as the phone's `VideoEncoder.lowLatencyFits` (ios/CamStudio/VideoEncoder.swift): keep them equal.
+fn iphone_needs_hevc(width: u32, height: u32, fps: i32) -> bool {
+    fps > 60 || width as u64 * height as u64 * fps.max(0) as u64 > 3840 * 2160 * 30
+}
+
 /// Phone capabilities -> the format list: per lens (in the phone's order), biggest first, every
-/// listed frame rate. HEVC when both ends support it (better quality per Mbps over Wi-Fi), else H.264.
+/// listed frame rate. H.264, except HEVC where only HEVC is offered or an iPhone needs it (ADR-012),
+/// when the HEVC extension is installed.
 fn phone_formats(caps: &Value) -> Vec<FormatOption> {
+    let ios = caps["device"]["os"].str() == "ios";
     let mut lenses: HashMap<String, (String, LensFacing)> = HashMap::new();
     let mut order: Vec<String> = Vec::new();
     for l in caps["lenses"].items() {
@@ -249,19 +258,22 @@ fn phone_formats(caps: &Value) -> Vec<FormatOption> {
                 hevc |= c.str() == "hevc";
             }
             // H.264 first: it always decodes on Windows. HEVC only when the phone offers nothing
-            // else and the HEVC extension is installed.
-            let use_hevc = hevc && !h264 && has_hevc_decoder();
-            if !h264 && !use_hevc {
+            // else, or for an iPhone's heavy modes, and the HEVC extension is installed.
+            let hevc_only = hevc && !h264 && has_hevc_decoder();
+            if !h264 && !hevc_only {
                 continue;
             }
+            let (width, height) = (m["width"].int(0) as u32, m["height"].int(0) as u32);
             let mut fps_list: Vec<i32> = m["fps"].items().iter().map(|f| f.int(0)).collect();
             fps_list.sort_unstable_by(|a, b| b.cmp(a));
             for fps in fps_list {
+                let use_hevc = hevc_only
+                    || (ios && hevc && iphone_needs_hevc(width, height, fps) && has_hevc_decoder());
                 let (label, facing) = &lenses[lens_id];
                 let native = NativeFormat {
                     index: out.len() as u32,
-                    width: m["width"].int(0) as u32,
-                    height: m["height"].int(0) as u32,
+                    width,
+                    height,
                     fps_num: fps as u32,
                     fps_den: 1,
                     subtype: if use_hevc {
