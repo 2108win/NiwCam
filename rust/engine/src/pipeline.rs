@@ -936,6 +936,23 @@ impl Pipeline {
                 rebuild: false,
             };
         }
+        // The camera is published at the rate of the source that was there when it was made (30 at
+        // launch, with no source). A faster source on the same size (4K60 after 4K30) would then be
+        // thinned to that rate for good: publish it again at the new rate while no app holds it.
+        // (A slower source needs nothing: the camera also offers the lower rates.)
+        if !plan.rebuild
+            && live
+            && !holds
+            && self.camera_fps > 0.0
+            && self.nominal_fps() > self.camera_fps + 0.5
+            && now >= self.no_rebuild_until
+        {
+            plan = OutputPlan {
+                width: self.vcam_width,
+                height: self.vcam_height,
+                rebuild: true,
+            };
+        }
         if plan.rebuild {
             self.register(plan.width, plan.height);
         }

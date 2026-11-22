@@ -337,6 +337,12 @@ private:
         // A rebuild that was refused a moment ago (an app still holds the old camera): stay
         // fitted for a while instead of trying again on every frame.
         if (plan.rebuild && Live() && now < m_noRebuildUntil) plan = { m_vcamWidth, m_vcamHeight, false };
+        // The camera is published at the rate of the source that was there when it was made (30 at
+        // launch, with no source). A faster source on the same size (4K60 after 4K30) would then be
+        // thinned to that rate for good: publish it again at the new rate while no app holds it.
+        // (A slower source needs nothing: the camera also offers the lower rates.)
+        if (!plan.rebuild && Live() && !holds && m_cameraFps > 0 && NominalFps() > m_cameraFps + 0.5 && now >= m_noRebuildUntil)
+            plan = { m_vcamWidth, m_vcamHeight, true };
         if (plan.rebuild) Register(plan.width, plan.height);
 
         m_image = image;

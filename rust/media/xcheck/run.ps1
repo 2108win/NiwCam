@@ -63,6 +63,10 @@ if ($cargoExit -ne 0) { throw 'cargo build failed' }
 $rex = Join-Path $rustTarget 'release\examples'
 
 if ($Stage -contains 'decode') {
+    # The C++ decoder is software only. The Rust one decodes on the GPU when it can (same pixels, but
+    # an HEVC stream's last frame also comes out at once, with no latency): compare like with like here;
+    # decode_bench compares hardware and software hash by hash.
+    $env:NIWCAM_DECODER = 'software'
     Write-Host '== VideoDecoder'
     $gen = Build-Cpp 'gen_stream'
     $cppdec = Build-Cpp 'cpp_decode'

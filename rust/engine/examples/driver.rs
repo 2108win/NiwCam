@@ -113,6 +113,7 @@ fn main() {
     let mut phone = arg("--phone").map(|exe| {
         Command::new(exe)
             .args(["--port", &port])
+            .args(arg("--phone-args").unwrap_or_default().split_whitespace())
             .current_dir(&data)
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -153,6 +154,7 @@ fn main() {
         add_phone(host.as_ptr(), port.parse().unwrap());
         let n = refresh();
         println!("cameras={n}");
+        let webcam = arg("--webcam");
         let mut phone_index = -1;
         for i in 0..n {
             let mut b = [0u16; 256];
@@ -162,11 +164,24 @@ fn main() {
             let id = wstr(&b);
             let kind = camera_kind(i);
             println!("camera[{i}] kind={kind} name={name} id={id}");
-            if kind == 1 && id.contains(&port) {
-                phone_index = i;
+            // --webcam <name part>: a real webcam instead of the stand-in phone (format 0 = its largest mode).
+            match &webcam {
+                Some(part) => {
+                    if kind == 0
+                        && phone_index < 0
+                        && name.to_lowercase().contains(&part.to_lowercase())
+                    {
+                        phone_index = i;
+                    }
+                }
+                None => {
+                    if kind == 1 && id.contains(&port) {
+                        phone_index = i;
+                    }
+                }
             }
         }
-        assert!(phone_index >= 0, "the stand-in phone was not listed");
+        assert!(phone_index >= 0, "the camera was not listed");
 
         // Pairing: both sides accept. load_formats blocks, so answer from a helper thread.
         let done = AtomicBool::new(false);

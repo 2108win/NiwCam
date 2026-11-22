@@ -9,6 +9,8 @@
 #pragma comment(lib, "mf.lib")
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "strmiids.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxguid.lib")
 
 static uint64_t Fnv(const void* p, size_t n, uint64_t h)
 {

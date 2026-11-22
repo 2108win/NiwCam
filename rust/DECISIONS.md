@@ -99,3 +99,21 @@ Decision: not in git (the binary would stay in the history), not in the C++ rele
 sources and checks SHA-256; licence texts and sources are in `docs/third-party-models.md` and `docs/third-party/`; the release that ships the Rust
 engine runs the script first (the installer already copies everything under `Assets\`) and shows the two notices.
 Consequences: a clone has no models until the script runs; without them the switch uses PP-HumanSeg + guided filter and Windows' face tracker.
+
+## ADR-011: Phone video is decoded on the GPU (2026-11-22)
+Status: accepted and built in BOTH engines (Rust `media/src/video_decoder.rs`, C++ `src/engine/VideoDecoder.cpp`)
+Context: at 1080p30 a phone stream was fine, at 4K / 60 fps it was not. Measured on this PC (RTX 5060 + AMD iGPU), 4K, synthetic 7 Mbps stream: the
+Microsoft software decoder takes 12.7 ms (H.264) / 11.2 ms (HEVC) per frame on ONE thread (`CODECAPI_AVDecNumWorkerThreads` gives E_INVALIDARG; a reused
+output buffer changed nothing), so 4K60 (16.7 ms for decode + pipeline + copy) cannot keep up, and real streams (25+ Mbps) are slower than the test one.
+Through the engine, 4K60 H.264 replayed by the fake phone: software = 28 fps out, frames skipped, 19 s of CPU per 10 s; GPU = 61 fps, 0 skipped, 4-5 s.
+Decision: the same inbox *synchronous* decoder MFT, given a Direct3D 11 device (`MFT_MESSAGE_SET_D3D_MANAGER`, `D3D11_CREATE_DEVICE_VIDEO_SUPPORT`,
+multithread-protected) so it uses DXVA; each picture is copied to a CPU-readable staging texture and handed on like before (pitch = `RowPitch`, repacked
+when the texture is taller than the picture). `MFT_ENUM_FLAG_HARDWARE` MFTs stay unused (async). Falls back to software at init (no D3D11-aware MFT, device
+creation fails, no NV12 output type) and at run time (readback fails, stream change offers no NV12: e.g. 10-bit HEVC as P010 only; a decode error is returned
+once so the engine asks for a keyframe). `NIWCAM_DECODER=software` forces the old path.
+Verified: `decode_bench` hashes every frame of H.264 and HEVC streams (640x480 to 4K, size changes, 1088-row surfaces) hardware vs software: identical
+pixels. One difference: the GPU decoder has no one-frame delay, so an HEVC stream's last frame comes out too (software holds it back). 2.7 ms (H.264) / 2.8 ms
+(HEVC) per 4K frame including the readback. Real Redmi 1080p30 over USB: CPU 37 % -> 30 % of a core, but 10.5 ms against 8.0 ms per frame (the GPU is idle
+and slow to wake; irrelevant at 30 fps, wanted at 4K60). `xcheck` decode stage runs with `NIWCAM_DECODER=software` so C++ and Rust are still compared like with like.
+Also: the camera is published again at a faster rate when a faster source arrives on the same size while no app holds it (4K60 after 4K30 would stay at 30).
+Not tested: a real iPhone (4K60, HLG 10-bit) and the HEVC 10-bit fallback; Wi-Fi bandwidth at 4K60 (the bitrate heuristic caps at 60 Mbps).

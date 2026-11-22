@@ -1528,6 +1528,8 @@ impl Shared {
         let mut wait_keyframe = true; // decoding starts at a keyframe
         let mut lost_frames = 0u32;
         let mut decode_ms = 0f64;
+        let mut decode_max = 0f64;
+        let trace = std::env::var_os("NIWCAM_TRACE").is_some();
         let mut decoded = 0u32;
         let mut lag = Lag::default();
         let frame_ms = 1000.0 / fps.max(1) as f64;
@@ -1668,7 +1670,9 @@ impl Shared {
                         }
                     },
                 );
-                decode_ms += qpc_ms() - t0;
+                let spent = qpc_ms() - t0;
+                decode_ms += spent;
+                decode_max = decode_max.max(spent);
                 decoded += 1;
                 if dhr.is_err() {
                     // Corrupt or missing data: ask for a fresh keyframe.
@@ -1686,6 +1690,23 @@ impl Shared {
             }
 
             if now.wrapping_sub(last_stats) >= 1000 {
+                if trace {
+                    // NIWCAM_TRACE=1: one line a second on stderr, to find where a stream loses time.
+                    eprintln!(
+                        "[trace] {}x{} frames {} decode+pipeline avg {:.1} ms max {:.1} ms, lag peak {:.0} ms, skipped {}, lost {}, pending {} B, pipeline fps {:.1}",
+                        width,
+                        height,
+                        decoded,
+                        if decoded != 0 { decode_ms / decoded as f64 } else { 0.0 },
+                        decode_max,
+                        lag.peak,
+                        skipped,
+                        lost_frames,
+                        link.pending_bytes(),
+                        pipeline.last_fps()
+                    );
+                }
+                decode_max = 0.0;
                 link.send_control(&jobj! {
                     "type" => "stats", "recvFps" => pipeline.last_fps(),
                     "decodeMs" => if decoded != 0 { decode_ms / decoded as f64 } else { 0.0 },

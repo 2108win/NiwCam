@@ -1,9 +1,13 @@
 //! H.264 / HEVC (Annex-B) -> NV12 with the Media Foundation decoder MFT.
-//! Port of `src/engine/VideoDecoder.{h,cpp}`: same enumeration flags, same attributes, same output
+//! Port of `src/engine/VideoDecoder.{h,cpp}` (ADR-011: decodes on the GPU first, as the C++ now does): same enumeration flags, same attributes, same output
 //! type negotiation, same HRESULTs. Media Foundation must be started by the caller (`MFStartup`).
 use std::mem::ManuallyDrop;
 
 use windows::core::{Interface, GUID, HRESULT};
+use windows::Win32::Foundation::{E_FAIL, HMODULE};
+use windows::Win32::Graphics::Direct3D::D3D_DRIVER_TYPE_HARDWARE;
+use windows::Win32::Graphics::Direct3D11::*;
+use windows::Win32::Graphics::Dxgi::IDXGIAdapter;
 use windows::Win32::Media::MediaFoundation::*;
 use windows::Win32::System::Com::CoTaskMemFree;
 use windows::Win32::System::Variant::VARIANT;
@@ -26,6 +30,66 @@ pub struct VideoDecoder {
     height: u32, // visible picture (e.g. 1920x1080)
     stride: i32,
     staging: Vec<u8>,
+    /// Hardware decoding (DXVA through a Direct3D 11 device), when the machine offers it.
+    gpu: Option<Gpu>,
+    gpu_fault: bool,
+    want: (bool, u32, u32),
+}
+
+/// The Direct3D 11 side of hardware decoding: the device the decoder runs on and a CPU-readable
+/// copy target (the rest of the pipeline works on system memory).
+struct Gpu {
+    device: ID3D11Device,
+    context: ID3D11DeviceContext,
+    _manager: IMFDXGIDeviceManager,
+    staging: Option<(ID3D11Texture2D, u32, u32)>,
+}
+
+impl Gpu {
+    /// Makes the device and hands it to the decoder. Any failure means "decode in software".
+    fn new(mft: &IMFTransform) -> Result<Gpu, HRESULT> {
+        // SAFETY: plain COM / D3D calls; every out parameter is a valid local.
+        unsafe {
+            let attrs = mft.GetAttributes().map_err(|e| e.code())?;
+            if attrs.GetUINT32(&MF_SA_D3D11_AWARE).unwrap_or(0) == 0 {
+                return Err(E_FAIL);
+            }
+            let mut device: Option<ID3D11Device> = None;
+            let mut context: Option<ID3D11DeviceContext> = None;
+            D3D11CreateDevice(
+                None::<&IDXGIAdapter>,
+                D3D_DRIVER_TYPE_HARDWARE,
+                HMODULE::default(),
+                D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
+                None,
+                D3D11_SDK_VERSION,
+                Some(&mut device),
+                None,
+                Some(&mut context),
+            )
+            .map_err(|e| e.code())?;
+            let (Some(device), Some(context)) = (device, context) else {
+                return Err(E_FAIL);
+            };
+            // The decoder works on its own threads with this device.
+            if let Ok(mt) = device.cast::<ID3D11Multithread>() {
+                let _ = mt.SetMultithreadProtected(true);
+            }
+            let mut token = 0u32;
+            let mut manager: Option<IMFDXGIDeviceManager> = None;
+            MFCreateDXGIDeviceManager(&mut token, &mut manager).map_err(|e| e.code())?;
+            let manager = manager.ok_or(E_FAIL)?;
+            manager.ResetDevice(&device, token).map_err(|e| e.code())?;
+            mft.ProcessMessage(MFT_MESSAGE_SET_D3D_MANAGER, manager.as_raw() as usize)
+                .map_err(|e| e.code())?;
+            Ok(Gpu {
+                device,
+                context,
+                _manager: manager,
+                staging: None,
+            })
+        }
+    }
 }
 
 // SAFETY: a Media Foundation transform is free-threaded; the decoder is used from one thread at a
@@ -46,8 +110,28 @@ impl VideoDecoder {
         (self.width, self.height)
     }
 
+    /// True while frames are decoded on the GPU.
+    pub fn is_hardware(&self) -> bool {
+        self.gpu.is_some()
+    }
+
+    /// Hardware first (`NIWCAM_DECODER=software` turns it off); software when the GPU path cannot start.
     pub fn init(&mut self, hevc: bool, width: u32, height: u32) -> HRESULT {
+        self.want = (hevc, width, height);
+        self.gpu_fault = false;
+        let allow = std::env::var("NIWCAM_DECODER").map_or(true, |v| v != "software");
+        if allow {
+            let hr = self.init_with(hevc, width, height, true);
+            if !is_failed(hr) {
+                return hr;
+            }
+        }
+        self.init_with(hevc, width, height, false)
+    }
+
+    fn init_with(&mut self, hevc: bool, width: u32, height: u32, hardware: bool) -> HRESULT {
         self.mft = None;
+        self.gpu = None;
         let subtype = if hevc {
             MFVideoFormat_HEVC
         } else {
@@ -113,6 +197,13 @@ impl VideoDecoder {
             if let Ok(codec_api) = mft.cast::<ICodecAPI>() {
                 let v = VARIANT::from(true);
                 let _ = codec_api.SetValue(&CODECAPI_AVLowLatencyMode, &v);
+            }
+        }
+
+        if hardware {
+            match Gpu::new(&mft) {
+                Ok(g) => self.gpu = Some(g),
+                Err(hr) => return hr,
             }
         }
 
@@ -224,6 +315,14 @@ impl VideoDecoder {
         time_100ns: i64,
         on_frame: &mut FrameCallback<'_>,
     ) -> HRESULT {
+        if self.gpu_fault {
+            // The GPU path failed (device lost, odd format): continue in software. The picture of
+            // this call is lost, so the caller asks for a keyframe like after any decode error.
+            self.gpu_fault = false;
+            let (hevc, w, h) = self.want;
+            let _ = self.init_with(hevc, w, h, false);
+            return E_FAIL;
+        }
         let Some(mft) = self.mft.clone() else {
             return E_UNEXPECTED;
         };
@@ -262,6 +361,69 @@ impl VideoDecoder {
             return e.code();
         }
         self.drain(on_frame)
+    }
+
+    /// Copies one decoded GPU picture into system memory and hands it on. False = the GPU path is broken.
+    fn read_gpu_sample(&mut self, sample: &IMFSample, on_frame: &mut FrameCallback<'_>) -> bool {
+        // SAFETY: COM / D3D calls; the mapped memory is read only between Map and Unmap.
+        unsafe {
+            let Ok(buf) = sample.GetBufferByIndex(0) else { return false };
+            let Ok(dxgi) = buf.cast::<IMFDXGIBuffer>() else { return false };
+            let mut raw: *mut std::ffi::c_void = std::ptr::null_mut();
+            if dxgi.GetResource(&ID3D11Texture2D::IID, &mut raw).is_err() || raw.is_null() {
+                return false;
+            }
+            let tex = ID3D11Texture2D::from_raw(raw);
+            let Ok(sub) = dxgi.GetSubresourceIndex() else { return false };
+            let mut desc = D3D11_TEXTURE2D_DESC::default();
+            tex.GetDesc(&mut desc);
+            let gpu = self.gpu.as_mut().unwrap();
+            if gpu.staging.as_ref().map(|s| (s.1, s.2)) != Some((desc.Width, desc.Height)) {
+                let sd = D3D11_TEXTURE2D_DESC {
+                    Width: desc.Width,
+                    Height: desc.Height,
+                    MipLevels: 1,
+                    ArraySize: 1,
+                    Format: desc.Format,
+                    SampleDesc: desc.SampleDesc,
+                    Usage: D3D11_USAGE_STAGING,
+                    BindFlags: 0,
+                    CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
+                    MiscFlags: 0,
+                };
+                let mut t: Option<ID3D11Texture2D> = None;
+                if gpu.device.CreateTexture2D(&sd, None, Some(&mut t)).is_err() {
+                    return false;
+                }
+                match t {
+                    Some(t) => gpu.staging = Some((t, desc.Width, desc.Height)),
+                    None => return false,
+                }
+            }
+            let staging = gpu.staging.as_ref().unwrap().0.clone();
+            gpu.context.CopySubresourceRegion(&staging, 0, 0, 0, 0, &tex, sub, None);
+            let mut mapped = D3D11_MAPPED_SUBRESOURCE::default();
+            if gpu.context.Map(&staging, 0, D3D11_MAP_READ, 0, Some(&mut mapped)).is_err() {
+                return false;
+            }
+            let pitch = mapped.RowPitch as usize;
+            let rows = desc.Height as usize;
+            let (w, h) = (self.width, self.height as usize);
+            let whole = std::slice::from_raw_parts(mapped.pData as *const u8, pitch * rows * 3 / 2);
+            if rows == h {
+                on_frame(whole, pitch as i32, w, h as u32);
+            } else {
+                // UV starts after the texture's full height: repack so it follows the visible rows.
+                let visible_luma = pitch * h;
+                self.staging.resize(visible_luma + visible_luma / 2, 0);
+                self.staging[..visible_luma].copy_from_slice(&whole[..visible_luma]);
+                self.staging[visible_luma..]
+                    .copy_from_slice(&whole[pitch * rows..pitch * rows + visible_luma / 2]);
+                on_frame(&self.staging, pitch as i32, w, h as u32);
+            }
+            gpu.context.Unmap(&staging, 0);
+            true
+        }
     }
 
     fn drain(&mut self, on_frame: &mut FrameCallback<'_>) -> HRESULT {
@@ -309,6 +471,8 @@ impl VideoDecoder {
                     // First frame (or resolution change): the real output format is known now.
                     let hr = self.select_output_type();
                     if is_failed(hr) {
+                        // e.g. 10-bit HEVC is offered as P010 only on the GPU path.
+                        self.gpu_fault = self.gpu.is_some();
                         return hr;
                     }
                     continue;
@@ -318,6 +482,14 @@ impl VideoDecoder {
             }
 
             let result = if self.provides_samples { produced } else { own };
+            if self.gpu.is_some() {
+                let Some(result) = result else { continue };
+                if !self.read_gpu_sample(&result, on_frame) {
+                    self.gpu_fault = true;
+                    return E_FAIL;
+                }
+                continue;
+            }
             // SAFETY: COM calls on the sample; the locked bytes are only read while locked.
             unsafe {
                 let Some(result) = result else { continue };

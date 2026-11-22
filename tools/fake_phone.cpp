@@ -5,6 +5,8 @@
 // with the Windows H.264 encoder MFT.
 //
 //   niwcam-fake-phone [--port 47321] [--thermal serious|critical] [--audio] [--stall MS]
+// --replay FILE --size WxH --fps N --codec h264|hevc: send the access units of FILE (13-byte header:
+// size u32, pts i64, key u8; made by gen_stream.exe) in a loop at N fps, announced as WxH.
 // --stall: every 3 s the stream stops for MS ms, then the held frames go out in a bunch (a Wi‑Fi
 // stall): the PC's "stats" (printed) should show queueMs rise, and the PC show the newest frame.
 // --audio: the caps offer a microphone; asked for it ("audio" in start, or "set"), the phone sends
@@ -45,7 +47,12 @@ using crypto::Bytes;
 
 namespace
 {
-constexpr uint32_t kWidth = 1280, kHeight = 720, kFps = 30;
+uint32_t kWidth = 1280, kHeight = 720, kFps = 30;
+// --replay: a recorded stream (rust/media/xcheck/gen_stream.exe) sent in a loop, so any size, rate and
+// codec can be tested without an encoder that keeps up (4K60 and the like).
+std::string g_replayFile, g_replayCodec = "h264";
+struct Unit { std::vector<uint8_t> data; bool key; };
+std::vector<Unit> g_units;
 const char* kDeviceId = "FAKE-PHONE-0001";
 
 SOCKET g_sock = INVALID_SOCKET;
@@ -225,12 +232,12 @@ void AudioLoop()
 json::Value Caps()
 {
     json::Value fps = json::Value::MakeArray();
-    fps.Push(30);
-    if (!g_thermal.empty()) fps.Push(60);
+    fps.Push(static_cast<int>(kFps));
+    if (!g_thermal.empty() && kFps != 60) fps.Push(60);
     json::Value audio = json::Value::MakeArray();
     audio.Push(48000);
     json::Value codecs = json::Value::MakeArray();
-    codecs.Push("h264");
+    codecs.Push(g_replayCodec);
     json::Value modes = json::Value::MakeArray();
     modes.Push(json::Value::MakeObject().Set("lens", "cam0").Set("width", kWidth).Set("height", kHeight)
         .Set("fps", fps).Set("codecs", codecs).Set("hdr", false));
@@ -271,8 +278,32 @@ void DrawFrame(std::vector<uint8_t>& nv12, uint32_t n)
             for (uint32_t r = 20; r < 60; ++r) memset(y + r * kWidth + 40 + b * 70, 235, 50);
 }
 
+void ReplayLoop()
+{
+    const int64_t frame100ns = 10000000 / kFps;
+    LARGE_INTEGER freq, t0, now;
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&t0);
+    for (uint64_t n = 0; g_streaming; ++n)
+    {
+        const Unit& u = g_units[n % g_units.size()];
+        if (n % g_units.size() == 0) g_forceKey = false;
+        if (!SendSealed(3, u.data.data(), u.data.size(), static_cast<int64_t>(n) * frame100ns / 10, u.key ? 1 : 0)) g_streaming = false;
+        // Next frame is due at n+1 intervals after the start (no drift).
+        const double due = static_cast<double>(n + 1) * 1e7 / kFps / 1e7;
+        for (;;)
+        {
+            QueryPerformanceCounter(&now);
+            const double el = static_cast<double>(now.QuadPart - t0.QuadPart) / static_cast<double>(freq.QuadPart);
+            if (el >= due || !g_streaming) break;
+            std::this_thread::yield();
+        }
+    }
+}
+
 void StreamLoop()
 {
+    if (!g_units.empty()) { ReplayLoop(); return; }
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     const ULONGLONG streamStart = GetTickCount64();
     ULONGLONG lastState = 0;
@@ -396,10 +427,30 @@ int main(int argc, char** argv)
         if (std::string(argv[i]) == "--port") port = atoi(argv[i + 1]);
         if (std::string(argv[i]) == "--thermal") g_thermal = argv[i + 1];
         if (std::string(argv[i]) == "--stall") g_stallMs = atoi(argv[i + 1]);
+        if (std::string(argv[i]) == "--replay") g_replayFile = argv[i + 1];
+        if (std::string(argv[i]) == "--codec") g_replayCodec = argv[i + 1];
+        if (std::string(argv[i]) == "--fps") kFps = static_cast<uint32_t>(atoi(argv[i + 1]));
+        if (std::string(argv[i]) == "--size")
+            sscanf_s(argv[i + 1], "%ux%u", &kWidth, &kHeight);
     }
     for (int i = 1; i < argc; ++i)
         if (std::string(argv[i]) == "--audio") g_audioCap = true;
 
+    if (!g_replayFile.empty())
+    {
+        FILE* f = nullptr;
+        if (fopen_s(&f, g_replayFile.c_str(), "rb") != 0 || !f) { printf("cannot open %s\n", g_replayFile.c_str()); return 1; }
+        for (;;)
+        {
+            uint32_t len = 0; int64_t t = 0; uint8_t key = 0;
+            if (fread(&len, 4, 1, f) != 1 || fread(&t, 8, 1, f) != 1 || fread(&key, 1, 1, f) != 1) break;
+            Unit u; u.key = key != 0; u.data.resize(len);
+            if (fread(u.data.data(), 1, len, f) != len) break;
+            g_units.push_back(std::move(u));
+        }
+        fclose(f);
+        printf("replay: %zu access units, %ux%u@%u %s\n", g_units.size(), kWidth, kHeight, kFps, g_replayCodec.c_str());
+    }
     WSADATA wsa;
     WSAStartup(MAKEWORD(2, 2), &wsa);
     MFStartup(MF_VERSION);
@@ -442,7 +493,7 @@ int main(int argc, char** argv)
                         g_audioOn = g_audioCap && msg["audio"].Bool();
                         printf("start: audio %s\n", g_audioOn ? "on" : "off");
                         SendControl(json::Value::MakeObject().Set("type", "started").Set("lens", "cam0")
-                            .Set("width", kWidth).Set("height", kHeight).Set("fps", kFps).Set("codec", "h264").Set("orientation", 0)
+                            .Set("width", kWidth).Set("height", kHeight).Set("fps", kFps).Set("codec", g_replayCodec).Set("orientation", 0)
                             .Set("audio", g_audioOn ? json::Value::MakeObject().Set("on", true).Set("rate", 48000).Set("channels", 1)
                                                     : json::Value::MakeObject().Set("on", false)));
                         g_streaming = true;

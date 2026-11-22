@@ -4,7 +4,11 @@
 # plus the same two files under their pre-0.1.14 names (CamStudio-Setup-<version>.exe,
 # CamStudio-<version>-android.apk): builds before 0.1.14 look for exactly those names to update.
 # Needs Inno Setup 6 (winget install JRSoftware.InnoSetup).
-# Usage: powershell -ExecutionPolicy Bypass -File scripts\package-release.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File scripts\package-release.ps1 [-Rust] [-SkipAndroid]
+#   -Rust         put the Rust engine, virtual camera and DirectShow filters (rust\, ADR-001..011) in the installer
+#                 in place of the C++ ones (same file names), and fetch the optional models first
+#   -SkipAndroid  no APK (a local install, not a release)
+param([switch]$Rust, [switch]$SkipAndroid)
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $root = Split-Path -Parent $PSScriptRoot
@@ -45,6 +49,26 @@ foreach ($f in "adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "NOTICE.txt") {
     if (-not (Test-Path $src)) { throw "$src missing: run scripts\setup-android-sdk.ps1" }
     Copy-Item $src $adbOut
 }
+if ($Rust) {
+    # The Rust core: same DLL names and exports as the C++ (checked by rust\*\xcheck). Own target folder.
+    $env:Path += ";$env:USERPROFILE\.cargo\bin"
+    $env:CARGO_TARGET_DIR = Join-Path $root "build\rust-ship"
+    Push-Location (Join-Path $root "rust")
+    try {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "fetch-models.ps1")
+        if ($LASTEXITCODE) { throw "fetch-models.ps1 failed" }
+        cargo build --release -p niwcam-engine -p niwcam-vcam -p niwcam-dshow
+        if ($LASTEXITCODE) { throw "cargo build (x64) failed" }
+        cargo build --release -p niwcam-dshow --target i686-pc-windows-msvc
+        if ($LASTEXITCODE) { throw "cargo build (x86 dshow) failed" }
+    } finally { Pop-Location }
+    $rt = $env:CARGO_TARGET_DIR
+    Copy-Item (Join-Path $rt "release\NiwCamEngine.dll") $appOut -Force
+    Copy-Item (Join-Path $rt "release\CamStudioVCam.dll") $appOut -Force
+    Copy-Item (Join-Path $rt "release\CamStudioDShow.dll") (Join-Path $appOut "CamStudioDShow64.dll") -Force
+    Copy-Item (Join-Path $rt "i686-pc-windows-msvc\release\CamStudioDShow.dll") (Join-Path $appOut "CamStudioDShow32.dll") -Force
+    Write-Host "Rust core in the installer"
+}
 foreach ($f in "NiwCam.exe", "NiwCam.pri", "MainWindow.xbf", "NiwCamEngine.dll", "adb\adb.exe", "CamStudioVCam.dll", "CamStudioDShow64.dll", "CamStudioDShow32.dll") {
     if (-not (Test-Path (Join-Path $appOut $f))) { throw "$f missing from the app folder" }
 }
@@ -58,6 +82,7 @@ if ($LASTEXITCODE) { throw "ISCC failed" }
 Remove-Item $stage -Recurse -Force
 
 # 4. Android.
+if ($SkipAndroid) { Get-ChildItem $out -File | ForEach-Object { "{0,-40} {1,8:N1} MB" -f $_.Name, ($_.Length / 1MB) }; return }
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "build-android.ps1")
 if ($LASTEXITCODE) { throw "build-android.ps1 failed" }
 Copy-Item (Join-Path $root "build\CamStudioPhone.apk") (Join-Path $out "NiwCam-$version-android.apk")

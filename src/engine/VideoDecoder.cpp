@@ -6,13 +6,60 @@
 #include <initguid.h> // defines CODECAPI_AVLowLatencyMode in this file only
 #include <codecapi.h>
 
+#include <cstdlib>
 #include <cstring>
+#include <d3d11_4.h>
+#include <mfidl.h>
 
 using Microsoft::WRL::ComPtr;
 
 HRESULT VideoDecoder::Init(bool hevc, uint32_t width, uint32_t height)
 {
+    m_wantHevc = hevc;
+    m_wantWidth = width;
+    m_wantHeight = height;
+    m_gpuFault = false;
+    char env[16] = {};
+    size_t got = 0;
+    getenv_s(&got, env, sizeof(env), "NIWCAM_DECODER");
+    if (strcmp(env, "software") != 0)
+    {
+        const HRESULT hr = InitWith(hevc, width, height, true);
+        if (SUCCEEDED(hr)) return hr;
+    }
+    return InitWith(hevc, width, height, false);
+}
+
+// The device the decoder runs on, given to the (synchronous, inbox) decoder MFT. Any failure here
+// means "decode in software".
+HRESULT VideoDecoder::SetupGpu()
+{
+    ComPtr<IMFAttributes> attrs;
+    HRESULT hr = m_mft->GetAttributes(&attrs);
+    if (FAILED(hr)) return hr;
+    if (MFGetAttributeUINT32(attrs.Get(), MF_SA_D3D11_AWARE, 0) == 0) return E_FAIL;
+    hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_VIDEO_SUPPORT, nullptr, 0,
+        D3D11_SDK_VERSION, &m_device, nullptr, &m_context);
+    if (FAILED(hr)) return hr;
+    ComPtr<ID3D11Multithread> mt;
+    if (SUCCEEDED(m_device.As(&mt))) mt->SetMultithreadProtected(TRUE); // the decoder uses it from its own threads
+    UINT token = 0;
+    hr = MFCreateDXGIDeviceManager(&token, &m_manager);
+    if (FAILED(hr)) return hr;
+    hr = m_manager->ResetDevice(m_device.Get(), token);
+    if (FAILED(hr)) return hr;
+    return m_mft->ProcessMessage(MFT_MESSAGE_SET_D3D_MANAGER, reinterpret_cast<ULONG_PTR>(m_manager.Get()));
+}
+
+HRESULT VideoDecoder::InitWith(bool hevc, uint32_t width, uint32_t height, bool hardware)
+{
     m_mft.Reset();
+    m_gpu = false;
+    m_stagingTex.Reset();
+    m_stagingTexW = m_stagingTexH = 0;
+    m_manager.Reset();
+    m_context.Reset();
+    m_device.Reset();
     const GUID subtype = hevc ? MFVideoFormat_HEVC : MFVideoFormat_H264;
     MFT_REGISTER_TYPE_INFO in{ MFMediaType_Video, subtype };
     MFT_REGISTER_TYPE_INFO out{ MFMediaType_Video, MFVideoFormat_NV12 };
@@ -42,6 +89,13 @@ HRESULT VideoDecoder::Init(bool hevc, uint32_t width, uint32_t height)
         v.vt = VT_BOOL;
         v.boolVal = VARIANT_TRUE;
         codecApi->SetValue(&CODECAPI_AVLowLatencyMode, &v);
+    }
+
+    if (hardware)
+    {
+        hr = SetupGpu();
+        if (FAILED(hr)) return hr;
+        m_gpu = true;
     }
 
     ComPtr<IMFMediaType> type;
@@ -104,6 +158,14 @@ HRESULT VideoDecoder::SelectOutputType()
 
 HRESULT VideoDecoder::Decode(const uint8_t* data, size_t size, int64_t time100ns, const FrameCallback& onFrame)
 {
+    if (m_gpuFault)
+    {
+        // The GPU path failed (device lost, an odd format): go on in software. This picture is lost,
+        // so the caller asks for a keyframe like after any decode error.
+        m_gpuFault = false;
+        InitWith(m_wantHevc, m_wantWidth, m_wantHeight, false);
+        return E_FAIL;
+    }
     if (!m_mft) return E_UNEXPECTED;
 
     ComPtr<IMFSample> sample;
@@ -155,12 +217,26 @@ HRESULT VideoDecoder::Drain(const FrameCallback& onFrame)
         {
             // First frame (or resolution change): the real output format is known now.
             hr = SelectOutputType();
-            if (FAILED(hr)) return hr;
+            if (FAILED(hr))
+            {
+                m_gpuFault = m_gpu; // e.g. 10-bit HEVC offered as P010 only on the GPU path
+                return hr;
+            }
             continue;
         }
         if (FAILED(hr)) return hr;
 
         IMFSample* result = m_providesSamples ? produced.Get() : own.Get();
+        if (m_gpu)
+        {
+            if (!result) continue;
+            if (!ReadGpuSample(result, onFrame))
+            {
+                m_gpuFault = true;
+                return E_FAIL;
+            }
+            continue;
+        }
         ComPtr<IMFMediaBuffer> buf;
         if (!result || FAILED(result->ConvertToContiguousBuffer(&buf))) continue;
         BYTE* p = nullptr;
@@ -188,4 +264,55 @@ HRESULT VideoDecoder::Drain(const FrameCallback& onFrame)
         }
         buf->Unlock();
     }
+}
+
+// One decoded GPU picture into system memory, then on. False = the GPU path is broken.
+bool VideoDecoder::ReadGpuSample(IMFSample* sample, const FrameCallback& onFrame)
+{
+    ComPtr<IMFMediaBuffer> buf;
+    ComPtr<IMFDXGIBuffer> dxgi;
+    ComPtr<ID3D11Texture2D> tex;
+    UINT sub = 0;
+    if (FAILED(sample->GetBufferByIndex(0, &buf)) || FAILED(buf.As(&dxgi)) ||
+        FAILED(dxgi->GetResource(IID_PPV_ARGS(&tex))) || FAILED(dxgi->GetSubresourceIndex(&sub)))
+        return false;
+    D3D11_TEXTURE2D_DESC desc{};
+    tex->GetDesc(&desc);
+    if (!m_stagingTex || m_stagingTexW != desc.Width || m_stagingTexH != desc.Height)
+    {
+        D3D11_TEXTURE2D_DESC sd{};
+        sd.Width = desc.Width;
+        sd.Height = desc.Height;
+        sd.MipLevels = 1;
+        sd.ArraySize = 1;
+        sd.Format = desc.Format;
+        sd.SampleDesc = desc.SampleDesc;
+        sd.Usage = D3D11_USAGE_STAGING;
+        sd.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        m_stagingTex.Reset();
+        if (FAILED(m_device->CreateTexture2D(&sd, nullptr, &m_stagingTex))) return false;
+        m_stagingTexW = desc.Width;
+        m_stagingTexH = desc.Height;
+    }
+    m_context->CopySubresourceRegion(m_stagingTex.Get(), 0, 0, 0, 0, tex.Get(), sub, nullptr);
+    D3D11_MAPPED_SUBRESOURCE mapped{};
+    if (FAILED(m_context->Map(m_stagingTex.Get(), 0, D3D11_MAP_READ, 0, &mapped))) return false;
+    const size_t pitch = mapped.RowPitch;
+    const size_t rows = desc.Height;
+    const uint8_t* p = static_cast<const uint8_t*>(mapped.pData);
+    if (rows == m_height)
+    {
+        onFrame(p, static_cast<long>(pitch), m_width, m_height);
+    }
+    else
+    {
+        // UV starts after the texture's full height: repack so it follows the visible rows.
+        const size_t visibleLuma = pitch * m_height;
+        m_staging.resize(visibleLuma + visibleLuma / 2);
+        memcpy(m_staging.data(), p, visibleLuma);
+        memcpy(m_staging.data() + visibleLuma, p + pitch * rows, visibleLuma / 2);
+        onFrame(m_staging.data(), static_cast<long>(pitch), m_width, m_height);
+    }
+    m_context->Unmap(m_stagingTex.Get(), 0);
+    return true;
 }
