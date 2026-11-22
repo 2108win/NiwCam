@@ -18,6 +18,9 @@
 //   build/fake-pc --forget                          drop saved pairing keys, pair again
 //   build/fake-pc --name "Máy tính Windows"         the PC name the phone shows (display only)
 //
+// Every stream also leaves <lens>.frames.csv in the output folder (arrival ms, pts µs, bytes, keyframe), to see how a
+// keyframe delays the frames behind it.
+//
 // The PC side of pairing is accepted automatically; the code is printed so it can be compared
 // with the one on the phone, where the person still has to press "Đồng ý".
 
@@ -578,6 +581,7 @@ final class PhoneLink {
     // Per-stream counters, reset by beginStream().
     var decoder: Decoder?
     var rawFile: FileHandle?
+    var csvFile: FileHandle?
     var frames = 0, keyframes = 0, bytes = 0, configs = 0
     var lastPts: Int64 = 0, firstPts: Int64 = 0
     var lastState: [String: Any] = [:]
@@ -609,6 +613,8 @@ final class PhoneLink {
                     bytes += m.payload.count
                     lastPts = m.ptsUs
                     if m.flags & 1 != 0 { keyframes += 1 }
+                    let ms = Double(DispatchTime.now().uptimeNanoseconds) / 1e6
+                    csvFile?.write(Data(String(format: "%.1f,%lld,%d,%d\n", ms, m.ptsUs, m.payload.count, m.flags & 1).utf8))
                     rawFile?.write(m.payload)
                     decoder?.decode(m.payload)
                 default:
@@ -670,6 +676,10 @@ final class PhoneLink {
             decoder = Decoder(hevc: hevc)
             FileManager.default.createFile(atPath: raw.path, contents: nil)
             rawFile = try? FileHandle(forWritingTo: raw)
+            let csv = raw.deletingPathExtension().appendingPathExtension("frames.csv")
+            FileManager.default.createFile(atPath: csv.path, contents: Data("arrivalMs,ptsUs,bytes,key\n".utf8))
+            csvFile = try? FileHandle(forWritingTo: csv)
+            csvFile?.seekToEndOfFile()
             frames = 0; keyframes = 0; bytes = 0; configs = 0; stateCount = 0; lastState = [:]
         }
     }
@@ -835,6 +845,8 @@ struct FakePc {
             phone.decoder?.finish()
             phone.rawFile?.closeFile()
             phone.rawFile = nil
+            phone.csvFile?.closeFile()
+            phone.csvFile = nil
             let d = phone.decoder!
             let span = Double(phone.lastPts - phone.firstPts) / 1_000_000
             let measuredFps = span > 0 ? Double(phone.frames - 1) / span : 0

@@ -439,7 +439,7 @@ Windows 11.
   per 4K frame), so 4K60 gave ~38 fps. HEVC above 4K30 pixels/s or above 60 fps now uses the normal encoder (4K60: 60 fps, ~37 ms);
   H.264 keeps low latency (its normal encoder: 50 fps, 139 ms). The PC asks HEVC for those iPhone modes (`iphone_needs_hevc`, written on
   the Mac, not compiled). `state` carries per-second counters (`captureFps`, `droppedFps`, `encodeOutFps`, `lowLatency`…); fake-pc prints
-  them as `phone side:`, and `--tune` overrides the encoder for tests.
+  them as `phone side:`, `--tune` overrides the encoder for tests, and every stream leaves `<lens>.frames.csv` (arrival, pts, bytes, key).
 - **Build tools:** VS 2022 Build Tools (C++, CMake, Windows 11 SDK 26100) and the .NET 10 SDK
   (`C:\Program Files\dotnet`, not on PATH in an old shell). A `build\CMakeCache.txt` from a removed
   Visual Studio stops CMake ("could not find specified instance"): delete it and `build\CMakeFiles`.

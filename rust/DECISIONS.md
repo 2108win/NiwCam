@@ -129,4 +129,4 @@ Decision: low-latency rate control unless the codec is HEVC and the mode has fps
 H.264) sees no change. The PC asks HEVC for exactly those iPhone modes when Windows has an HEVC decoder (`iphone_needs_hevc` / `IphoneNeedsHevc`); the
 two rules must stay equal. The saved mode (`HKCU\...\Modes`) holds lens, size and fps only, so it still matches.
 Not tested: the PC change (compile, then 4K60 from the real iPhone through the virtual camera); other iPhone models (thresholds from an A15); 1080p240 and
-HEVC 10-bit with the normal encoder; Wi-Fi at 4K, where a big keyframe trips the phone's drop rule again and again (docs/ios-4k60.md, "Còn mở").
+HEVC 10-bit with the normal encoder; Wi-Fi at 4K to the real PC (from the Mac the link carried only ~15-18 Mbit/s, docs/ios-4k60.md).

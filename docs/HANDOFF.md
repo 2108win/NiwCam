@@ -30,8 +30,8 @@ Write-up: **[docs/ios-4k60.md](ios-4k60.md)**, decision ADR-012. The low-latency
 - PC, both engines: ask HEVC for exactly those iPhone modes (`iphone_needs_hevc` in `rust/engine/src/api.rs`, `IphoneNeedsHevc` in
   `src/engine/EngineApi.cpp`). **Written on the Mac, NOT compiled.** On Windows: build, then the real iPhone at 4K60 over USB through the
   virtual camera (`phone_perf --usb --format 3840x2160@60`, `NIWCAM_TRACE=1`): expect ~60 fps; the mode menu should still show 4K60.
-- Open: Wi‑Fi at 4K. Each 4K keyframe delays the frames behind it past the phone's 150 ms drop rule (`Session.congestion`), which asks for
-  another keyframe and cuts 30 %: the bitrate spirals down to 1 Mbps (docs/ios-4k60.md, "Còn mở"). Not fixed yet.
+- Wi‑Fi at 4K could not be judged from the Mac (iPhone -> router -> Mac carried ~15-18 Mbit/s, one 7 s stall; the phone lowered the bitrate as
+  designed; keyframes are small, 52-156 KB). Measure on the real PC (0.3).
 
 ### 0.3 Discord still stutters at high resolution/rate (open, not reproduced by us)
 

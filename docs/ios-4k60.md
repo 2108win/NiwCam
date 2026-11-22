@@ -32,9 +32,10 @@ riêng; caps báo `lowLightBoost` false trên máy này); `maxFrameDelay:1` khô
 
 ## Còn mở
 
-- **Wi‑Fi ở 4K:** mỗi khung khóa 4K làm các khung sau chờ quá 150 ms, iPhone tưởng nghẽn (`Session.congestion`): bỏ khung,
-  xin khung khóa mới, giảm bitrate 30 %. Khung khóa mới lại gây nghẽn, nên bitrate tụt dần tới 1 Mbps (2 phút ở 15 Mbps:
-  36 khung khóa, máy nhận 32 fps). Lần đầu luôn rơi đúng giây thứ 10 (khung khóa định kỳ). Cáp USB không bị.
+- **Wi‑Fi ở 4K chưa đo được đúng:** từ máy Mac, đường iPhone → router → Mac chỉ chở ~15–18 Mbit/s (khung đến trễ 100–400 ms
+  ngay cả khi không có khung khóa) và có lúc đứng hẳn ~7 s; iPhone giảm bitrate đúng như thiết kế (tới 1 Mbps). Không phải do
+  khung khóa: khung khóa 4K HEVC chỉ 52–156 KB, khung thường ~24 KB (`<lens>.frames.csv` của fake-pc). Mac: 5 GHz, 300 Mbit/s,
+  `awdl0` (AirDrop) bật. Phải đo trên PC thật (HANDOFF 0.3).
 - Các iPhone khác chưa đo: ngưỡng lấy từ iPhone 14 (A15).
 - Cách đo lại: `scripts/fake-pc.sh --host <ip iPhone> --lens back-wide --width 3840 --height 2160 --fps 60 --codec hevc
   --bitrate 15000 --seconds 15 [--tune '{"lowLatency":true}']`, đọc dòng `phone side:`. IP lấy bằng
