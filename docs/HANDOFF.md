@@ -9,7 +9,7 @@
 > `niwcam-protocol-test` đều đạt. **iPhone 14 thật, 4K60 qua cáp USB: ~60 fps** (trước ~40): Rust engine 5 phút liền trung bình 59,9 fps, lag đỉnh 33 ms,
 > 7 khung bỏ/300 s, CPU ~77 % một lõi; C++ engine 60 fps nhưng nặng hơn (CPU ~100 %, bỏ 52 khung/15 s). Menu chế độ vẫn có 4K60/50/48 (HEVC), 4K30 vẫn H.264.
 > **Còn lại:** mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật); luật nóng máy của app chưa thử trong 5 phút (phone_perf không đọc `thermal`; fps không tụt);
-> Lỗi thoát 0xC0000005 trong `dnsapi.dll` (engine Rust, ở `cs_shutdown`): **đã sửa** (2026-11-22): `DnsServiceBrowse` nhận địa chỉ một biến cục bộ rồi bản sao mới được đem đi hủy; giờ cái handle nằm trong `Box` (như biến toàn cục của C++), `shutdown_probe` thoát 0. Chưa nằm trong v0.1.15 đã đăng.
+> Lỗi thoát 0xC0000005 trong `dnsapi.dll` (engine Rust, ở `cs_shutdown`): **đã sửa** (2026-11-22): `DnsServiceBrowse` nhận địa chỉ một biến cục bộ rồi bản sao mới được đem đi hủy; giờ cái handle nằm trong `Box` (như biến toàn cục của C++), `shutdown_probe` thoát 0. Nằm trong **v0.1.16 (đã đăng 2026-11-22)**.
 > TestFlight/App Store mới do người dùng quyết.
 >
 > **Wi‑Fi và app thật (2026-11-22, tối):** `phone_perf --wifi` 4K60 (HEVC), 30 s: 60 fps, lag 6–40 ms, 14 khung bỏ, CPU ~63 %. App NiwCam (bản sao của thư mục cài
@@ -29,7 +29,7 @@ For AI agents picking the work up on any machine. Read CLAUDE.md first, then thi
 | Rust port (`rust/`) | every crate ported and compared with the C++ (`xcheck/run.ps1` per crate, `engine/xcheck/{abi,engine}.ps1`); `cargo test --workspace` passes. See `rust/MAP.md`. |
 | Installed on the user's PC | **0.1.15 with the Rust core** (engine, Frame Server camera `CamStudioVCam.dll`; the DirectShow filters are in the installer but only installed on Windows 10). Built by `scripts\package-release.ps1 -Rust -SkipAndroid` -> `build\dist\NiwCam-Setup-0.1.15.exe` (git-ignored; the script wipes `build\dist`). Not published, not tagged. The optional models (MODNet, YuNet) are in `app\Assets\Models` via `scripts\fetch-models.ps1`. |
 | Rollback to the C++ build | reinstall the published `NiwCam-Setup-0.1.14.exe` from GitHub releases (`2108win/NiwCam`), or build C++: `scripts\package-release.ps1` without `-Rust`. The C++ `CamStudioVCam.dll` registration is restored by installing it; `rust\vcam\xcheck\frameserver.ps1 -Restore` (admin) only restores what that script saved. |
-| Last published release | **v0.1.15 (Rust core, 2026-11-22, tag on a2b214b)**; assets under both names (setup + APK, 0.1.14 was the last C++). Rollback: reinstall `NiwCam-Setup-0.1.14.exe`. The updater will move every 0.1.14 install to the Rust core. Windows 10 (DirectShow filter) still untested on a real PC. |
+| Last published release | **v0.1.16 (2026-11-22, the dnsapi exit fix); v0.1.15 (Rust core, tag on a2b214b)**; assets under both names (setup + APK, 0.1.14 was the last C++). Rollback: reinstall `NiwCam-Setup-0.1.14.exe`. The updater will move every 0.1.14 install to the Rust core. Windows 10 (DirectShow filter) still untested on a real PC. |
 | iPhone app | **1.0.1 (build 20261122.2016, from `main` with ADR-012) submitted to App Review 2026-11-22, "Waiting for Review", released automatically once approved** (all users at once). App Store 1.0 (10/11/2026) is live until then. The user's iPhone runs a dev Release build of the same code; once 1.0.1 is out, installing it from the App Store replaces that. |
 
 ### 0.2 iPhone 4K60 at ~40 fps: cause found (2026-11-22, Mac)
