@@ -11,6 +11,11 @@
 > **Còn lại:** mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật); luật nóng máy của app chưa thử trong 5 phút (phone_perf không đọc `thermal`; fps không tụt);
 > `phone_perf` thoát với 0xC0000005 trong `dnsapi.dll` khi engine **Rust** tắt (engine C++ thoát 0; đã có từ 17:38, không thấy ở app NiwCam: nghi chuyện dọn mDNS lúc thoát, chưa tra);
 > TestFlight/App Store mới do người dùng quyết.
+>
+> **Wi‑Fi và app thật (2026-11-22, tối):** `phone_perf --wifi` 4K60 (HEVC), 30 s: 60 fps, lag 6–40 ms, 14 khung bỏ, CPU ~63 %. App NiwCam (bản sao của thư mục cài
+> + `NiwCamEngine.dll` mới, đặt trong scratchpad) chọn iPhone › 1× › 4K60: `NIWCAM_TRACE` 60 fps (decode+pipeline ~6 ms); `niwcam-verify --mode 0 --hold 20` qua Frame Server
+> thật: 1198/1200 khung live, 60,0 fps, khoảng cách khung 8–25 ms. **Bản đang cài trên máy (`C:\Program Files\CamStudio`) vẫn là 0.1.15 cũ, chưa có ADR-012: 4K60 trong app đó vẫn ~39 fps
+> cho tới khi cài lại** (`package-release.ps1 -Rust -SkipAndroid`). Discord gọi thật ở 4K60: chưa đo (cần người dùng bật camera trong cuộc gọi); `reader_active` = 0 khi Discord chỉ "giữ" camera.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first, then this file, then `rust/MAP.md` and
 `rust/DECISIONS.md` (ADR-001..012). Update this file in the same commit as each step; delete it once everything is tested.
