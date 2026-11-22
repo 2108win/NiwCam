@@ -3,6 +3,7 @@
 
 pub mod background_hq;
 pub mod face_detect;
+pub mod matte_segmenter;
 pub mod segmenter;
 pub mod still_picture;
 pub mod window_source;

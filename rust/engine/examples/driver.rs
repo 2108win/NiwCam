@@ -341,6 +341,16 @@ fn main() {
         if !header.is_null() {
             (*header).reader_active -= 1;
         }
+        if background.is_some() {
+            let get_background: unsafe extern "C" fn(*mut NiwCamEngine::abi::CsBackground) =
+                api.f("cs_get_background");
+            let mut b: NiwCamEngine::abi::CsBackground = std::mem::zeroed();
+            get_background(&mut b);
+            println!(
+                "background_state available={} active={} infer_ms={:.1}",
+                b.available, b.active, b.infer_ms
+            );
+        }
         stop();
         // CPU and memory of this process (the engine runs inside it) over the whole scenario.
         {

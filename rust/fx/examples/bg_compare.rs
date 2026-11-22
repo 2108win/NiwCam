@@ -8,7 +8,8 @@
 use std::time::{Duration, Instant};
 
 use niwcam_fx::background_hq::{blend_background_hq, refine_alpha, HqScratch};
-use niwcam_fx::segmenter::{blend_background, BackgroundScratch, Segmenter};
+use niwcam_fx::matte_segmenter::MatteSegmenter;
+use niwcam_fx::segmenter::{blend_background, BackgroundScratch, Segmenter, K_SIZE};
 use niwcam_fx::still_picture::{load_image_fill, save_png};
 use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
@@ -40,6 +41,43 @@ fn mask_for(nv12: &[u8], w: u32, h: u32, model: &str, quality: bool) -> Vec<u8> 
         seg.infer_ms()
     );
     mask
+}
+
+/// The matting model's soft alpha and its size (a few looks of the still picture: smoothing settles).
+fn matte_mask(nv12: &[u8], w: u32, h: u32, model: &str) -> (Vec<u8>, u32, u32) {
+    let seg = MatteSegmenter::new();
+    seg.set_model(model);
+    let (y, uv) = nv12.split_at(w as usize * h as usize);
+    let (mut mask, mut size) = (Vec::new(), (0, 0));
+    let mut now = 0.0;
+    for _ in 0..8 {
+        let start = Instant::now();
+        while !seg.due(now) && start.elapsed() < Duration::from_secs(5) {
+            std::thread::sleep(Duration::from_millis(5));
+            now += 5.0;
+        }
+        seg.offer(y, uv, w as usize, w, h, now);
+        let t = Instant::now();
+        loop {
+            if let Some(s) = seg.take_mask(&mut mask) {
+                size = s;
+                break;
+            }
+            if t.elapsed() > Duration::from_secs(8) {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        now += 60.0;
+    }
+    println!(
+        "matte   mask: state {} infer {:.1} ms, {}x{}",
+        seg.state(),
+        seg.infer_ms(),
+        size.0,
+        size.1
+    );
+    (mask, size.0, size.1)
 }
 
 /// A replacement background: warm diagonal gradient with a few soft rectangles.
@@ -91,6 +129,9 @@ fn main() {
 
     let classic_mask_u8 = mask_for(&nv12, w, h, &a[2], false);
     let hq_prob = mask_for(&nv12, w, h, &a[2], true);
+    let matte = std::env::var("NIWCAM_MATTE_MODEL")
+        .ok()
+        .map(|m| matte_mask(&nv12, w, h, &m));
     let image = backdrop(w, h);
     let pitch = w as usize;
     let split = w as usize * h as usize;
@@ -126,10 +167,30 @@ fn main() {
             w,
             h,
             &hq_prob,
+            K_SIZE as usize,
+            K_SIZE as usize,
             strength,
             image.map(|v| v.as_slice()),
             &mut hs,
         );
+        if let Some((mm, mw, mh)) = &matte {
+            let mut m = nv12.clone();
+            let (my, muv) = m.split_at_mut(split);
+            blend_background_hq(
+                my,
+                muv,
+                pitch,
+                w,
+                h,
+                mm,
+                *mw as usize,
+                *mh as usize,
+                strength,
+                image.map(|v| v.as_slice()),
+                &mut hs,
+            );
+            let _ = save_png(&format!("{out}/matte-{name}.png"), &m, w, h);
+        }
         let _ = save_png(&format!("{out}/classic-{name}.png"), &c, w, h);
         let _ = save_png(&format!("{out}/hq-{name}.png"), &hq, w, h);
         // timing (the second image of each pair is made from the same input)
@@ -164,6 +225,8 @@ fn main() {
                 w,
                 h,
                 &hq_prob,
+                K_SIZE as usize,
+                K_SIZE as usize,
                 strength,
                 image.map(|v| v.as_slice()),
                 &mut hs,
@@ -172,7 +235,16 @@ fn main() {
         let hq_ms = t.elapsed().as_secs_f64() * 1000.0 / n as f64;
         let t = Instant::now();
         for _ in 0..n {
-            refine_alpha(&nv12[..split], pitch, w, h, &hq_prob, &mut hs);
+            refine_alpha(
+                &nv12[..split],
+                pitch,
+                w,
+                h,
+                &hq_prob,
+                K_SIZE as usize,
+                K_SIZE as usize,
+                &mut hs,
+            );
         }
         println!(
             "{name:8} refine_alpha alone {:.2} ms",

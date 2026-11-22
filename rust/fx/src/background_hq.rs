@@ -15,10 +15,6 @@
 //!
 //! Pure functions on slices (no Windows), so `tests/` and `examples/matte_bench.rs` can measure them.
 
-use crate::segmenter::K_SIZE;
-
-const K: usize = K_SIZE as usize;
-
 fn smoothstep(e0: f32, e1: f32, x: f32) -> f32 {
     let t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0);
     t * t * (3.0 - 2.0 * t)
@@ -173,19 +169,19 @@ fn luma_small(y: &[u8], pitch: usize, w: u32, h: u32, lw: u32, lh: u32, out: &mu
     }
 }
 
-/// Bilinear K x K -> ow x oh, 0..1.
-fn upsample_probability(prob: &[u8], ow: u32, oh: u32, out: &mut Vec<f32>) {
+/// Bilinear pw x ph -> ow x oh, 0..1.
+fn upsample_probability(prob: &[u8], pw: usize, ph: usize, ow: u32, oh: u32, out: &mut Vec<f32>) {
     out.resize(ow as usize * oh as usize, 0.0);
-    let tap = |x: u32, o: u32| {
-        let pos = ((x as f32 + 0.5) * K as f32 / o as f32 - 0.5).max(0.0);
-        let i0 = (pos as usize).min(K - 1);
-        (i0, (i0 + 1).min(K - 1), pos - i0 as f32)
+    let tap = |x: u32, o: u32, n: usize| {
+        let pos = ((x as f32 + 0.5) * n as f32 / o as f32 - 0.5).max(0.0);
+        let i0 = (pos as usize).min(n - 1);
+        (i0, (i0 + 1).min(n - 1), pos - i0 as f32)
     };
-    let xt: Vec<(usize, usize, f32)> = (0..ow).map(|i| tap(i, ow)).collect();
+    let xt: Vec<(usize, usize, f32)> = (0..ow).map(|i| tap(i, ow, pw)).collect();
     for j in 0..oh {
-        let (j0, j1, fy) = tap(j, oh);
-        let r0 = &prob[j0 * K..];
-        let r1 = &prob[j1 * K..];
+        let (j0, j1, fy) = tap(j, oh, ph);
+        let r0 = &prob[j0 * pw..];
+        let r1 = &prob[j1 * pw..];
         for (i, o) in out[j as usize * ow as usize..(j as usize + 1) * ow as usize]
             .iter_mut()
             .enumerate()
@@ -248,24 +244,37 @@ fn guided_filter(s: &mut HqScratch, w: usize, h: usize, r: usize, eps: f32) {
 }
 
 /// The soft person alpha at [`alpha_size`], refined against the picture's luma. `prob` is the
-/// K x K probability (0..255). The result is in `s.alpha` (0..255) at `s.alpha_w` x `s.alpha_h`.
-pub fn refine_alpha(y: &[u8], pitch: usize, w: u32, h: u32, prob: &[u8], s: &mut HqScratch) {
-    refine_alpha_with(y, pitch, w, h, prob, s, &HqParams::default());
+/// `pw` x `ph` probability (0..255). The result is in `s.alpha` (0..255) at `s.alpha_w` x `s.alpha_h`.
+#[expect(clippy::too_many_arguments)]
+pub fn refine_alpha(
+    y: &[u8],
+    pitch: usize,
+    w: u32,
+    h: u32,
+    prob: &[u8],
+    pw: usize,
+    ph: usize,
+    s: &mut HqScratch,
+) {
+    refine_alpha_with(y, pitch, w, h, prob, pw, ph, s, &HqParams::default());
 }
 
 /// [`refine_alpha`] with explicit knobs.
+#[expect(clippy::too_many_arguments)]
 pub fn refine_alpha_with(
     y: &[u8],
     pitch: usize,
     w: u32,
     h: u32,
     prob: &[u8],
+    pw: usize,
+    ph: usize,
     s: &mut HqScratch,
     k: &HqParams,
 ) {
     let (lw, lh) = alpha_size(w, h);
     luma_small(y, pitch, w, h, lw, lh, &mut s.guide);
-    upsample_probability(prob, lw, lh, &mut s.p);
+    upsample_probability(prob, pw, ph, lw, lh, &mut s.p);
     let r = ((lh as f32 / k.radius_div).round() as usize).max(2);
     guided_filter(s, lw as usize, lh as usize, r, k.eps);
     s.alpha.resize(lw as usize * lh as usize, 0);
@@ -487,8 +496,8 @@ fn blurred_background(
 }
 
 /// Blends the background of an NV12 picture with its blurred, halo-free copy (`strength` 0..100) or
-/// with `image` (NV12, same size, with a light wrap), using the soft probability `prob` (K x K,
-/// 0..255). Same buffer contract as `segmenter::blend_background`.
+/// with `image` (NV12, same size, with a light wrap), using the soft probability `prob` (`pw` x
+/// `ph`, 0..255). Same buffer contract as `segmenter::blend_background`.
 #[expect(clippy::too_many_arguments)]
 pub fn blend_background_hq(
     y: &mut [u8],
@@ -497,11 +506,13 @@ pub fn blend_background_hq(
     w: u32,
     h: u32,
     prob: &[u8],
+    pw: usize,
+    ph: usize,
     strength: i32,
     image: Option<&[u8]>,
     s: &mut HqScratch,
 ) {
-    if w < 16 || h < 16 || prob.len() != K * K || pitch < w as usize {
+    if w < 16 || h < 16 || pw == 0 || ph == 0 || prob.len() != pw * ph || pitch < w as usize {
         return;
     }
     let need_y = (h as usize - 1) * pitch + w as usize;
@@ -512,7 +523,7 @@ pub fn blend_background_hq(
     {
         return;
     }
-    refine_alpha(y, pitch, w, h, prob, s);
+    refine_alpha(y, pitch, w, h, prob, pw, ph, s);
     let (aw, ah) = (s.alpha_w, s.alpha_h);
 
     let (mut tw, mut th) = (0u32, 0u32);

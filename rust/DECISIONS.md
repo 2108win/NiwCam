@@ -71,3 +71,13 @@ real gain needs a better model. `fx/examples/bg_compare.rs` on a real portrait w
 classic chain blurs away is kept, and the blurred wall has no coloured halo. Cost: +1.2 ms per 720p frame (refine) = ~4 % of a core at 30 fps;
 off = 0. `fx/tests/hq.rs` covers smoothing, edge snapping and the halo. Engine with the model, 30 fps held, 238 MB peak (the model's DirectML).
 Next (needs downloads, asked first): a matting model (MODNet, Apache-2.0) and a face detector (YuNet, MIT); see `rust/research/background-and-faces.md`.
+
+### ADR-008 progress, step 2 (2026-11-22): the matting model
+`fx/src/matte_segmenter.rs`: MODNet `modnet_webcam.onnx` (Apache-2.0, 24.8 MB, from github.com/yakhyo/modnet) through Windows ML, dynamic input
+(384x224 for 16:9, 224x384 upright, multiples of 32), soft alpha, 20 runs a second. The engine uses it when the high-quality switch is on and the
+file is next to `pphumanseg.onnx` (`Assets\Models\modnet_webcam.onnx`); otherwise the PP-HumanSeg + guided filter chain of step 1.
+Measured on this PC (RTX 5060, DirectML): 7.1 ms per run in the engine (9.2 ms at 512x288, 6.0 ms at 320x192; CPU 25-63 ms); the engine holds 30 fps;
+working set 392 MB with it against 238 MB with PP-HumanSeg (the larger model in DirectML). On the real portrait the whole long grey hair stays on both sides
+with a soft edge (PP-HumanSeg loses the left side). Not shipped: the model file is not in the installer or the repo (a 26 MB addition and its
+Apache-2.0 notice are the user's call); a dev copy goes in `app\Assets\Models`.
+Still open: YuNet face detector + Kalman tracking for framing and skin smoothing; the matte flicker on a real moving person (needs a clip).

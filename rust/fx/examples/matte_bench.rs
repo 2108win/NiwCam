@@ -288,7 +288,7 @@ fn run_hq(frames: &[Frame], k: &HqParams) -> (f64, f64, f64) {
     for (t, f) in frames.iter().enumerate() {
         smooth_probability_with(&mut state, &f.model, t == 0, k);
         let prob: Vec<u8> = state.iter().map(|&p| (p * 255.0 + 0.5) as u8).collect();
-        refine_alpha_with(&f.y, W, W as u32, H as u32, &prob, &mut hs, k);
+        refine_alpha_with(&f.y, W, W as u32, H as u32, &prob, K, K, &mut hs, k);
         let est = to_half_grid(hs.alpha(), hs.alpha_w() as usize, hs.alpha_h() as usize);
         accumulate(&mut acc, &est, f, &mut prev, t);
     }

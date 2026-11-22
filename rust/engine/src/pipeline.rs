@@ -40,7 +40,7 @@ use windows::Win32::System::Performance::{QueryPerformanceCounter, QueryPerforma
 use crate::capture_engine::{lock, BackgroundMode, Shared, State};
 use crate::fx_bridge::{
     blend_background, blend_background_hq, load_image_fill, BackgroundScratch, FaceDetector,
-    HqScratch, Segmenter,
+    HqScratch, MatteSegmenter, Segmenter, K_SIZE,
 };
 
 /// Source closed after this long with no app on the camera and no preview on screen (an app
@@ -195,6 +195,12 @@ struct Effects {
     // Background effect (apply_background).
     segmenter: Option<Segmenter>,
     mask: Vec<u8>,
+    /// The size of `mask` (K x K for PP-HumanSeg, the matting model's own for MODNet).
+    mask_dims: (usize, usize),
+    mask_is_matte: bool,
+    /// The matting model (high quality only), when its file is there and Windows ML runs it.
+    matte: Option<MatteSegmenter>,
+    matte_missing: bool,
     bg_scratch: BackgroundScratch,
     hq_scratch: HqScratch,
     /// The quality the segmenter was last told (its mask means another thing when it changes).
@@ -229,6 +235,10 @@ impl Effects {
             framing_on: false,
             segmenter: None,
             mask: Vec::new(),
+            mask_dims: (K_SIZE as usize, K_SIZE as usize),
+            mask_is_matte: false,
+            matte: None,
+            matte_missing: false,
             bg_scratch: BackgroundScratch::default(),
             hq_scratch: HqScratch::default(),
             bg_quality_set: false,
@@ -313,12 +323,49 @@ impl Effects {
             seg.set_quality(quality);
             seg.reset(); // the old mask is of the other kind
             self.mask.clear();
+            self.matte = None; // off frees the model; on looks for the file again
+            self.matte_missing = false;
         }
-        if seg.due(now) {
-            seg.offer(y, uv, pitch, w, h, now); // the picture as it is
+        // High quality uses the matting model when its file is next to the PP-HumanSeg one.
+        if quality && self.matte.is_none() && !self.matte_missing {
+            let path = std::path::Path::new(&lock(&engine.lock).bg_model)
+                .with_file_name("modnet_webcam.onnx");
+            if path.exists() {
+                let m = MatteSegmenter::new();
+                m.set_model(&path.to_string_lossy());
+                self.matte = Some(m);
+            } else {
+                self.matte_missing = true;
+            }
         }
-        let changed = seg.take_mask(&mut self.mask);
-        let available = seg.state();
+        let matte = self.matte.as_ref().filter(|m| quality && m.state() == 1);
+        let use_matte = matte.is_some();
+        if use_matte != self.mask_is_matte {
+            // The other model's mask means another size and another look.
+            self.mask_is_matte = use_matte;
+            self.mask.clear();
+            self.mask_dims = (K_SIZE as usize, K_SIZE as usize);
+            seg.reset();
+        }
+        let (changed, available, infer_ms);
+        if let Some(m) = matte {
+            if m.due(now) {
+                m.offer(y, uv, pitch, w, h, now);
+            }
+            if let Some((mw, mh)) = m.take_mask(&mut self.mask) {
+                self.mask_dims = (mw as usize, mh as usize);
+            }
+            changed = true;
+            available = m.state();
+            infer_ms = m.infer_ms();
+        } else {
+            if seg.due(now) {
+                seg.offer(y, uv, pitch, w, h, now); // the picture as it is
+            }
+            changed = seg.take_mask(&mut self.mask);
+            available = seg.state();
+            infer_ms = seg.infer_ms();
+        }
         let mut active = false;
         if !self.mask.is_empty() {
             let mut have_image = false;
@@ -346,6 +393,8 @@ impl Effects {
                     w,
                     h,
                     &self.mask,
+                    self.mask_dims.0,
+                    self.mask_dims.1,
                     engine.bg_strength.load(Relaxed),
                     image,
                     &mut self.hq_scratch,
@@ -370,7 +419,7 @@ impl Effects {
         let mut g = lock(&engine.lock);
         g.bg_state.available = available;
         g.bg_state.active = active;
-        g.bg_state.infer_ms = seg.infer_ms();
+        g.bg_state.infer_ms = infer_ms;
     }
 
     fn apply_smoothing(&mut self, engine: &Shared, y: &mut [u8], pitch: usize, w: u32, h: u32) {
@@ -418,6 +467,9 @@ impl Effects {
     /// Turned off, or not a camera any more: the model's thread ends.
     fn stop_background(&mut self, engine: &Shared) {
         self.segmenter = None;
+        self.matte = None;
+        self.mask_is_matte = false;
+        self.mask_dims = (K_SIZE as usize, K_SIZE as usize);
         self.bg_reported = 1;
         self.mask.clear();
         lock(&engine.lock).bg_state.active = false;

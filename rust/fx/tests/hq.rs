@@ -73,7 +73,7 @@ fn refinement_moves_the_edge_to_the_pictures_edge() {
     // The mask edge is one cell (5 px) to the right of the luma edge.
     let (y, prob) = edge_case(w, h, edge_x, edge_x / (w / K) + 1);
     let mut s = HqScratch::default();
-    refine_alpha(&y, w, w as u32, h as u32, &prob, &mut s);
+    refine_alpha(&y, w, w as u32, h as u32, &prob, K, K, &mut s);
     let (aw, ah) = (s.alpha_w() as usize, s.alpha_h() as usize);
     let at = crossing(s.alpha(), aw, ah / 2) * (w as f32 / aw as f32);
     // The raw mask crosses one half at 488.6 px (cell 97 is 90, cell 98 is 255, cells are 5 px
@@ -128,7 +128,7 @@ fn blurred_background_has_no_halo_of_the_persons_colour() {
     let (mut hy, mut huv) = (luma.clone(), chroma.clone());
     let mut hs = HqScratch::default();
     blend_background_hq(
-        &mut hy, &mut huv, w, w as u32, h as u32, &mask, 100, None, &mut hs,
+        &mut hy, &mut huv, w, w as u32, h as u32, &mask, K, K, 100, None, &mut hs,
     );
     let (classic, hq) = (halo(&cuv), halo(&huv));
     assert!(
@@ -150,6 +150,8 @@ fn bad_buffers_do_nothing() {
         640,
         360,
         &vec![0u8; K * K],
+        K,
+        K,
         50,
         None,
         &mut s,
