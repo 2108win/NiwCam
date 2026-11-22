@@ -1,12 +1,51 @@
 [package]
 name = "niwcam-vcam"
+description = "NiwCam virtual camera media source (COM DLL loaded by the Windows 11 Frame Server). Port of src/vcam"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
 
+# The file must be CamStudioVCam.dll (its registration is in old uninstall logs, see CLAUDE.md).
 [lib]
+name = "CamStudioVCam"
 crate-type = ["cdylib", "rlib"]
-[dependencies]
-niwcam-core = { path = "../core" }
-windows = "0.62"
 
+[features]
+# Test builds only (rust/vcam/xcheck): the kernel-object names carry the suffix in the environment
+# variable NIWCAM_TEST_SUFFIX (session-local `Local\NiwCamTest_<suffix>_*`) and DllRegisterServer
+# writes under HKCU\Software\NiwCamTest_<suffix>. The shipped build never has this feature.
+test-names = []
+
+[dependencies]
+niwcam-shm = { path = "../shm" }
+# The `#[implement]` macro names this crate directly.
+windows-core = "0.62"
+
+[dependencies.windows]
+version = "0.62"
+features = [
+    "Win32_Foundation",
+    "Win32_Media_KernelStreaming",
+    "Win32_Media_MediaFoundation",
+    "Win32_Security",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Registry",
+    "Win32_System_Threading",
+    "Win32_System_Variant",
+    "Win32_UI_Shell_PropertiesSystem",
+]
+
+# An OS crate (ADR-003): `unsafe` is allowed, every block carries a `// SAFETY:` note.
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "warn"
+
+[dev-dependencies]
+niwcam-core = { path = "../core" }

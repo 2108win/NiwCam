@@ -1,10 +1,31 @@
 [package]
 name = "niwcam-shm"
+description = "NiwCam shared-memory frame channel: header layout, writer (host) and reader (media source). Port of SharedFrame.h, FrameWriter.h, FrameReader.h/.cpp"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
 
 [dependencies]
 niwcam-core = { path = "../core" }
-windows = "0.62"
 
+[dependencies.windows]
+version = "0.62"
+features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_Security_Authorization",
+    "Win32_Media_MediaFoundation",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_SystemInformation",
+    "Win32_System_Threading",
+]
+
+# Not `[lints] workspace = true`: this crate is an OS crate (ADR-003), `unsafe` is allowed here,
+# every block carries a `// SAFETY:` note.
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "warn"

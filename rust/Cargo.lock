@@ -302,6 +302,7 @@ version = "0.1.14"
 dependencies = [
  "niwcam-core",
  "windows",
+ "windows-core",
 ]
 
 [[package]]
@@ -318,6 +319,8 @@ version = "0.1.14"
 dependencies = [
  "niwcam-core",
  "windows",
+ "windows-collections",
+ "windows-numerics",
 ]
 
 [[package]]
@@ -349,7 +352,9 @@ name = "niwcam-vcam"
 version = "0.1.14"
 dependencies = [
  "niwcam-core",
+ "niwcam-shm",
  "windows",
+ "windows-core",
 ]
 
 [[package]]

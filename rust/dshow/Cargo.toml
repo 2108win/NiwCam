@@ -1,12 +1,40 @@
 [package]
 name = "niwcam-dshow"
+description = "NiwCam DirectShow source filter for Windows 10 (Rust port of src/dshow); builds CamStudioDShow.dll"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
 
 [lib]
+# The DLL keeps the C++ file name (CamStudioDShow.dll): its COM registration is in old uninstall logs.
+name = "CamStudioDShow"
 crate-type = ["cdylib", "rlib"]
+
+[features]
+# Test builds only: NIWCAM_TEST_SUFFIX is appended to the shared-memory and event names, so a test never
+# touches the real channel of a running NiwCam. The default build has no such code.
+test-names = []
+
 [dependencies]
 niwcam-core = { path = "../core" }
-windows = "0.62"
+# The #[implement] and #[interface] macros expand to ::windows_core paths, so it must be a direct dependency.
+windows-core = "0.62"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Media",
+    "Win32_Media_DirectShow",
+    "Win32_Media_KernelStreaming",
+    "Win32_Media_MediaFoundation",
+    "Win32_Security",
+    "Win32_System_Com",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Registry",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_Debug",
+] }
 
+# No [lints] workspace = true: the workspace forbids unsafe, and this crate is all COM/FFI.
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"

@@ -258,30 +258,44 @@ struct Tap {
     w1: u32, // 0..256
 }
 
-fn taps(n: u32, start: f64, len: f64, limit: u32) -> Vec<Tap> {
+/// Per-thread buffers reused between calls (the C++ keeps them `thread_local` too), so scaling a
+/// frame allocates nothing once the sizes have been seen.
+#[derive(Default)]
+struct Pool {
+    taps_x: Vec<Tap>,
+    taps_y: Vec<Tap>,
+    columns: Vec<usize>,
+    xmap: Vec<usize>,
+    cxmap: Vec<usize>,
+}
+
+thread_local! {
+    static POOL: std::cell::RefCell<Pool> = std::cell::RefCell::new(Pool::default());
+}
+
+fn fill_taps(out: &mut Vec<Tap>, n: u32, start: f64, len: f64, limit: u32) {
     let step = len / n as f64;
     let max = limit.saturating_sub(1) as f64;
-    (0..n)
-        .map(|i| {
-            let mut f = start + (i as f64 + 0.5) * step - 0.5;
-            if f < 0.0 {
-                f = 0.0;
-            }
-            if f > max {
-                f = max;
-            }
-            let i0 = f as u32;
-            Tap {
-                i0: i0 as usize,
-                i1: if i0 + 1 < limit {
-                    i0 as usize + 1
-                } else {
-                    i0 as usize
-                },
-                w1: ((f - i0 as f64) * 256.0 + 0.5) as u32,
-            }
-        })
-        .collect()
+    out.clear();
+    out.extend((0..n).map(|i| {
+        let mut f = start + (i as f64 + 0.5) * step - 0.5;
+        if f < 0.0 {
+            f = 0.0;
+        }
+        if f > max {
+            f = max;
+        }
+        let i0 = f as u32;
+        Tap {
+            i0: i0 as usize,
+            i1: if i0 + 1 < limit {
+                i0 as usize + 1
+            } else {
+                i0 as usize
+            },
+            w1: ((f - i0 as f64) * 256.0 + 0.5) as u32,
+        }
+    }));
 }
 
 fn lerp2(a: u32, b: u32, wx: u32) -> u32 {
@@ -306,8 +320,10 @@ pub fn nv12_crop_scale_bilinear_to(
     dh: u32,
 ) {
     // Luma.
-    let xs = taps(dw, r.x, r.w, sw);
-    let ys = taps(dh, r.y, r.h, sh);
+    let (mut xs, mut ys) =
+        POOL.with_borrow_mut(|p| (std::mem::take(&mut p.taps_x), std::mem::take(&mut p.taps_y)));
+    fill_taps(&mut xs, dw, r.x, r.w, sw);
+    fill_taps(&mut ys, dh, r.y, r.h, sh);
     for (y, ty) in ys.iter().enumerate() {
         let a = &src[ty.i0 * src_pitch..];
         let b = &src[ty.i1 * src_pitch..];
@@ -322,8 +338,8 @@ pub fn nv12_crop_scale_bilinear_to(
 
     // Chroma (interleaved UV at half resolution).
     let src_uv = &src[src_pitch * sh as usize..];
-    let xs = taps(dw / 2, r.x / 2.0, r.w / 2.0, sw / 2);
-    let ys = taps(dh / 2, r.y / 2.0, r.h / 2.0, sh / 2);
+    fill_taps(&mut xs, dw / 2, r.x / 2.0, r.w / 2.0, sw / 2);
+    fill_taps(&mut ys, dh / 2, r.y / 2.0, r.h / 2.0, sh / 2);
     for (y, ty) in ys.iter().enumerate() {
         let a = &src_uv[ty.i0 * src_pitch..];
         let b = &src_uv[ty.i1 * src_pitch..];
@@ -337,6 +353,10 @@ pub fn nv12_crop_scale_bilinear_to(
             }
         }
     }
+    POOL.with_borrow_mut(|p| {
+        p.taps_x = xs;
+        p.taps_y = ys;
+    });
 }
 
 /// Same into a contiguous dw x dh frame.
@@ -464,9 +484,9 @@ pub fn nv12_to_bgra(
     ph: u32,
 ) {
     let (pwu, phu) = (pw as usize, ph as usize);
-    let columns: Vec<usize> = (0..pw as u64)
-        .map(|x| (x * w as u64 / pw as u64) as usize)
-        .collect();
+    let mut columns = POOL.with_borrow_mut(|p| std::mem::take(&mut p.columns));
+    columns.clear();
+    columns.extend((0..pw as u64).map(|x| (x * w as u64 / pw as u64) as usize));
     let mut last_sy = usize::MAX;
     for y in 0..phu {
         let sy = (y as u64 * h as u64 / ph as u64) as usize;
@@ -483,6 +503,7 @@ pub fn nv12_to_bgra(
             *o = bgra_pixel(row[sx], uv[cx], uv[cx + 1]);
         }
     }
+    POOL.with_borrow_mut(|p| p.columns = columns);
 }
 
 /// Copies or nearest-neighbour scales an NV12 image into separate Y and UV destinations (a
@@ -515,12 +536,13 @@ pub fn nv12_scale_to(
         return;
     }
 
-    let xmap: Vec<usize> = (0..dw as u64)
-        .map(|x| (x * sw as u64 / dw as u64) as usize)
-        .collect();
-    let cxmap: Vec<usize> = (0..(dw / 2) as u64)
-        .map(|x| (x * (sw / 2) as u64 / (dw / 2) as u64) as usize * 2)
-        .collect();
+    let (mut xmap, mut cxmap) =
+        POOL.with_borrow_mut(|p| (std::mem::take(&mut p.xmap), std::mem::take(&mut p.cxmap)));
+    xmap.clear();
+    xmap.extend((0..dw as u64).map(|x| (x * sw as u64 / dw as u64) as usize));
+    cxmap.clear();
+    cxmap
+        .extend((0..(dw / 2) as u64).map(|x| (x * (sw / 2) as u64 / (dw / 2) as u64) as usize * 2));
 
     for y in 0..dhu {
         let s = &src[(y as u64 * sh as u64 / dh as u64) as usize * src_pitch..];
@@ -539,6 +561,10 @@ pub fn nv12_scale_to(
             d[2 * x + 1] = s[cx + 1];
         }
     }
+    POOL.with_borrow_mut(|p| {
+        p.xmap = xmap;
+        p.cxmap = cxmap;
+    });
 }
 
 /// Same, with contiguous destination planes (the UV plane right after `dh` rows of `dst_pitch`).

@@ -36,3 +36,15 @@ Consequences: revisit if a phone ever sends invalid UTF-8.
 Status: accepted (2026-11-22)
 Decision: `nv12.rs` has no SIMD; `xcheck` shows the same bytes as the SSE2 C++. Speed is measured when the
 module runs inside the engine (wave 3); `std::simd` only if a frame costs more than in the C++.
+
+## ADR-008: Better background, face and object detection come after parity
+Status: accepted (2026-11-22), asked for by the user
+Context: the user wants the background blur/replace to be the best and smoothest, and better face/object
+detection. The port is held to byte/behaviour equality with the C++ (xcheck, driver), which an upgrade breaks.
+Decision: first finish the faithful port of `Segmenter`, `FaceDetect`, `SkinSmooth`, `AutoFrame` (crate `fx`). Then add
+the upgrade as separate modules behind a setting, default off until it wins: soft-alpha matting model with temporal
+smoothing, edge refinement against the full-resolution frame, a better blur, a stronger face detector with tracking
+(and a person/pose detector for framing). Models only with permissive licences (no GPL/AGPL/non-commercial).
+Chosen from `rust/research/background-and-faces.md`; judged by quality metrics (matting error, flicker between frames),
+frame time on this PC and idle cost, not by equality with the C++.
+Consequences: the old path stays as the fallback and the reference.
