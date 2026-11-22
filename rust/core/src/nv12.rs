@@ -25,10 +25,7 @@ impl Nv12ColorAdjust {
     }
 }
 
-/// out = (in - 128) * mul / 128 + add, saturated to 0..255.
-fn adjust_value(v: u8, mul: i32, add: i32) -> u8 {
-    ((((v as i32 - 128) * mul) >> 7) + add).clamp(0, 255) as u8
-}
+use crate::simd::{adjust_row, adjust_row_in_place};
 
 #[expect(clippy::too_many_arguments)]
 fn adjust_rows(
@@ -42,11 +39,12 @@ fn adjust_rows(
     add: [i32; 2],
 ) {
     for y in 0..rows {
-        let s = &src[y * src_pitch..y * src_pitch + bytes];
-        let d = &mut dst[y * dst_pitch..y * dst_pitch + bytes];
-        for (x, (o, &i)) in d.iter_mut().zip(s).enumerate() {
-            *o = adjust_value(i, mul, add[x & 1]);
-        }
+        adjust_row(
+            &src[y * src_pitch..y * src_pitch + bytes],
+            &mut dst[y * dst_pitch..y * dst_pitch + bytes],
+            mul as i16,
+            [add[0] as i16, add[1] as i16],
+        );
     }
 }
 
@@ -59,9 +57,11 @@ fn adjust_rows_in_place(
     add: [i32; 2],
 ) {
     for y in 0..rows {
-        for (x, v) in buf[y * pitch..y * pitch + bytes].iter_mut().enumerate() {
-            *v = adjust_value(*v, mul, add[x & 1]);
-        }
+        adjust_row_in_place(
+            &mut buf[y * pitch..y * pitch + bytes],
+            mul as i16,
+            [add[0] as i16, add[1] as i16],
+        );
     }
 }
 
@@ -265,6 +265,7 @@ struct Pool {
     taps_x: Vec<Tap>,
     taps_y: Vec<Tap>,
     columns: Vec<usize>,
+    line: Vec<u8>,
     xmap: Vec<usize>,
     cxmap: Vec<usize>,
 }
@@ -458,17 +459,6 @@ pub fn bgra_to_nv12(
     }
 }
 
-/// One BGRA pixel from Y, U, V (BT.601 limited range).
-fn bgra_pixel(y: u8, u: u8, v: u8) -> u32 {
-    let c = y as i32 - 16;
-    let d = u as i32 - 128;
-    let e = v as i32 - 128;
-    let r = ((298 * c + 409 * e + 128) >> 8).clamp(0, 255) as u32;
-    let g = ((298 * c - 100 * d - 208 * e + 128) >> 8).clamp(0, 255) as u32;
-    let b = ((298 * c + 516 * d + 128) >> 8).clamp(0, 255) as u32;
-    0xFF00_0000 | (r << 16) | (g << 8) | b
-}
-
 /// NV12 (w x h, planes `y_plane` / `uv_plane`, `pitch` bytes per row) -> BGRA of pw x ph,
 /// nearest-neighbour (pw == w and ph == h converts 1:1). BT.601 limited range. Used for
 /// on-screen pictures (the preview, a phone screen's window). `out` is pw x ph pixels.
@@ -487,6 +477,9 @@ pub fn nv12_to_bgra(
     let mut columns = POOL.with_borrow_mut(|p| std::mem::take(&mut p.columns));
     columns.clear();
     columns.extend((0..pw as u64).map(|x| (x * w as u64 / pw as u64) as usize));
+    // One output row's Y, U and V samples are gathered first, then converted 8 pixels at a time.
+    let mut line = POOL.with_borrow_mut(|p| std::mem::take(&mut p.line));
+    line.resize(pwu * 3, 0);
     let mut last_sy = usize::MAX;
     for y in 0..phu {
         let sy = (y as u64 * h as u64 / ph as u64) as usize;
@@ -498,11 +491,34 @@ pub fn nv12_to_bgra(
         last_sy = sy;
         let row = &y_plane[sy * pitch..];
         let uv = &uv_plane[(sy / 2) * pitch..];
-        for (o, &sx) in out[y * pwu..(y + 1) * pwu].iter_mut().zip(&columns) {
-            let cx = sx & !1;
-            *o = bgra_pixel(row[sx], uv[cx], uv[cx + 1]);
+        let (ly, rest) = line.split_at_mut(pwu);
+        let (lu, lv) = rest.split_at_mut(pwu);
+        if pwu == w as usize {
+            ly.copy_from_slice(&row[..pwu]);
+        } else {
+            for (o, &sx) in ly.iter_mut().zip(&columns) {
+                *o = row[sx];
+            }
         }
+        if pwu == w as usize && pwu % 2 == 0 {
+            // 1:1: each UV pair covers two pixels.
+            let (lu2, _) = lu.as_chunks_mut::<2>();
+            let (lv2, _) = lv.as_chunks_mut::<2>();
+            let (uv2, _) = uv[..pwu].as_chunks::<2>();
+            for ((u, v), p) in lu2.iter_mut().zip(lv2.iter_mut()).zip(uv2) {
+                *u = [p[0]; 2];
+                *v = [p[1]; 2];
+            }
+        } else {
+            for ((u, v), &sx) in lu.iter_mut().zip(lv.iter_mut()).zip(&columns) {
+                let cx = sx & !1;
+                *u = uv[cx];
+                *v = uv[cx + 1];
+            }
+        }
+        crate::simd::row_to_bgra(ly, lu, lv, &mut out[y * pwu..(y + 1) * pwu]);
     }
+    POOL.with_borrow_mut(|p| p.line = line);
     POOL.with_borrow_mut(|p| p.columns = columns);
 }
 

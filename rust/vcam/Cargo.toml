@@ -15,6 +15,8 @@ crate-type = ["cdylib", "rlib"]
 # variable NIWCAM_TEST_SUFFIX (session-local `Local\NiwCamTest_<suffix>_*`) and DllRegisterServer
 # writes under HKCU\Software\NiwCamTest_<suffix>. The shipped build never has this feature.
 test-names = []
+# Diagnostic builds only: also append the log lines to C:\ProgramData\NiwCam-vcam-diag.log.
+diag-file = []
 
 [dependencies]
 niwcam-shm = { path = "../shm" }
@@ -28,12 +30,14 @@ features = [
     "Win32_Media_KernelStreaming",
     "Win32_Media_MediaFoundation",
     "Win32_Security",
+    "Win32_Security_Authorization",
     "Win32_System_Com",
     "Win32_System_Com_StructuredStorage",
     "Win32_System_Diagnostics_Debug",
     "Win32_System_LibraryLoader",
     "Win32_System_Memory",
     "Win32_System_Registry",
+    "Win32_System_RemoteDesktop",
     "Win32_System_Threading",
     "Win32_System_Variant",
     "Win32_UI_Shell_PropertiesSystem",

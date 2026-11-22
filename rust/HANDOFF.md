@@ -5,6 +5,7 @@ Read first: `rust/MAP.md`, `rust/DECISIONS.md`, `rust/AGENTS.md`.
 - Every crate is ported and checked against the C++ with its own `xcheck/run.ps1` (core, shm, phone, media, fx, vcam,
   dshow) and `engine/xcheck/{abi,engine}.ps1`. `cargo test --workspace` and `cargo clippy --workspace --all-targets -- -D warnings` pass.
 - Baseline of the C++ is in `rust/baseline/`. The C++ is still what ships.
+- Done live (see MAP.md): Rust engine + Rust vcam under the real Frame Server, and the real app with the Rust engine. `vcam/xcheck/frameserver.ps1 -Register|-Restore` does the admin registration and rollback.
 - Next, in order, each needing the user: (1) close their NiwCam and run the Rust `NiwCamEngine.dll` under the real app
   (`scripts\build.ps1 -Target app` copies the DLL), with the C++ vcam; (2) register the Rust vcam (admin, `scripts\register.ps1`
   style, keep the C++ DLL for rollback) and test with Discord/OBS; (3) real webcam/phone/iPhone runs; (4) Windows 10 and the dshow filter.

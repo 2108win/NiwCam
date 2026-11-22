@@ -53,6 +53,8 @@ impl IMFActivate_Impl for Activate_Impl {
         ppv: *mut *mut c_void,
     ) -> windows::core::Result<()> {
         guard(|| {
+            #[cfg(feature = "diag-file")]
+            crate::common::vcam_log("ActivateObject");
             if ppv.is_null() {
                 return Err(Error::from_hresult(E_POINTER));
             }

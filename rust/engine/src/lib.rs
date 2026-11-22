@@ -1,6 +1,9 @@
 //! niwcam-engine: the flat C API (NiwCamEngine.dll) and the capture engine.
 #![deny(unsafe_op_in_unsafe_fn)]
-#![allow(non_snake_case, reason = "the DLL file must be NiwCamEngine.dll, so the crate carries that name")]
+#![allow(
+    non_snake_case,
+    reason = "the DLL file must be NiwCamEngine.dll, so the crate carries that name"
+)]
 
 pub mod abi;
 pub mod api;

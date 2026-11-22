@@ -4,7 +4,7 @@
 use std::sync::atomic::{fence, Ordering};
 
 use niwcam_core::nv12::nv12_fit_into;
-use windows::core::{Error, BOOL, PCWSTR};
+use windows::core::{Error, BOOL, HRESULT, PCWSTR};
 use windows::Win32::Foundation::{
     GetLastError, LocalFree, ERROR_ALREADY_EXISTS, HANDLE, HLOCAL, INVALID_HANDLE_VALUE,
 };
@@ -19,7 +19,7 @@ use windows::Win32::System::Threading::{
     CreateEventW, OpenEventW, Sleep, EVENT_MODIFY_STATE, SYNCHRONIZATION_SYNCHRONIZE,
 };
 
-use crate::os::{last_error, log, Names, OwnedHandle, View};
+use crate::os::{log, win32_error, Names, OwnedHandle, View};
 use crate::shared_frame::*;
 
 pub struct FrameReader {
@@ -127,24 +127,30 @@ impl FrameReader {
             }
         }
 
+        // The C++ reads GetLastError() once, after BOTH calls and the LocalFree: when the mapping
+        // failed but the event was created, that is 0 and `Open` returns S_OK with no mapping. That
+        // is what happens in the app's own process (a normal user cannot create `Global\` sections):
+        // the virtual camera's media source is instantiated there too, runs without a mapping and
+        // lets Start() succeed, while the instance inside Frame Server (privileged) creates the real
+        // channel. Returning the mapping's own error here made Start() fail with E_ACCESSDENIED, so
+        // this quirk is kept on purpose.
+        // SAFETY: plain thread-local read, as the C++ does it.
+        let tail = unsafe { GetLastError() };
         let (mapping, event) = match (mapping, event) {
             (Ok(m), Ok(e)) => (m, OwnedHandle(e)),
             (m, e) => {
-                // The error of the failing call (the C++ read GetLastError once for both).
-                let err = e
-                    .as_ref()
-                    .err()
-                    .or(m.as_ref().err())
-                    .cloned()
-                    .unwrap_or_else(last_error);
                 log(&format!(
                     "CreateFileMapping/CreateEvent failed 0x{:08X}",
-                    err.code().0 as u32
+                    HRESULT::from_win32(tail.0).0 as u32
                 ));
                 // Whatever did succeed closes here.
                 drop(m.map(OwnedHandle));
                 drop(e.map(OwnedHandle));
-                return Err(err);
+                return if tail.0 == 0 {
+                    Ok(())
+                } else {
+                    Err(win32_error(tail))
+                };
             }
         };
 

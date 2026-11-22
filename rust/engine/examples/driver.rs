@@ -101,7 +101,12 @@ fn main() {
     let seconds: u64 = arg("--seconds").and_then(|s| s.parse().ok()).unwrap_or(6);
     let data = std::env::temp_dir().join(format!("niwcam-driver-{}", std::process::id()));
     std::fs::create_dir_all(&data).unwrap();
-    std::env::set_var("CAMSTUDIO_FORCE_DSHOW", "1");
+    // --real: the real virtual camera (Frame Server) instead of the session-local channel; an app
+    // (niwcam-verify) then reads it. The user's own NiwCam must be closed for that.
+    let real = std::env::args().any(|a| a == "--real");
+    if !real {
+        std::env::set_var("CAMSTUDIO_FORCE_DSHOW", "1");
+    }
     std::env::set_var("CAMSTUDIO_DATA_DIR", &data);
     println!("dll={dll}");
 
@@ -221,7 +226,7 @@ fn main() {
         let mut mapping = HANDLE::default();
         let begin = Instant::now();
         let mut header: *mut Header = std::ptr::null_mut();
-        while begin.elapsed() < Duration::from_secs(10) && header.is_null() {
+        while !real && begin.elapsed() < Duration::from_secs(10) && header.is_null() {
             if let Ok(h) = OpenFileMappingW((FILE_MAP_READ | FILE_MAP_WRITE).0, false, mapping_name)
             {
                 mapping = h;

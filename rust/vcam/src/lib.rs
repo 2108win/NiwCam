@@ -55,6 +55,8 @@ impl IClassFactory_Impl for ActivateFactory_Impl {
         riid: *const GUID,
         ppv: *mut *mut c_void,
     ) -> windows::core::Result<()> {
+        #[cfg(feature = "diag-file")]
+        vcam_log("CreateInstance");
         guard(|| {
             if ppv.is_null() {
                 return Err(Error::from_hresult(E_POINTER));
@@ -106,6 +108,8 @@ pub unsafe extern "system" fn DllGetClassObject(
     ppv: *mut *mut c_void,
 ) -> HRESULT {
     export_guard(|| {
+        #[cfg(feature = "diag-file")]
+        vcam_log("DllGetClassObject");
         if ppv.is_null() {
             return E_POINTER;
         }

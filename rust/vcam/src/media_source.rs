@@ -152,6 +152,11 @@ impl MediaSource {
         }
         vlog!("Initialize native {}x{} @ {}/{}", w, h, fn_, fd);
 
+        #[cfg(feature = "diag-file")]
+        {
+            crate::common::diag_token();
+            crate::common::diag_objects();
+        }
         check!(lock(&self.reader).open(w, h, false));
         st.attributes = Some(check!(create_source_attributes(activate_attributes)));
         // SAFETY: plain MF call.
