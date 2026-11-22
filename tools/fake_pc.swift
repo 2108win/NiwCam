@@ -10,6 +10,7 @@
 //   build/fake-pc --host 192.168.1.20               connect by address (port 47321)
 //   build/fake-pc --lens all --seconds 4            every lens in caps, one after another
 //   build/fake-pc --lens back-wide-1 --width 3840 --height 2160 --fps 30 --codec hevc
+//   build/fake-pc --tune '{"lowLatency":false}'     "tune" object in start (testing: lowLatency, realTime, maxFrameDelay, videoHDR, lowLightBoost)
 //   build/fake-pc --set '{"zoom":2,"torch":0.5}'    send a "set" part way through each stream
 //   build/fake-pc --effects                         open the iPhone's video-effects panel while streaming
 //   build/fake-pc --screen                          the iPhone's shared screen (TXT src=screen) instead
@@ -39,6 +40,7 @@ struct Options {
     var bitrateKbps = 8000
     var seconds = 5.0
     var set: [String: Any]?
+    var tune: [String: Any]?
     var effects = false
     var screen = false
     var forget = false
@@ -73,6 +75,11 @@ struct Options {
                     fail("--set needs a JSON object")
                 }
                 o.set = json
+            case "--tune":
+                guard let obj = try? JSONSerialization.jsonObject(with: Data(value(a).utf8)) as? [String: Any] else {
+                    fail("--tune needs a JSON object")
+                }
+                o.tune = obj
             case "--effects": o.effects = true
             case "--screen": o.screen = true
             case "--forget": o.forget = true
@@ -784,8 +791,10 @@ struct FakePc {
         phone.beginStream(hevc: codec.hasPrefix("hevc"), raw: raw)
         log("-> start \(lens) \(width)×\(height)@\(fps) \(codec) \(o.bitrateKbps) kbps")
         let t0 = Date()
-        phone.send(["type": "start", "lens": lens, "width": width, "height": height, "fps": fps, "codec": codec,
-                    "bitrateKbps": o.bitrateKbps, "hdr": codec == "hevc10"])
+        var start: [String: Any] = ["type": "start", "lens": lens, "width": width, "height": height, "fps": fps, "codec": codec,
+                                    "bitrateKbps": o.bitrateKbps, "hdr": codec == "hevc10"]
+        if let tune = o.tune { start["tune"] = tune }
+        phone.send(start)
         guard let started = phone.waitFor(["started"], timeout: 10), started["type"] as? String == "started" else {
             return "\(lens): FAILED to start \(phone.closedError.map { "(\($0))" } ?? "")"
         }
@@ -848,6 +857,9 @@ struct FakePc {
                 + " size=\(d.decodedSize.map { "\($0.0)×\($0.1)" } ?? "-") fullRange=\(d.fullRange.map(String.init) ?? "-") png=\(png)"
                 + "\n     state x\(phone.stateCount): zoom=\(st["zoom"] ?? "-") iso=\(st["iso"] ?? "-") exposureMs=\(st["exposureMs"] ?? "-")"
                 + " orientation=\(st["orientation"] ?? "-") battery=\(st["battery"] ?? "-") thermal=\(st["thermal"] ?? "-")"
+                + "\n     phone side: capture=\(st["captureFps"] ?? "-") dropped=\(st["droppedFps"] ?? "-") (\(st["dropReason"] ?? "-"))"
+                + " encoder in=\(st["encodeInFps"] ?? "-") out=\(st["encodeOutFps"] ?? "-") callMaxMs=\(st["encodeCallMs"] ?? "-")"
+                + " latencyMs=\(st["encodeLatencyMs"] ?? "-")"
                 + (o.set.map { s in " | set " + s.keys.sorted().map { "\($0)=\(st[$0] ?? "-")" }.joined(separator: " ") } ?? "")
         }
     }

@@ -287,7 +287,7 @@ Mọi thông điệp đều có trường `"type"`. Bên nhận **bỏ qua** nh�
 | type | Trường | Ý nghĩa |
 |---|---|---|
 | `getCaps` | | Xin bảng khả năng camera (mục 5) |
-| `start` | `lens`, `width`, `height`, `fps`, `codec` (`h264`, `hevc`, `hevc10`), `bitrateKbps`, `hdr` (bool), `stabilization`, `audio` (bool, mục 5.1) | Bắt đầu phát |
+| `start` | `lens`, `width`, `height`, `fps`, `codec` (`h264`, `hevc`, `hevc10`), `bitrateKbps`, `hdr` (bool), `stabilization`, `audio` (bool, mục 5.1), `tune` (object, chỉ để thử máy, bản PC không gửi: iOS đọc `lowLatency`, `realTime`, `maxFrameDelay`, `videoHDR`, `lowLightBoost`) | Bắt đầu phát |
 | `stop` | | Dừng phát; vẫn giữ kết nối |
 | `set` | các trường điều khiển ở mục 4.3; `audio` (bool, mục 5.1) | Đổi thông số khi đang phát |
 | `keyframe` | | Xin một khung khóa (sau khi mất gói, hoặc khi bộ giải mã cần khởi tạo lại) |
@@ -301,7 +301,7 @@ Mọi thông điệp đều có trường `"type"`. Bên nhận **bỏ qua** nh�
 |---|---|---|
 | `caps` | mục 5 | Trả lời `getCaps`; gửi lại khi khả năng thay đổi |
 | `started` | `lens`, `width`, `height`, `fps`, `codec`, `hdr`, `orientation`, `audio` (khi PC xin, mục 5.1) | Đã bắt đầu phát với thông số **thực tế**. `orientation` = số độ **PC phải xoay ảnh theo chiều kim đồng hồ** để hình đứng thẳng (0/90/180/270). Điện thoại tính từ hướng cảm biến và hướng cầm máy, rồi gửi lại trong `state` mỗi khi người dùng xoay máy |
-| `state` | trạng thái hiện tại của mọi trường ở mục 4.3, cộng `iso`, `exposureMs`, `lensPosition`, `wbKelvin`, `thermal` (`nominal`/`fair`/`serious`/`critical`), `battery` (0–100), `charging` | Gửi khi có thay đổi, tối đa 4 lần/giây |
+| `state` | trạng thái hiện tại của mọi trường ở mục 4.3, cộng `iso`, `exposureMs`, `lensPosition`, `wbKelvin`, `thermal` (`nominal`/`fair`/`serious`/`critical`), `battery` (0–100), `charging`; iOS thêm số đo mỗi giây để tìm khung bị mất: `captureFps`, `droppedFps`, `dropReason`, `encodeInFps`, `encodeOutFps`, `encodeCallMs`, `encodeLatencyMs` | Gửi khi có thay đổi, tối đa 4 lần/giây |
 | `stopped` | `reason` | Đã dừng: do PC, app bị ẩn, máy quá nóng… |
 | `error` | `code`, `message` (tiếng Việt, để hiện cho người dùng) | Lỗi |
 | `bitrate` | `kbps` | Bitrate hiện tại sau khi tự thích ứng |

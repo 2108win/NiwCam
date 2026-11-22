@@ -3,6 +3,8 @@
 > **Unfinished work (2026-10-18): read [docs/HANDOFF.md](docs/HANDOFF.md) first.** It says what is
 > not tested yet, the user's decisions, and the next steps.
 
+> **iPhone 4K60 only gives ~40 fps (2026-11-22): [docs/ios-4k60.md](docs/ios-4k60.md)** has the measurements and what to run on a Mac with the iPhone.
+
 A Camo Studio–like app: external cameras (USB webcams, Android phones, iPhones) published as a Windows 11
 virtual camera **"NiwCam"** at each source's **native resolution**. User-facing docs: [README.md](README.md)
 (Vietnamese). Wire protocol shared by all three sides: [docs/protocol.md](docs/protocol.md).
@@ -431,6 +433,10 @@ Windows 11.
   frames at 30 fps through the installed 0.1.12 vcam, queueMs 260–340 in stall seconds. **Not
   tested:** the new vcam DLL's pacing (needs the installer), the "Trễ mạng" row on screen, any
   phone (Android APK built, tests pass; iOS not compiled: needs a Mac).
+- **GPU decode (2026-11-22, both engines, `VideoDecoder`, rust/DECISIONS.md ADR-011):** 4K60 could not keep up in software (12.7 ms a 4K frame, one
+  thread). The decoder MFT now gets a D3D11 device (DXVA) and falls back to software by itself; `NIWCAM_DECODER=software` forces the old path,
+  `NIWCAM_TRACE=1` (Rust engine) prints decode ms, lag and skips each second. Tools: `niwcam-fake-phone --replay <gen_stream .bin> --size WxH --fps N
+  --codec h264|hevc` (any size/rate), `driver --phone-args`, `phone_perf` (real phone), `decode_bench`. 4K60: 28 fps -> 61 fps. Not seen on a real iPhone yet.
 - **Build tools:** VS 2022 Build Tools (C++, CMake, Windows 11 SDK 26100) and the .NET 10 SDK
   (`C:\Program Files\dotnet`, not on PATH in an old shell). A `build\CMakeCache.txt` from a removed
   Visual Studio stops CMake ("could not find specified instance"): delete it and `build\CMakeFiles`.

@@ -1,6 +1,44 @@
 import CoreMedia
 import Foundation
+import os
 import VideoToolbox
+
+private let diagLog = Logger(subsystem: "vn.camstudio.phone", category: "stream")
+
+/// Counters for finding where frames are lost at a high resolution and rate: what the camera delivers,
+/// what the capture queue drops (with iOS' reason), what goes into the encoder and what comes out, and how
+/// long the encoder takes. Closed once a second into `state` (docs/protocol.md 4.4) and the system log.
+final class StreamDiag {
+    private let lock = NSLock()
+    private var captured = 0, dropped = 0, submitted = 0, completed = 0
+    private var callNsMax: UInt64 = 0, latencyNsSum: UInt64 = 0
+    private var lastReason = ""
+    private var windowStart = DispatchTime.now().uptimeNanoseconds
+
+    func capture() { lock.lock(); captured += 1; lock.unlock() }
+    func drop(_ reason: String) { lock.lock(); dropped += 1; lastReason = reason; lock.unlock() }
+    func submit(callNs: UInt64) { lock.lock(); submitted += 1; callNsMax = max(callNsMax, callNs); lock.unlock() }
+    func complete(latencyNs: UInt64) { lock.lock(); completed += 1; latencyNsSum += latencyNs; lock.unlock() }
+
+    /// The numbers of the last full second, once one has passed; nil before that.
+    func roll() -> [String: Any]? {
+        lock.lock(); defer { lock.unlock() }
+        let now = DispatchTime.now().uptimeNanoseconds
+        let seconds = Double(now - windowStart) / 1e9
+        guard seconds >= 1 else { return nil }
+        func rate(_ n: Int) -> Double { (Double(n) / seconds * 10).rounded() / 10 }
+        let latency = completed > 0 ? Double(latencyNsSum) / Double(completed) / 1e6 : 0
+        let out: [String: Any] = [
+            "captureFps": rate(captured), "droppedFps": rate(dropped), "encodeInFps": rate(submitted),
+            "encodeOutFps": rate(completed), "encodeCallMs": (Double(callNsMax) / 1e5).rounded() / 10,
+            "encodeLatencyMs": (latency * 10).rounded() / 10, "dropReason": lastReason,
+        ]
+        diagLog.info("capture \(self.captured, privacy: .public) dropped \(self.dropped, privacy: .public) (\(self.lastReason, privacy: .public)) encoder in \(self.submitted, privacy: .public) out \(self.completed, privacy: .public), call max \(Double(self.callNsMax) / 1e6, privacy: .public) ms, latency \(latency, privacy: .public) ms")
+        captured = 0; dropped = 0; submitted = 0; completed = 0; callNsMax = 0; latencyNsSum = 0
+        windowStart = now
+        return out
+    }
+}
 
 /// VideoToolbox hardware encoder -> Annex-B packets (docs/protocol.md 2). VideoToolbox writes AVCC:
 /// the 4-byte lengths become start codes, and the parameter sets from the format description go
@@ -19,8 +57,12 @@ final class VideoEncoder {
     private var session: VTCompressionSession?
     private var forceKeyframe = true
     private var lastFormat: CMFormatDescription? // VideoToolbox delivers one session's output in order
+    let diag = StreamDiag()
 
-    init(width: Int32, height: Int32, fps: Int, codec: String, bitrate: Int, callbacks: StreamCallbacks) throws {
+    /// `tune` (the optional "tune" object of "start", for finding the cause of a slow mode; the defaults are the
+    /// shipped behaviour): `lowLatency` (bool, low-latency rate control), `realTime` (bool), `maxFrameDelay` (int).
+    init(width: Int32, height: Int32, fps: Int, codec: String, bitrate: Int, callbacks: StreamCallbacks,
+         tune: [String: Any] = [:]) throws {
         self.width = width
         self.height = height
         self.codec = codec
@@ -28,11 +70,12 @@ final class VideoEncoder {
         self.callbacks = callbacks
 
         let codecType = codec.hasPrefix("hevc") ? kCMVideoCodecType_HEVC : kCMVideoCodecType_H264
-        let spec: [CFString: Any] = [kVTVideoEncoderSpecification_EnableLowLatencyRateControl: true]
+        let spec: CFDictionary? = (tune["lowLatency"] as? Bool ?? true)
+            ? [kVTVideoEncoderSpecification_EnableLowLatencyRateControl: true] as CFDictionary : nil
         var session: VTCompressionSession?
         var status = VTCompressionSessionCreate(
             allocator: nil, width: width, height: height, codecType: codecType,
-            encoderSpecification: spec as CFDictionary, imageBufferAttributes: nil, compressedDataAllocator: nil,
+            encoderSpecification: spec, imageBufferAttributes: nil, compressedDataAllocator: nil,
             outputCallback: nil, refcon: nil, compressionSessionOut: &session)
         if status != noErr {
             // The low-latency encoder does not take every codec/size on every
@@ -47,7 +90,7 @@ final class VideoEncoder {
         }
 
         func set(_ key: CFString, _ value: Any) { VTSessionSetProperty(session, key: key, value: value as CFTypeRef) }
-        set(kVTCompressionPropertyKey_RealTime, true)
+        set(kVTCompressionPropertyKey_RealTime, tune["realTime"] as? Bool ?? true)
         set(kVTCompressionPropertyKey_AllowFrameReordering, false)
         set(kVTCompressionPropertyKey_AverageBitRate, bitrate)
         set(kVTCompressionPropertyKey_ExpectedFrameRate, fps)
@@ -56,7 +99,7 @@ final class VideoEncoder {
         // Wi‑Fi. No frame held back in the encoder.
         set(kVTCompressionPropertyKey_MaxKeyFrameInterval, fps * VideoEncoder.keyframeSeconds)
         set(kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration, VideoEncoder.keyframeSeconds)
-        set(kVTCompressionPropertyKey_MaxFrameDelayCount, 0)
+        set(kVTCompressionPropertyKey_MaxFrameDelayCount, tune["maxFrameDelay"] as? Int ?? 0)
         switch codec {
         case "hevc10":
             set(kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_HEVC_Main10_AutoLevel)
@@ -79,11 +122,14 @@ final class VideoEncoder {
         forceKeyframe = false
         lock.unlock()
         let props = keyframe ? [kVTEncodeFrameOptionKey_ForceKeyFrame: true] as CFDictionary : nil
+        let t0 = DispatchTime.now().uptimeNanoseconds
         VTCompressionSessionEncodeFrame(session, imageBuffer: image, presentationTimeStamp: pts, duration: .invalid,
                                         frameProperties: props, infoFlagsOut: nil) { [weak self] status, _, sample in
             guard status == noErr, let sample, let self else { return }
+            self.diag.complete(latencyNs: DispatchTime.now().uptimeNanoseconds - t0)
             self.emit(sample)
         }
+        diag.submit(callNs: DispatchTime.now().uptimeNanoseconds - t0)
     }
 
     func requestKeyframe() {

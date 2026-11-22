@@ -25,7 +25,8 @@ final class CameraSource: MediaSource {
         let height = Int32(json["height"] as? Int ?? 1080)
         let fps = json["fps"] as? Int ?? 30
         let codec = json["codec"] as? String ?? "hevc"
-        let s = CameraStreamer(lens: lens, width: width, height: height, fps: fps, codec: codec, bitrate: bitrate, callbacks: callbacks)
+        let s = CameraStreamer(lens: lens, width: width, height: height, fps: fps, codec: codec, bitrate: bitrate, callbacks: callbacks,
+                               tune: json["tune"] as? [String: Any] ?? [:])
         do {
             try s.start(stabilization: json["stabilization"] as? String, cinematic: json["cinematic"] as? Bool ?? false)
         } catch let e as StreamError {

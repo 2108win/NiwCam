@@ -11,6 +11,8 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     private(set) var codec: String                // h264 | hevc | hevc10 (falls back to hevc without 10-bit)
     private var bitrate: Int
     private let callbacks: StreamCallbacks
+    private let tune: [String: Any]            // optional "tune" of "start" (testing only, VideoEncoder.init)
+    private var lastDiag: [String: Any] = [:]
 
     private let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
@@ -29,7 +31,9 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     /// The camera keeps running when the app leaves the screen (in the PiP window).
     var runsInBackground: Bool { session.isMultitaskingCameraAccessEnabled }
 
-    init(lens: CameraCaps.Lens, width: Int32, height: Int32, fps: Int, codec: String, bitrate: Int, callbacks: StreamCallbacks) {
+    init(lens: CameraCaps.Lens, width: Int32, height: Int32, fps: Int, codec: String, bitrate: Int, callbacks: StreamCallbacks,
+         tune: [String: Any] = [:]) {
+        self.tune = tune
         self.lens = lens
         self.width = width
         self.height = height
@@ -66,6 +70,14 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         device.activeVideoMaxFrameDuration = duration
         if codec == "hevc10", format.supportedColorSpaces.contains(.HLG_BT2020) {
             device.activeColorSpace = .HLG_BT2020
+        }
+        // Tests (tune): video HDR and low-light boost can cost frame rate or add processing at 4K60.
+        if tune["videoHDR"] as? Bool == false {
+            device.automaticallyAdjustsVideoHDREnabled = false
+            if format.isVideoHDRSupported { device.isVideoHDREnabled = false }
+        }
+        if tune["lowLightBoost"] as? Bool == false, device.isLowLightBoostSupported {
+            device.automaticallyEnablesLowLightBoostWhenAvailable = false
         }
         device.unlockForConfiguration()
 
@@ -107,7 +119,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.commitConfiguration()
         committed = true
 
-        encoder = try VideoEncoder(width: width, height: height, fps: fps, codec: codec, bitrate: bitrate, callbacks: callbacks)
+        encoder = try VideoEncoder(width: width, height: height, fps: fps, codec: codec, bitrate: bitrate, callbacks: callbacks, tune: tune)
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVCaptureSession.wasInterruptedNotification, object: session, queue: nil) { [weak self] n in
             self?.interrupted(n)
@@ -186,7 +198,17 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let image = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        encoder?.diag.capture()
         encoder?.encode(image, pts: CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+    }
+
+    /// A frame the capture queue dropped (the delegate was still busy, or iOS had a reason): counted, with iOS' reason.
+    func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        var reason = "?"
+        if let r = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_DroppedFrameReason, attachmentModeOut: nil) {
+            reason = "\(r)"
+        }
+        encoder?.diag.drop(reason)
     }
 
     // MARK: - controls
@@ -318,6 +340,8 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         state["orientation"] = orientation
         state["bitrateKbps"] = bitrate / 1000
+        if let rolled = encoder?.diag.roll() { lastDiag = rolled }
+        state.merge(lastDiag) { _, new in new }
         state.merge(DeviceStatus.fields()) { _, new in new }
         callbacks.state(state)
     }
