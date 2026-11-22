@@ -1,0 +1,23 @@
+dll=D:\winlax\job\cam-studio\build\Release\NiwCamEngine.dll
+init=0
+cameras=2
+camera[0] kind=0 name=OBSBOT Meet SE StreamCamera id=cam:\\?\usb#vid_3564&pid_fefe&mi_00#9&32fd9698&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\global
+camera[1] kind=1 name=127.0.0.1 (127.0.0.1) id=phone:127.0.0.1:47997
+pairing_code_len=7
+formats=1
+format[0] 1280x720@30/1 fourcc=34363248 native=1 lens=1 label=Camera giả · góc rộng
+caps_len=385
+start=1
+shared_memory_opened=true
+t=0s state=2 out=1280x720 camera=1280x720 fps=0 standby=0 consumer=0 noSource=0 picture=1280x720 preview=0x0
+t=1s state=2 out=1280x720 camera=1280x720 fps=12 standby=0 consumer=1 noSource=0 picture=1280x720 preview=1280x720
+t=2s state=2 out=1280x720 camera=1280x720 fps=31 standby=0 consumer=1 noSource=0 picture=1280x720 preview=1280x720
+t=3s state=2 out=1280x720 camera=1280x720 fps=30 standby=0 consumer=1 noSource=0 picture=1280x720 preview=1280x720
+t=4s state=2 out=1280x720 camera=1280x720 fps=31 standby=0 consumer=1 noSource=0 picture=1280x720 preview=1280x720
+t=5s state=2 out=1280x720 camera=1280x720 fps=30 standby=0 consumer=1 noSource=0 picture=1280x720 preview=1280x720
+reader_frames=169 reader_fps=28.2
+preview_updates=169 preview_fps=28.2
+header width=1280 height=720 stride=1280 slots=3 frame_bytes=14155776 version=2
+switch_none=2
+after_switch_none state=2 noSource=1 out=1280x720 err=
+done

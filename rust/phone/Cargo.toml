@@ -1,0 +1,10 @@
+[package]
+name = "niwcam-phone"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+niwcam-core = { path = "../core" }
+windows = "0.62"
+

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core"]
+members = ["core", "shm", "phone", "media", "fx", "vcam", "dshow", "engine"]
 
 [workspace.package]
 edition = "2021"
@@ -12,3 +12,5 @@ unsafe_code = "forbid"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
+
+

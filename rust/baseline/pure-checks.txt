@@ -1,0 +1,5 @@
+OK    fresh ECDH round trip
+
+ALL PASS
+388 checks, 0 failed
+37 checks, 0 failed

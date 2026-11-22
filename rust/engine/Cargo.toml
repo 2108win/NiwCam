@@ -1,0 +1,13 @@
+[package]
+name = "niwcam-engine"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[lib]
+name = "niwcam_engine"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+niwcam-core = { path = "../core" }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Memory"] }
