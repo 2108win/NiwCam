@@ -10,15 +10,18 @@ bridge C++/C#.
 
 ## Waves
 
-| Wave | Module (C++ file) | State |
+| Wave | Crate / module | State |
 |---|---|---|
-| 0 | `crypto` (Crypto.cpp) — ECDH, HKDF, AES-GCM, SAS | **done**: `docs/protocol-vectors.json` matches, 6 tests, clippy clean |
-| 1 | `json`, `image_settings`, `nv12`, `auto_frame`, `skin_smooth` | **done**: 31 Rust tests (ports of `frame-check` and `framing-check`), clippy clean, and `xcheck/run.ps1` shows 1863 output lines identical to the C++ |
-| 1b | `shared_frame` (SharedFrame.h), `frame_writer` (FrameWriter.h) | open: Win32 shared memory, moves to wave 2 with the OS crate |
-| 2 | `phone_link` (PhoneLink), `connector` (Connector), `discovery` (mDNS), `usb_transport` (adb, usbmuxd), `video_decoder` (Media Foundation) | open |
-| 3 | `capture_engine` (CaptureEngine, 2000 lines), `mf_devices`, `window_source`, `screen_viewer`, `recorder`, `audio_out`, `still_picture`, `segmenter`, `face_detect` | open |
-| 4 | `vcam` (COM media source, Frame Server), `dshow` (x64 + x86 filter), C API cdylib `NiwCamEngine.dll` | open |
-| — | WinUI 3 app, Android, iOS | out of scope |
+| 0-1 | `core`: crypto, json, nv12, image_settings, auto_frame, skin_smooth | **done**: `xcheck/run.ps1` identical to the C++ on 1863 lines |
+| 2 | `shm` (SharedFrame, FrameWriter, FrameReader), `phone` (PhoneLink, discovery, USB, connector) | **done**, each with its own `xcheck/run.ps1` against the C++ |
+| 3 | `media` (decoder, webcams, audio out, recorder), `fx` (pause picture, faces, background, window capture) | **done**, each with its own `xcheck/run.ps1` |
+| 3b | `engine`: CaptureEngine + Pipeline, ScreenViewer, the 55 `cs_*` exports -> `NiwCamEngine.dll` | **done**: ABI layout and exports identical; `engine/xcheck/engine.ps1` runs the same scenario through the C++ and the Rust DLL: same behaviour, same RAM |
+| 4 | `vcam` (`CamStudioVCam.dll`, Frame Server), `dshow` (`CamStudioDShow.dll`, x64+x86) | **done in isolation** (loaded in-process, not registered): exports identical, same samples/frames as the C++ |
+| — | WinUI 3 app, Android, iOS | stay as they are |
+
+**Not proven yet (needs the user):** the Rust `NiwCamEngine.dll` under the real WinUI app, the Rust vcam loaded by the real
+Frame Server (admin registration), the dshow filter in a real DirectShow app, a webcam/phone/iPhone/Discord run, Windows 10.
+Until then the shipped build is the C++ one; `scripts\package-release.ps1` is not changed.
 
 Sizes: engine ~13.5k lines C++ (CaptureEngine 2.0k, UsbTransport 0.9k, EngineApi 0.9k, SourceFilter 0.9k).
 

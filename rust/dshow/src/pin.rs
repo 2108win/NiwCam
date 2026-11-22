@@ -123,19 +123,18 @@ fn is_partial(mt: Option<&AM_MEDIA_TYPE>) -> bool {
 }
 
 /// NV12 (contiguous, pitch w) -> YUY2 (pitch 2w). Chroma rows are shared by two luma rows.
+/// (Written with chunk iterators so the per-pixel loop has no bounds checks: the C++ has none.)
 pub fn nv12_to_yuy2(nv12: &[u8], w: u32, h: u32, dst: &mut [u8]) {
     let (w, h) = (w as usize, h as usize);
-    let uv_plane = &nv12[w * h..];
-    for y in 0..h {
-        let yr = &nv12[y * w..];
-        let uv = &uv_plane[(y / 2) * w..];
-        let d = &mut dst[y * w * 2..(y + 1) * w * 2];
-        for x in (0..w).step_by(2) {
-            let o = &mut d[x * 2..x * 2 + 4];
-            o[0] = yr[x];
-            o[1] = uv[x];
-            o[2] = yr[x + 1];
-            o[3] = uv[x + 1];
+    let (luma, uv_plane) = nv12.split_at(w * h);
+    for (y, d) in dst.chunks_exact_mut(w * 2).take(h).enumerate() {
+        let yr = &luma[y * w..(y + 1) * w];
+        let uv = &uv_plane[(y / 2) * w..(y / 2 + 1) * w];
+        let (d4, _) = d.as_chunks_mut::<4>();
+        let (y2, _) = yr.as_chunks::<2>();
+        let (c2, _) = uv.as_chunks::<2>();
+        for ((o, yy), cc) in d4.iter_mut().zip(y2).zip(c2) {
+            *o = [yy[0], cc[0], yy[1], cc[1]];
         }
     }
 }
@@ -144,12 +143,11 @@ pub fn nv12_to_yuy2(nv12: &[u8], w: u32, h: u32, dst: &mut [u8]) {
 pub fn nv12_to_i420(nv12: &[u8], w: u32, h: u32, dst: &mut [u8]) {
     let luma = w as usize * h as usize;
     dst[..luma].copy_from_slice(&nv12[..luma]);
-    let uv = &nv12[luma..];
-    let pairs = luma / 4;
-    let (u, v) = dst[luma..].split_at_mut(pairs);
-    for i in 0..pairs {
-        u[i] = uv[2 * i];
-        v[i] = uv[2 * i + 1];
+    let (pairs, _) = nv12[luma..].as_chunks::<2>();
+    let (u, v) = dst[luma..].split_at_mut(luma / 4);
+    for ((u, v), p) in u.iter_mut().zip(v.iter_mut()).zip(pairs) {
+        *u = p[0];
+        *v = p[1];
     }
 }
 

@@ -16,9 +16,13 @@ use std::time::{Duration, Instant};
 use windows::core::{w, PCSTR, PCWSTR};
 use windows::Win32::Foundation::{CloseHandle, HANDLE, HMODULE};
 use windows::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
-use windows::Win32::System::Memory::{MapViewOfFile, OpenFileMappingW, FILE_MAP_READ, FILE_MAP_WRITE};
+use windows::Win32::System::Memory::{
+    MapViewOfFile, OpenFileMappingW, FILE_MAP_READ, FILE_MAP_WRITE,
+};
+use windows::Win32::System::ProcessStatus::{GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS};
+use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
 
-use niwcam_engine::abi::{CsFormat, CsImage, CsStatus};
+use NiwCamEngine::abi::{CsFormat, CsImage, CsStatus};
 
 struct Api {
     module: HMODULE,
@@ -28,14 +32,16 @@ impl Api {
     fn load(path: &str) -> Api {
         let wide: Vec<u16> = path.encode_utf16().chain([0]).collect();
         // SAFETY: `wide` is a NUL-terminated UTF-16 path that outlives the call.
-        let module = unsafe { LoadLibraryW(PCWSTR(wide.as_ptr())) }.unwrap_or_else(|e| panic!("LoadLibrary {path}: {e}"));
+        let module = unsafe { LoadLibraryW(PCWSTR(wide.as_ptr())) }
+            .unwrap_or_else(|e| panic!("LoadLibrary {path}: {e}"));
         Api { module }
     }
 
     fn f<T: Copy>(&self, name: &str) -> T {
         let c = std::ffi::CString::new(name).unwrap();
         // SAFETY: the module handle is valid and the name is NUL-terminated.
-        let p = unsafe { GetProcAddress(self.module, PCSTR(c.as_ptr() as *const u8)) }.unwrap_or_else(|| panic!("missing export {name}"));
+        let p = unsafe { GetProcAddress(self.module, PCSTR(c.as_ptr() as *const u8)) }
+            .unwrap_or_else(|| panic!("missing export {name}"));
         // SAFETY: the caller names the exact signature of the export through `T`.
         unsafe { std::mem::transmute_copy(&p) }
     }
@@ -64,7 +70,9 @@ fn wstr(buf: &[u16]) -> String {
 
 fn arg(name: &str) -> Option<String> {
     let a: Vec<String> = std::env::args().collect();
-    a.iter().position(|x| x == name).and_then(|i| a.get(i + 1).cloned())
+    a.iter()
+        .position(|x| x == name)
+        .and_then(|i| a.get(i + 1).cloned())
 }
 
 /// What a reader of the shared memory sees (the layout of `SharedFrameHeader`).
@@ -175,14 +183,36 @@ fn main() {
         for i in 0..count.max(0) {
             let mut f: CsFormat = std::mem::zeroed();
             get_format(i, &mut f);
-            println!("format[{i}] {}x{}@{}/{} fourcc={:08x} native={} lens={} label={}", f.width, f.height, f.fps_num, f.fps_den, f.fourcc, f.is_native, f.lens, wstr(&f.lens_label));
+            println!(
+                "format[{i}] {}x{}@{}/{} fourcc={:08x} native={} lens={} label={}",
+                f.width,
+                f.height,
+                f.fps_num,
+                f.fps_den,
+                f.fourcc,
+                f.is_native,
+                f.lens,
+                wstr(&f.lens_label)
+            );
         }
         let mut caps = vec![0u8; 16384];
         let len = phone_caps(caps.as_mut_ptr(), caps.len() as i32);
         println!("caps_len={len}");
 
         preview_enabled(1);
-        let image = CsImage { rotation: 0, mirror: 0, flip: 0, aspect: 0, zoom: 1.0, center_x: 0.5, center_y: 0.5, brightness: 0, contrast: 0, saturation: 0, temperature: 0 };
+        let image = CsImage {
+            rotation: 0,
+            mirror: 0,
+            flip: 0,
+            aspect: 0,
+            zoom: 1.0,
+            center_x: 0.5,
+            center_y: 0.5,
+            brightness: 0,
+            contrast: 0,
+            saturation: 0,
+            temperature: 0,
+        };
         let id = start(phone_index, 0, &image);
         println!("start={id}");
 
@@ -192,7 +222,8 @@ fn main() {
         let begin = Instant::now();
         let mut header: *mut Header = std::ptr::null_mut();
         while begin.elapsed() < Duration::from_secs(10) && header.is_null() {
-            if let Ok(h) = OpenFileMappingW((FILE_MAP_READ | FILE_MAP_WRITE).0, false, mapping_name) {
+            if let Ok(h) = OpenFileMappingW((FILE_MAP_READ | FILE_MAP_WRITE).0, false, mapping_name)
+            {
                 mapping = h;
                 let view = MapViewOfFile(h, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
                 header = view.Value as *mut Header;
@@ -205,7 +236,7 @@ fn main() {
         println!("shared_memory_opened={}", !header.is_null());
         if !header.is_null() {
             // A reader is "active": the engine then writes every frame.
-            (*(&raw mut (*header).reader_active)) += 1;
+            (*header).reader_active += 1;
         }
 
         let mut last_latest = 0i64;
@@ -224,7 +255,13 @@ fn main() {
                 }
             }
             let (mut pw, mut ph, mut pid) = (0u32, 0u32, 0u64);
-            copy_preview(pixels.as_mut_ptr(), pixels.len() as i32, &mut pw, &mut ph, &mut pid);
+            copy_preview(
+                pixels.as_mut_ptr(),
+                pixels.len() as i32,
+                &mut pw,
+                &mut ph,
+                &mut pid,
+            );
             if pid != preview_id {
                 preview_frames += 1;
                 preview_id = pid;
@@ -243,10 +280,24 @@ fn main() {
             println!("{p}");
         }
         let secs = t0.elapsed().as_secs_f64();
-        println!("reader_frames={frames} reader_fps={:.1}", frames as f64 / secs);
-        println!("preview_updates={preview_frames} preview_fps={:.1}", preview_frames as f64 / secs);
+        println!(
+            "reader_frames={frames} reader_fps={:.1}",
+            frames as f64 / secs
+        );
+        println!(
+            "preview_updates={preview_frames} preview_fps={:.1}",
+            preview_frames as f64 / secs
+        );
         if !header.is_null() {
-            println!("header width={} height={} stride={} slots={} frame_bytes={} version={}", (*header).width, (*header).height, (*header).stride, (*header).slots, (*header).frame_bytes, (*header).version);
+            println!(
+                "header width={} height={} stride={} slots={} frame_bytes={} version={}",
+                (*header).width,
+                (*header).height,
+                (*header).stride,
+                (*header).slots,
+                (*header).frame_bytes,
+                (*header).version
+            );
         }
 
         // Switch to "no source": the camera stays, apps see "no signal".
@@ -255,12 +306,42 @@ fn main() {
         std::thread::sleep(Duration::from_secs(3));
         let mut st: CsStatus = std::mem::zeroed();
         status(&mut st);
-        println!("after_switch_none state={} noSource={} out={}x{} err={}", st.state, st.no_source, st.width, st.height, wstr(&st.error));
+        println!(
+            "after_switch_none state={} noSource={} out={}x{} err={}",
+            st.state,
+            st.no_source,
+            st.width,
+            st.height,
+            wstr(&st.error)
+        );
 
         if !header.is_null() {
-            (*(&raw mut (*header).reader_active)) -= 1;
+            (*header).reader_active -= 1;
         }
         stop();
+        // CPU and memory of this process (the engine runs inside it) over the whole scenario.
+        {
+            let (mut c, mut e, mut k, mut u) = (
+                Default::default(),
+                Default::default(),
+                Default::default(),
+                Default::default(),
+            );
+            let _ = GetProcessTimes(GetCurrentProcess(), &mut c, &mut e, &mut k, &mut u);
+            let ticks = |f: windows::Win32::Foundation::FILETIME| {
+                ((u64::from(f.dwHighDateTime) << 32) | u64::from(f.dwLowDateTime)) as f64 / 1e7
+            };
+            let mut m: PROCESS_MEMORY_COUNTERS = std::mem::zeroed();
+            m.cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS>() as u32;
+            let _ = GetProcessMemoryInfo(GetCurrentProcess(), &mut m, m.cb);
+            println!(
+                "process_cpu_seconds={:.2} (user {:.2} kernel {:.2}) peak_working_set_mb={:.0}",
+                ticks(k) + ticks(u),
+                ticks(u),
+                ticks(k),
+                m.PeakWorkingSetSize as f64 / 1048576.0
+            );
+        }
         shutdown();
         if !mapping.is_invalid() {
             let _ = CloseHandle(mapping);

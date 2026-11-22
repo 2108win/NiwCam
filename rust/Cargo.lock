@@ -310,6 +310,10 @@ name = "niwcam-engine"
 version = "0.1.14"
 dependencies = [
  "niwcam-core",
+ "niwcam-fx",
+ "niwcam-media",
+ "niwcam-phone",
+ "niwcam-shm",
  "windows",
 ]
 

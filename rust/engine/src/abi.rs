@@ -101,7 +101,12 @@ pub fn layout_lines() -> Vec<String> {
     }
     macro_rules! o {
         ($t:ty, $tn:literal, $f:ident, $fname:literal) => {
-            v.push(format!("offsetof {}.{} {}", $tn, $fname, offset_of!($t, $f)));
+            v.push(format!(
+                "offsetof {}.{} {}",
+                $tn,
+                $fname,
+                offset_of!($t, $f)
+            ));
         };
     }
     s!(CsFormat, "CsFormat");
