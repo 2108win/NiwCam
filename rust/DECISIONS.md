@@ -119,7 +119,7 @@ Also: the camera is published again at a faster rate when a faster source arrive
 Not tested: a real iPhone (4K60, HLG 10-bit) and the HEVC 10-bit fallback; Wi-Fi bandwidth at 4K60 (the bitrate heuristic caps at 60 Mbps).
 
 ## ADR-012: Heavy iPhone modes use HEVC and the normal encoder (2026-11-22)
-Status: accepted. iOS built and measured on an iPhone 14; PC (both engines) written on the Mac, NOT compiled
+Status: accepted. iOS built and measured on an iPhone 14; PC (both engines) compiled and measured on the PC with that iPhone over USB (below)
 Context: the iPhone sent ~40 fps at 4K60/50/48. Measured on the phone (`StreamDiag`, docs/ios-4k60.md): the camera delivers 60, but VideoToolbox's
 low-latency rate control encodes one frame at a time (the encode call returns when the frame is done): ~26 ms per 4K frame, ~9.5 ms per 1080p frame, so
 4K60 HEVC gave 37.6 fps (22.4 frames/s dropped as `FrameWasLate`) and 1080p120 108. The normal encoder pipelines ~2 frames: HEVC 4K60 = 60 fps at 35-39 ms,
@@ -130,3 +130,6 @@ H.264) sees no change. The PC asks HEVC for exactly those iPhone modes when Wind
 two rules must stay equal. The saved mode (`HKCU\...\Modes`) holds lens, size and fps only, so it still matches.
 Not tested: the PC change (compile, then 4K60 from the real iPhone through the virtual camera); other iPhone models (thresholds from an A15);
 HEVC 10-bit with the normal encoder; Wi-Fi at 4K to the real PC (from the Mac the link carried only ~15-18 Mbit/s, docs/ios-4k60.md).
+Result on the PC (2026-11-22, iPhone 14 over USB, `phone_perf --usb --format 3840x2160@60`): the mode list offers 4K60/50/48 as HEVC and 4K30 as H.264 (both engines);
+Rust engine 5 min: 59.9 fps average, lag peak 33 ms, 7 frames skipped in 300 s, ~77 % of a core; C++ engine 15 s: 60 fps, ~100 % of a core, 52 skipped.
+Not seen: the app's hot-phone rule in a long run (phone_perf does not read `thermal`; the frame rate never fell).

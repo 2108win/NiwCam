@@ -26,7 +26,7 @@ riêng; caps báo `lowLightBoost` false trên máy này); `maxFrameDelay:1` khô
 - iPhone (`VideoEncoder.lowLatencyFits`): HEVC có fps > 60 hoặc số điểm ảnh/giây > 4K30 thì dùng bộ mã hóa thường. H.264 giữ
   độ trễ thấp ở mọi chế độ (bộ mã hóa thường của H.264 trễ 139 ms ở 4K60). `state.lowLatency` cho biết chế độ đang dùng.
 - PC (`phone_formats` trong `rust/engine/src/api.rs`, `PhoneFormats` trong `src/engine/EngineApi.cpp`): với iPhone, đúng các
-  chế độ đó xin HEVC (khi Windows có bộ giải mã HEVC). **Viết trên Mac, chưa biên dịch.**
+  chế độ đó xin HEVC (khi Windows có bộ giải mã HEVC). Viết trên Mac; đã biên dịch và đo trên PC (iPhone 14, cáp USB, 4K60 HEVC = 60 fps, 5 phút ổn, 2026-11-22).
 - Kiểm lại sau khi sửa: 4K60 HEVC phía iPhone 60, máy nhận 58,5; H.264 4K60 vẫn ~40 với `lowLatency=1` (y như bản cũ);
   4K30, 1080p60, 1080p30 không đổi. CryptoTests đạt.
 

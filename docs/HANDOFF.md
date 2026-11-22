@@ -5,14 +5,12 @@
 > giải mã GPU (cả C++ lẫn Rust). **iPhone ~40 khung/giây ở 4K60: đã tìm ra và sửa trên iPhone** (mục 0.2; phần PC viết trên Mac, chưa
 > biên dịch). Người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
 
-> **Việc tiếp theo trên PC Windows (theo thứ tự):**
-> 1. `git pull origin main`. Build cả hai engine (`scripts\build.ps1`, Rust: `cargo build --release` như mục 0.5). Sửa lỗi biên dịch nếu có
->    ở `iphone_needs_hevc` (`rust/engine/src/api.rs`) và `IphoneNeedsHevc` (`src/engine/EngineApi.cpp`): viết trên Mac, chưa qua trình biên dịch.
-> 2. `cargo test --workspace`, `rust\engine\xcheck\engine.ps1` (so C++ với Rust), `niwcam-protocol-test`.
-> 3. iPhone cắm cáp (đang chạy bản thử có bản sửa, đừng cài lại từ App Store): `phone_perf --usb --format 3840x2160@60` với
->    `NIWCAM_TRACE=1`: phải ~60 fps (trước: ~40). Windows phải có bộ giải mã HEVC (`has_hevc_decoder`), nếu không PC vẫn xin H.264 (~40).
-> 4. 5 phút 4K60 qua cáp, theo dõi `thermal` (cáp sạc máy; `serious` làm PC hạ xuống 1080p30 và che mất bản sửa).
-> 5. Rồi mới tới mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật). Ghi kết quả vào đây và ADR-012; bản TestFlight/App Store mới do người dùng quyết.
+> **Đã làm trên PC Windows (2026-11-22, tối):** build cả hai engine không lỗi; `cargo test --workspace`, `engine.ps1` (BEHAVIOUR SAME, 60 fps cả hai),
+> `niwcam-protocol-test` đều đạt. **iPhone 14 thật, 4K60 qua cáp USB: ~60 fps** (trước ~40): Rust engine 5 phút liền trung bình 59,9 fps, lag đỉnh 33 ms,
+> 7 khung bỏ/300 s, CPU ~77 % một lõi; C++ engine 60 fps nhưng nặng hơn (CPU ~100 %, bỏ 52 khung/15 s). Menu chế độ vẫn có 4K60/50/48 (HEVC), 4K30 vẫn H.264.
+> **Còn lại:** mục 0.3 (Discord ở 4K, Wi‑Fi 4K60 thật); luật nóng máy của app chưa thử trong 5 phút (phone_perf không đọc `thermal`; fps không tụt);
+> `phone_perf` thoát với 0xC0000005 trong `dnsapi.dll` khi engine **Rust** tắt (engine C++ thoát 0; đã có từ 17:38, không thấy ở app NiwCam: nghi chuyện dọn mDNS lúc thoát, chưa tra);
+> TestFlight/App Store mới do người dùng quyết.
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first, then this file, then `rust/MAP.md` and
 `rust/DECISIONS.md` (ADR-001..012). Update this file in the same commit as each step; delete it once everything is tested.
@@ -36,7 +34,7 @@ Write-up: **[docs/ios-4k60.md](ios-4k60.md)**, decision ADR-012. The low-latency
 - iOS: HEVC above 4K30 pixels/s or 60 fps uses the normal encoder: 4K60 HEVC 37.6 -> 60 fps (~37 ms), 1080p120 108 -> 120. H.264 unchanged
   (~40 at 4K60) because its normal encoder only reaches 50 fps at 139 ms. Built (Release), CryptoTests pass, measured on the iPhone 14.
 - PC, both engines: ask HEVC for exactly those iPhone modes (`iphone_needs_hevc` in `rust/engine/src/api.rs`, `IphoneNeedsHevc` in
-  `src/engine/EngineApi.cpp`). **Written on the Mac, NOT compiled.** On Windows: build, then the real iPhone at 4K60 over USB through the
+  `src/engine/EngineApi.cpp`). **Written on the Mac; compiled and measured on the PC (see the note at the top).** Was: build, then the real iPhone at 4K60 over USB through the
   virtual camera (`phone_perf --usb --format 3840x2160@60`, `NIWCAM_TRACE=1`): expect ~60 fps; the mode menu should still show 4K60. Run
   `rust\engine\xcheck\engine.ps1` (both engines changed). Then 5 minutes of 4K60 on the cable watching `thermal`: the cable charges the phone,
   and `serious` makes the PC drop to 1080p30 (`MainWindow.Thermal.cs`), which would hide the fix. The iPhone runs the dev build with the fix:
@@ -96,7 +94,7 @@ Verified: GPU decode correct (hash per frame = software, 640x480..4K, H.264/HEVC
 28 -> 61 fps with a fake phone; real iPhone 4K30 = 30, 1080p60 = 60 via the cable; Redmi 1080p30 over USB; installed 0.1.15 starts, the camera lists 14 modes.
 Not verified: the new code on a Windows 10 PC; HEVC 10-bit / HLG through the GPU path (falls back to software by design, never exercised); Wi-Fi at 4K60;
 a real Discord/OBS/Zoom call with the Rust core; the rebuild-on-faster-source rule (`Pipeline::relayout`, both engines; compiled and reviewed, not run in the exact
-"same size, faster rate" case); the PC side of ADR-012 (not compiled).
+"same size, faster rate" case); the HEVC-for-heavy-modes rule on other iPhone models and over Wi‑Fi.
 
 ## 1. What is not verified yet (older notes, 2026-11-09)
 
