@@ -33,3 +33,7 @@ build-x86/
 
 # camstudio-fake-phone keeps its pairing keys in the folder it runs from
 fake-phone-*.key
+
+# Optional models of the high-quality effects: scripts/fetch-models.ps1 (docs/third-party-models.md)
+app/Assets/Models/modnet_webcam.onnx
+app/Assets/Models/face_detection_yunet_2026may.onnx

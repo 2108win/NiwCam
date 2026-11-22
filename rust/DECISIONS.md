@@ -91,3 +91,11 @@ of the picture, no false face on a flat picture. First answer takes 0.6-1.5 s (t
 NOT shown: any gain on several faces, small or turned faces (no such pictures here; YuNet's WIDER Face scores are the zoo's, not ours), and the Kalman
 tracking of the research (the framing code already eases and holds the shot, so it was left out until a real clip shows jitter).
 Engine with MODNet + YuNet + framing on: 29 fps held, 395-434 MB working set; nothing is loaded while the switch or the effects are off.
+
+## ADR-010: The optional models are fetched, not committed
+Status: accepted (2026-11-22), chosen by the assistant when the user said "choose for me"
+Context: MODNet (26 MB) and YuNet (230 KB) are needed by the high-quality effects of the Rust engine only.
+Decision: not in git (the binary would stay in the history), not in the C++ release; `scripts/fetch-models.ps1` downloads them from the official
+sources and checks SHA-256; licence texts and sources are in `docs/third-party-models.md` and `docs/third-party/`; the release that ships the Rust
+engine runs the script first (the installer already copies everything under `Assets\`) and shows the two notices.
+Consequences: a clone has no models until the script runs; without them the switch uses PP-HumanSeg + guided filter and Windows' face tracker.
