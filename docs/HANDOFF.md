@@ -29,7 +29,10 @@ Write-up: **[docs/ios-4k60.md](ios-4k60.md)**, decision ADR-012. The low-latency
   (~40 at 4K60) because its normal encoder only reaches 50 fps at 139 ms. Built (Release), CryptoTests pass, measured on the iPhone 14.
 - PC, both engines: ask HEVC for exactly those iPhone modes (`iphone_needs_hevc` in `rust/engine/src/api.rs`, `IphoneNeedsHevc` in
   `src/engine/EngineApi.cpp`). **Written on the Mac, NOT compiled.** On Windows: build, then the real iPhone at 4K60 over USB through the
-  virtual camera (`phone_perf --usb --format 3840x2160@60`, `NIWCAM_TRACE=1`): expect ~60 fps; the mode menu should still show 4K60.
+  virtual camera (`phone_perf --usb --format 3840x2160@60`, `NIWCAM_TRACE=1`): expect ~60 fps; the mode menu should still show 4K60. Run
+  `rust\engine\xcheck\engine.ps1` (both engines changed). Then 5 minutes of 4K60 on the cable watching `thermal`: the cable charges the phone,
+  and `serious` makes the PC drop to 1080p30 (`MainWindow.Thermal.cs`), which would hide the fix. The iPhone runs the dev build with the fix:
+  keep it until this passes; only then a TestFlight/App Store build (the user's call).
 - Wi‑Fi at 4K could not be judged from the Mac (iPhone -> router -> Mac carried ~15-18 Mbit/s, one 7 s stall; the phone lowered the bitrate as
   designed; keyframes are small, 52-156 KB). Measure on the real PC (0.3).
 

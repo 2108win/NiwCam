@@ -123,10 +123,10 @@ Status: accepted. iOS built and measured on an iPhone 14; PC (both engines) writ
 Context: the iPhone sent ~40 fps at 4K60/50/48. Measured on the phone (`StreamDiag`, docs/ios-4k60.md): the camera delivers 60, but VideoToolbox's
 low-latency rate control encodes one frame at a time (the encode call returns when the frame is done): ~26 ms per 4K frame, ~9.5 ms per 1080p frame, so
 4K60 HEVC gave 37.6 fps (22.4 frames/s dropped as `FrameWasLate`) and 1080p120 108. The normal encoder pipelines ~2 frames: HEVC 4K60 = 60 fps at 35-39 ms,
-1080p120 = 120 at 21 ms; but 4K30 waits 77 ms (low latency: 26), and H.264 4K60 reaches only 50 fps with its queue at ~139 ms.
+1080p120 = 120 at 21 ms, 1080p240 = 238 at 12 ms; but 4K30 waits 77 ms (low latency: 26), and H.264 4K60 reaches only 50 fps with its queue at ~139 ms.
 Decision: low-latency rate control unless the codec is HEVC and the mode has fps > 60 or more than 3840x2160x30 pixels per second
 (`VideoEncoder.lowLatencyFits`; `tune.lowLatency` overrides it for tests). H.264 keeps low latency everywhere, so every existing PC (which always asks
 H.264) sees no change. The PC asks HEVC for exactly those iPhone modes when Windows has an HEVC decoder (`iphone_needs_hevc` / `IphoneNeedsHevc`); the
 two rules must stay equal. The saved mode (`HKCU\...\Modes`) holds lens, size and fps only, so it still matches.
-Not tested: the PC change (compile, then 4K60 from the real iPhone through the virtual camera); other iPhone models (thresholds from an A15); 1080p240 and
+Not tested: the PC change (compile, then 4K60 from the real iPhone through the virtual camera); other iPhone models (thresholds from an A15);
 HEVC 10-bit with the normal encoder; Wi-Fi at 4K to the real PC (from the Mac the link carried only ~15-18 Mbit/s, docs/ios-4k60.md).

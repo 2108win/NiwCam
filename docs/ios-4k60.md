@@ -14,7 +14,7 @@ Khung nào hết thời gian thì camera bỏ (`FrameWasLate`, hàng đợi `cap
 | 4K60 HEVC | 37,6 fps, bỏ 22,4/s, 26 ms | **60 fps**, bỏ 0, 35–39 ms |
 | 4K60 H.264 | ~39–43 fps, 25 ms | 50 fps, bỏ 9,6/s, **139 ms** (không kịp, hàng đợi dài ra) |
 | 1080p120 HEVC | 108 fps, 9 ms | **120 fps**, 21 ms |
-| 1080p240 HEVC | 96 fps | (chưa đo) |
+| 1080p240 HEVC | 96 fps | **238 fps**, 12 ms |
 | 4K30 HEVC | 30 fps, 24–26 ms | 30 fps, **77 ms** (tệ hơn) |
 | 1080p60 / 1080p30 | 60 / 30, ~10 ms | (không cần) |
 
