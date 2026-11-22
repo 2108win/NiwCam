@@ -17,6 +17,12 @@ Ngôn ngữ chính: tiếng Việt. Sửa ở đây trước, rồi chép sang A
 - **Hỗ trợ (Support URL):** https://github.com/2108win/NiwCam
 - **Giá:** miễn phí
 
+## Lịch sử phiên bản
+
+- **1.0** (build 20261109.0100): lên App Store 10/11/2026, phát hành tay.
+- **1.0.1** (build 20261122.2016): gửi duyệt 22/11/2026, tự phát hành khi duyệt xong, cập nhật cho mọi người cùng lúc.
+  Có gì mới: "Hình 4K 60 khung/giây mượt mà hơn." (ADR-012)
+
 ## Phiên bản
 
 **Văn bản quảng cáo (Promotional Text):**
