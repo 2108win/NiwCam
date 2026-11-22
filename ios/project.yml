@@ -16,7 +16,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "1.0"          # CFBundleShortVersionString = the App Store Connect version
+    MARKETING_VERSION: "1.0.1"        # CFBundleShortVersionString = the App Store Connect version
     CURRENT_PROJECT_VERSION: "1"      # CFBundleVersion: an extension must have one, equal to the app's
 targets:
   CamStudio:
