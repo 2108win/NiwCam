@@ -54,6 +54,7 @@ public sealed class AppSettings
     public int BackgroundMode { get; set; }            // "Nền": 0 off, 1 blur, 2 image
     public int LastBackgroundMode { get; set; } = 1;   // what Ctrl+Alt+B turns back on
     public int BackgroundStrength { get; set; } = 60;  // blur, 0..100
+    public bool BackgroundQuality { get; set; }        // "Chất lượng cao" (the Rust engine only)
     public string BackgroundImage { get; set; } = "";  // a copy in %LOCALAPPDATA%\NiwCam
     public int SkinSmoothing { get; set; }              // "Làm mịn da": 0 off, 1..100
     public bool PhoneMic { get; set; }                  // "Micro điện thoại": the phone's sound to the PC
@@ -104,6 +105,7 @@ public sealed class AppSettings
         s.BackgroundMode = Math.Clamp(Int("BackgroundMode", 0), 0, 2);
         s.LastBackgroundMode = Math.Clamp(Int("LastBackgroundMode", 1), 1, 2);
         s.BackgroundStrength = Math.Clamp(Int("BackgroundStrength", 60), 0, 100);
+        s.BackgroundQuality = Int("BackgroundQuality", 0) != 0;
         s.BackgroundImage = key.GetValue("BackgroundImage") as string ?? "";
         s.SkinSmoothing = Math.Clamp(Int("SkinSmoothing", 0), 0, 100);
         s.PhoneMic = Int("PhoneMic", 0) != 0;
@@ -160,6 +162,7 @@ public sealed class AppSettings
         key.SetValue("BackgroundMode", BackgroundMode, RegistryValueKind.DWord);
         key.SetValue("LastBackgroundMode", LastBackgroundMode, RegistryValueKind.DWord);
         key.SetValue("BackgroundStrength", BackgroundStrength, RegistryValueKind.DWord);
+        key.SetValue("BackgroundQuality", BackgroundQuality ? 1 : 0, RegistryValueKind.DWord);
         key.SetValue("BackgroundImage", BackgroundImage);
         key.SetValue("SkinSmoothing", SkinSmoothing, RegistryValueKind.DWord);
         key.SetValue("PhoneMic", PhoneMic ? 1 : 0, RegistryValueKind.DWord);

@@ -488,6 +488,9 @@
                                         <TextBlock x:Name="BackgroundImageName" Style="{StaticResource CaptionTextBlockStyle}" VerticalAlignment="Center"
                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" MaxWidth="150" />
                                     </StackPanel>
+                                    <ToggleSwitch x:Name="BackgroundQualityToggle" Header="Chất lượng cao" Margin="0,12,0,0"
+                                                  OnContent="Bật" OffContent="Tắt" Toggled="BackgroundQuality_Toggled"
+                                                  ToolTipService.ToolTip="Viền tóc và vai mượt hơn, ít nhấp nháy, nền mờ không viền màu. Tốn thêm khoảng 1 ms mỗi khung hình." />
                                     <TextBlock x:Name="BackgroundHint" Style="{StaticResource InspectorHintStyle}" Margin="0,8,0,0" />
 
                                     <Grid Margin="0,16,0,0">

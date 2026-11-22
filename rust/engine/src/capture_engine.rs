@@ -347,6 +347,8 @@ pub(crate) struct Shared {
     // Background effect settings (mode and strength read on every frame, the paths under `lock`).
     pub(crate) bg_mode: AtomicI32,
     pub(crate) bg_strength: AtomicI32,
+    /// High-quality background (ADR-008): soft matte, guided filter, halo-free blur.
+    pub(crate) bg_quality: AtomicBool,
     pub(crate) smoothing: AtomicI32,
 
     audio_gen: AtomicU32,
@@ -495,6 +497,7 @@ impl Shared {
             recorder: Recorder::new(),
             bg_mode: AtomicI32::new(0),
             bg_strength: AtomicI32::new(60),
+            bg_quality: AtomicBool::new(false),
             smoothing: AtomicI32::new(0),
             audio_gen: AtomicU32::new(0),
             audio_wanted: AtomicBool::new(false),
@@ -2117,6 +2120,12 @@ impl CaptureEngine {
 
     /// "Nền": the person stays sharp; the background is blurred (strength 0..100) or replaced by
     /// an image. Cameras only (never a screen or a window), and only on frames that go somewhere.
+    /// "Nền" in high quality (ADR-008): on a soft matte refined against the picture, smoothed over
+    /// time, with a halo-free blur and a light wrap for replacement; off: the classic chain.
+    pub fn set_background_quality(&self, on: bool) {
+        self.shared.bg_quality.store(on, SeqCst);
+    }
+
     pub fn set_background(&self, mode: BackgroundMode, strength: i32, image: &str, model: &str) {
         {
             let mut g = lock(&self.shared.lock);

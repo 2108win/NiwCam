@@ -152,6 +152,24 @@ internal static unsafe partial class Engine
     [LibraryImport(Dll, StringMarshalling = StringMarshalling.Utf16)] public static partial void cs_set_background(int mode, int strength, string imagePath, string modelPath);
     [LibraryImport(Dll)] public static partial void cs_get_background(out CsBackground state);
     [LibraryImport(Dll)] public static partial void cs_set_smoothing(int strength);
+    // Only the Rust engine has it (a soft matte refined against the picture, a halo-free blur): the
+    // C++ engine does not export it, so look it up before calling (an old DLL must not crash the app).
+    [LibraryImport(Dll)] private static partial void cs_set_background_quality(int enabled);
+    private static bool? _hasBackgroundQuality;
+    public static bool HasBackgroundQuality => _hasBackgroundQuality ??= ProbeBackgroundQuality();
+    private static bool ProbeBackgroundQuality()
+    {
+        try
+        {
+            return NativeLibrary.TryLoad(Dll, typeof(Engine).Assembly, DllImportSearchPath.AssemblyDirectory, out var h)
+                && NativeLibrary.TryGetExport(h, "cs_set_background_quality", out _);
+        }
+        catch (Exception) { return false; }
+    }
+    public static void SetBackgroundQuality(bool on)
+    {
+        if (HasBackgroundQuality) cs_set_background_quality(on ? 1 : 0);
+    }
     [LibraryImport(Dll, StringMarshalling = StringMarshalling.Utf16)] public static partial void cs_set_phone_audio(string target);
     [LibraryImport(Dll)] public static partial void cs_set_audio_wanted(int wanted);
     [LibraryImport(Dll)] public static partial int cs_phone_audio_state(char* problem, int capacity);

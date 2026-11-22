@@ -140,6 +140,9 @@ fn main() {
     let preview_enabled: FnSetI32 = api.f("cs_set_preview_enabled");
     let copy_preview: FnCopyPreview = api.f("cs_copy_preview");
     let phone_caps: FnCaps = api.f("cs_phone_caps");
+    // --background <model.onnx> [--hq]: the blur effect on, classic or high quality.
+    let background = arg("--background");
+    let hq = std::env::args().any(|a| a == "--hq");
 
     // SAFETY: the engine API is called as its header documents, from one thread at a time except
     // the pairing helper below, which only calls the two thread-safe pairing functions.
@@ -205,6 +208,21 @@ fn main() {
         println!("caps_len={len}");
 
         preview_enabled(1);
+        if let Some(model) = &background {
+            let set_background: unsafe extern "C" fn(i32, i32, *const u16, *const u16) =
+                api.f("cs_set_background");
+            let m: Vec<u16> = model.encode_utf16().chain([0]).collect();
+            let none: [u16; 1] = [0];
+            set_background(1, 60, none.as_ptr(), m.as_ptr());
+            if hq {
+                let set_quality: FnSetI32 = api.f("cs_set_background_quality");
+                set_quality(1);
+            }
+            println!(
+                "background=blur60 quality={}",
+                if hq { "high" } else { "classic" }
+            );
+        }
         let image = CsImage {
             rotation: 0,
             mirror: 0,

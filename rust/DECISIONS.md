@@ -59,3 +59,15 @@ where creating the `Global\` mapping fails with ACCESS_DENIED. The C++ then read
 creates the real channel. The Rust port first returned the mapping's own error: `Start` failed with 0x80070005.
 Decision: copy the quirk (`shm/src/frame_reader.rs`, comment there). Found only by loading the DLL into the real Frame Server.
 Consequences: any "fix" of this must be tested with the real Frame Server, not in-process.
+
+### ADR-008 progress (2026-11-22): step 1 done, no new weights
+`fx/src/background_hq.rs` + `Segmenter::set_quality` + `cs_set_background_quality` (Rust engine only) + the app's "Chất lượng cao" switch
+(Hiệu ứng › Nền, disabled with the C++ engine). Off by default. What it does: soft probability kept (no early hardening), uncertainty-weighted
+smoothing over time, guided filter of the alpha against the picture's luma at 1/4 size, a blur made only from background pixels (no halo of the
+person's colours), a light wrap for replacement, the model run 30x a second instead of 15.
+Measured: `fx/examples/matte_bench.rs` (synthetic scene with a true alpha, simulated model output) vs the classic chain: flicker 0.91 -> 0.80
+(still), edge error 112 -> 104 (still) and 137 -> 106 (moving), mean error 7.5 -> 6.9. The model's own error dominates the rest, so the next
+real gain needs a better model. `fx/examples/bg_compare.rs` on a real portrait with the real model: the long hair on the left that the
+classic chain blurs away is kept, and the blurred wall has no coloured halo. Cost: +1.2 ms per 720p frame (refine) = ~4 % of a core at 30 fps;
+off = 0. `fx/tests/hq.rs` covers smoothing, edge snapping and the halo. Engine with the model, 30 fps held, 238 MB peak (the model's DirectML).
+Next (needs downloads, asked first): a matting model (MODNet, Apache-2.0) and a face detector (YuNet, MIT); see `rust/research/background-and-faces.md`.

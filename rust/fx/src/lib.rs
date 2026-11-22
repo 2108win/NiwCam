@@ -1,6 +1,7 @@
 //! niwcam-fx: StillPicture, FaceDetect, Segmenter, WindowSource (see rust/MAP.md).
 #![deny(unsafe_op_in_unsafe_fn)]
 
+pub mod background_hq;
 pub mod face_detect;
 pub mod segmenter;
 pub mod still_picture;

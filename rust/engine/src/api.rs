@@ -972,6 +972,17 @@ pub unsafe extern "C" fn cs_set_background(
     })
 }
 
+/// "Nền" in high quality (ADR-008): 1 on, 0 off (the classic chain). Added next to the C++ API:
+/// the C++ engine has no such function, the app checks for it before calling.
+#[no_mangle]
+pub extern "C" fn cs_set_background_quality(enabled: i32) {
+    guard((), || {
+        if let Some(e) = engine() {
+            e.set_background_quality(enabled != 0);
+        }
+    })
+}
+
 #[no_mangle]
 pub extern "C" fn cs_set_smoothing(strength: i32) {
     guard((), || {

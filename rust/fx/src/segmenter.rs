@@ -24,6 +24,8 @@ use windows::AI::MachineLearning::{
 pub const K_SIZE: u32 = 192;
 /// ~15 a second.
 pub const K_INTERVAL_MS: f64 = 66.0;
+/// ~30 a second in the high-quality mode (the model costs 1-2 ms on the GPU).
+pub const K_INTERVAL_HQ_MS: f64 = 33.0;
 
 /// What the worker thread and the capture thread share (the C++ members under `m_mutex`).
 struct State {
@@ -43,6 +45,8 @@ struct Shared {
     unsupported: AtomicBool,
     gave_up: AtomicBool,
     infer_ms: AtomicU64, // f64 bits
+    /// High quality (ADR-008): the mask is the soft probability, smoothed by `background_hq`.
+    quality: AtomicBool,
 }
 
 pub struct Segmenter {
@@ -96,9 +100,17 @@ impl Segmenter {
                 unsupported: AtomicBool::new(false),
                 gave_up: AtomicBool::new(false),
                 infer_ms: AtomicU64::new(0f64.to_bits()),
+                quality: AtomicBool::new(false),
             }),
             thread: Mutex::new(None),
         }
+    }
+
+    /// High quality: the mask handed out is the soft person probability (0..255) smoothed over time
+    /// by how sure each new look is, to be refined by `background_hq::blend_background_hq`; the
+    /// model runs 30 times a second. Off: the classic firm mask, 15 times a second.
+    pub fn set_quality(&self, on: bool) {
+        self.shared.quality.store(on, Ordering::Relaxed);
     }
 
     pub fn set_model(&self, path: &str) {
@@ -113,7 +125,12 @@ impl Segmenter {
             return false;
         }
         let st = lock(&self.shared.state);
-        !st.busy && now_ms - st.last_offer_ms >= K_INTERVAL_MS
+        let interval = if self.shared.quality.load(Ordering::Relaxed) {
+            K_INTERVAL_HQ_MS
+        } else {
+            K_INTERVAL_MS
+        };
+        !st.busy && now_ms - st.last_offer_ms >= interval
     }
 
     /// Starts over (another source: the old mask is someone else).
@@ -248,6 +265,7 @@ fn infer(
     model: &Model,
     job: &[f32],
     reset: bool,
+    quality: bool,
     smooth: &mut Vec<f32>,
     infer_ms: &AtomicU64,
 ) -> windows::core::Result<Vec<u8>> {
@@ -298,9 +316,25 @@ fn infer(
     } else {
         return Err(windows::Win32::Foundation::E_UNEXPECTED.into());
     }
+    if quality {
+        crate::background_hq::smooth_probability(smooth, &person, reset);
+        return Ok(smooth
+            .iter()
+            .map(|&p| (p.clamp(0.0, 1.0) * 255.0 + 0.5) as u8)
+            .collect());
+    }
+    Ok(classic_mask(&person, reset, smooth))
+}
+
+/// The classic post-processing of the person probability: half the new look and half the old over
+/// time, then a firmer edge (0.3 and below is background, 0.7 and above the person).
+#[doc(hidden)]
+pub fn classic_mask(person: &[f32], reset: bool, smooth: &mut Vec<f32>) -> Vec<u8> {
+    let n = person.len();
     // Over time: half the new look, half the old (no flicker at the edges).
     if reset || smooth.len() != n {
-        smooth.clone_from(&person);
+        smooth.clear();
+        smooth.extend_from_slice(person);
     } else {
         for i in 0..n {
             smooth[i] = 0.5 * (smooth[i] + person[i]);
@@ -312,7 +346,7 @@ fn infer(
         let t = ((smooth[i] - 0.3) / 0.4).clamp(0.0, 1.0);
         mask[i] = (255.0f32 * t * t * (3.0 - 2.0 * t)).round() as i64 as u8;
     }
-    Ok(mask)
+    mask
 }
 
 fn worker(shared: &Shared) {
@@ -353,7 +387,14 @@ fn worker(shared: &Shared) {
         if !shared.unsupported.load(Ordering::Relaxed) && !shared.gave_up.load(Ordering::Relaxed) {
             let outcome = model.as_ref().map(|m| {
                 std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    infer(m, &job, reset, &mut smooth, &shared.infer_ms)
+                    infer(
+                        m,
+                        &job,
+                        reset,
+                        shared.quality.load(Ordering::Relaxed),
+                        &mut smooth,
+                        &shared.infer_ms,
+                    )
                 }))
             });
             match outcome {

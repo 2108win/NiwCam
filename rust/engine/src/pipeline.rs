@@ -39,7 +39,8 @@ use windows::Win32::System::Performance::{QueryPerformanceCounter, QueryPerforma
 
 use crate::capture_engine::{lock, BackgroundMode, Shared, State};
 use crate::fx_bridge::{
-    blend_background, load_image_fill, BackgroundScratch, FaceDetector, Segmenter,
+    blend_background, blend_background_hq, load_image_fill, BackgroundScratch, FaceDetector,
+    HqScratch, Segmenter,
 };
 
 /// Source closed after this long with no app on the camera and no preview on screen (an app
@@ -195,6 +196,9 @@ struct Effects {
     segmenter: Option<Segmenter>,
     mask: Vec<u8>,
     bg_scratch: BackgroundScratch,
+    hq_scratch: HqScratch,
+    /// The quality the segmenter was last told (its mask means another thing when it changes).
+    bg_quality_set: bool,
     bg_image_nv12: Vec<u8>,
     bg_image_gen: u32,
     bg_image_w: u32,
@@ -226,6 +230,8 @@ impl Effects {
             segmenter: None,
             mask: Vec::new(),
             bg_scratch: BackgroundScratch::default(),
+            hq_scratch: HqScratch::default(),
+            bg_quality_set: false,
             bg_image_nv12: Vec::new(),
             bg_image_gen: u32::MAX,
             bg_image_w: 0,
@@ -301,6 +307,13 @@ impl Effects {
         let Some(seg) = self.segmenter.as_ref() else {
             return;
         };
+        let quality = engine.bg_quality.load(Relaxed);
+        if quality != self.bg_quality_set {
+            self.bg_quality_set = quality;
+            seg.set_quality(quality);
+            seg.reset(); // the old mask is of the other kind
+            self.mask.clear();
+        }
         if seg.due(now) {
             seg.offer(y, uv, pitch, w, h, now); // the picture as it is
         }
@@ -325,19 +338,33 @@ impl Effects {
             } else {
                 None
             };
-            blend_background(
-                y,
-                uv,
-                pitch,
-                w,
-                h,
-                &self.mask,
-                changed,
-                engine.bg_strength.load(Relaxed),
-                image,
-                &mut self.bg_scratch,
-                parallel,
-            );
+            if quality {
+                blend_background_hq(
+                    y,
+                    uv,
+                    pitch,
+                    w,
+                    h,
+                    &self.mask,
+                    engine.bg_strength.load(Relaxed),
+                    image,
+                    &mut self.hq_scratch,
+                );
+            } else {
+                blend_background(
+                    y,
+                    uv,
+                    pitch,
+                    w,
+                    h,
+                    &self.mask,
+                    changed,
+                    engine.bg_strength.load(Relaxed),
+                    image,
+                    &mut self.bg_scratch,
+                    parallel,
+                );
+            }
             active = true;
         }
         let mut g = lock(&engine.lock);

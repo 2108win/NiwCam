@@ -24,6 +24,15 @@ public sealed partial class MainWindow
         int mode = _settings.BackgroundMode;
         if (mode == BackgroundImage && !File.Exists(_settings.BackgroundImage)) mode = BackgroundBlur;
         Engine.cs_set_background(mode, _settings.BackgroundStrength, _settings.BackgroundImage, BackgroundModel);
+        Engine.SetBackgroundQuality(_settings.BackgroundQuality);
+    }
+
+    private void BackgroundQuality_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        _settings.BackgroundQuality = BackgroundQualityToggle.IsOn;
+        _settings.Save();
+        Engine.SetBackgroundQuality(_settings.BackgroundQuality);
     }
 
     private void LoadBackgroundIntoUi()
@@ -41,6 +50,12 @@ public sealed partial class MainWindow
         foreach (var chip in BackgroundChips.Children.OfType<ToggleButton>())
             chip.IsChecked = (string)chip.Tag == _settings.BackgroundMode.ToString();
         BackgroundStrengthRow.Visibility = _settings.BackgroundMode == BackgroundBlur ? Visibility.Visible : Visibility.Collapsed;
+        BackgroundQualityToggle.Visibility = _settings.BackgroundMode == BackgroundOff ? Visibility.Collapsed : Visibility.Visible;
+        BackgroundQualityToggle.IsEnabled = Engine.HasBackgroundQuality;
+        bool loading = _loading;
+        _loading = true; // setting IsOn here is not the person's click
+        BackgroundQualityToggle.IsOn = Engine.HasBackgroundQuality && _settings.BackgroundQuality;
+        _loading = loading;
         BackgroundImageRow.Visibility = _settings.BackgroundMode == BackgroundImage ? Visibility.Visible : Visibility.Collapsed;
         BackgroundImageName.Text = File.Exists(_settings.BackgroundImage) ? "Đã chọn ảnh" : "Chưa chọn ảnh: tạm làm mờ";
         string background = _settings.BackgroundMode switch
@@ -65,6 +80,7 @@ public sealed partial class MainWindow
         bool camera = _windowSource is null && _camera >= 0 && _camera < _kinds.Count && _kinds[_camera] != 2;
         BackgroundHint.Text = !File.Exists(BackgroundModel) ? "Thiếu tệp mô hình (Assets\\Models): hãy cài lại NiwCam."
             : state.Available == 0 ? "Máy này không chạy được (thiếu Windows ML)."
+            : !Engine.HasBackgroundQuality && _settings.BackgroundQuality ? "Chất lượng cao cần bản engine mới hơn."
             : state.Available < 0 ? "Đã dừng vì lỗi. Tắt rồi bật lại để thử lại."
             : !camera ? "Chỉ cho camera: màn hình và cửa sổ không bị làm mờ."
             : state.Active != 0 ? $"Đang chạy · {state.InferMs:0} ms mỗi lần tìm người"

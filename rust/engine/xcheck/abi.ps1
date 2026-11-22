@@ -37,7 +37,9 @@ function Names($f) {
     Get-Content $f | ForEach-Object { if ($_ -match '^\s+\d+\s+[0-9A-F]+\s+[0-9A-F]+\s+(\S+)') { $Matches[1] } } | Where-Object { $_ -like 'cs_*' } | Sort-Object
 }
 if (Test-Path "$out\rust-exports.raw") {
-    $a = Names "$out\cpp-exports.raw"; $b = Names "$out\rust-exports.raw"
+    # Functions only the Rust engine has, added next to the C++ API (the app looks them up before calling).
+    $extra = @('cs_set_background_quality')
+    $a = Names "$out\cpp-exports.raw"; $b = Names "$out\rust-exports.raw" | Where-Object { $extra -notcontains $_ }
     $e = Compare-Object $a $b
     if ($e) { $e | Out-String | Write-Host; Write-Host "EXPORTS DIFFERENT: $($e.Count)"; $fail = 1 } else { Write-Host "exports identical: $($a.Count) cs_* functions" }
 } else { Write-Host "(no Rust NiwCamEngine.dll yet: exports not compared; C++ has $((Names "$out\cpp-exports.raw").Count) cs_* functions)" }
