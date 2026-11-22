@@ -2,7 +2,8 @@
 
 > **Tóm tắt (2026-11-22):** lõi PC (engine + camera ảo + DirectShow) đã viết lại bằng **Rust**, đang chạy thật trên máy
 > người dùng (bản dev **0.1.15**, chưa đăng release; bản đăng gần nhất vẫn là C++ 0.1.14). Lag ở 4K/60 đã sửa phía PC bằng
-> giải mã GPU (cả C++ lẫn Rust). Còn lại: **iPhone chỉ đẩy ~40 khung/giây ở 4K** (việc cho máy Mac, mục 0.2), và
+> giải mã GPU (cả C++ lẫn Rust). **iPhone ~40 khung/giây ở 4K60: đã tìm ra và sửa trên iPhone** (mục 0.2; phần PC viết trên Mac, chưa
+> biên dịch), và
 > người dùng báo Discord vẫn giật khi dùng độ phân giải/tần số cao (mục 0.3). Mục 1 trở xuống là ghi chú cũ (2026-11-09).
 
 For AI agents picking the work up on any machine. Read CLAUDE.md first, then this file, then `rust/MAP.md` and
@@ -19,20 +20,18 @@ For AI agents picking the work up on any machine. Read CLAUDE.md first, then thi
 | Installed on the user's PC | **0.1.15 with the Rust core** (engine, Frame Server camera `CamStudioVCam.dll`; the DirectShow filters are in the installer but only installed on Windows 10). Built by `scripts\package-release.ps1 -Rust -SkipAndroid` -> `build\dist\NiwCam-Setup-0.1.15.exe` (git-ignored; the script wipes `build\dist`). Not published, not tagged. The optional models (MODNet, YuNet) are in `app\Assets\Models` via `scripts\fetch-models.ps1`. |
 | Rollback to the C++ build | reinstall the published `NiwCam-Setup-0.1.14.exe` from GitHub releases (`2108win/NiwCam`), or build C++: `scripts\package-release.ps1` without `-Rust`. The C++ `CamStudioVCam.dll` registration is restored by installing it; `rust\vcam\xcheck\frameserver.ps1 -Restore` (admin) only restores what that script saved. |
 | Last published release | v0.1.14 (C++). 0.1.15 (version bumped in `app\NiwCam.App.csproj`, Android `versionName` 0.1.15 / `versionCode` 17) is NOT released: shipping it means deciding to release the Rust core (see 0.4). |
-| iPhone app | App Store 1.0 (10/11/2026) is older than the `tune` + counters code on `main`, which has never been compiled (written on Windows). |
+| iPhone app | App Store 1.0 (10/11/2026) is older than `main`. On the user's iPhone runs a **dev Release build** of `main` (installed from the Mac over Wi‑Fi, 2026-11-22) in place of the App Store one; reinstall from the App Store to go back. A new TestFlight/App Store build is the user's call. |
 
-### 0.2 iPhone 4K60 delivers ~40 fps: for the Mac session
+### 0.2 iPhone 4K60 at ~40 fps: cause found (2026-11-22, Mac)
 
-Full write-up and the test matrix: **[docs/ios-4k60.md](ios-4k60.md)**. In short:
-- Measured on the PC (iPhone 14 over USB, GPU decode): 1080p60 -> 60 fps, 4K30 -> 30, **4K60 / 4K50 / 4K48 -> ~38-40** (H.264 and
-  HEVC alike). The PC takes everything that arrives (0 skipped, 0 lost, queue 0 B, ~20 ms lag): the loss is inside the iPhone.
-- The phone also reports `thermal` serious after a few minutes (charging at 70 %); the PC then drops to 1080p30 (`MainWindow.Thermal.cs`).
-  **Cool the phone before measuring.**
-- On the Mac: `git pull origin main`, `scripts/ios-run.sh`, then `scripts/fake-pc.sh --usb ... --tune '<json>'` per the doc.
-  The new code (`StreamDiag` in `VideoEncoder.swift`, `didDrop` in `CameraStreamer.swift`, `start.tune`, `fake_pc --tune`) was **never compiled**.
-- Ask the user before installing on the iPhone (CLAUDE.md pitfalls). One PC per phone: a Mac test kicks the user's Windows PC off.
-- When the cause is known: fix the default for the heavy modes only, keep 1080p30/60 as they are, re-measure 4K60 >= 58 fps, run
-  `CryptoTests`, then ADR-012 + a TestFlight/App Store build (user's call).
+Write-up: **[docs/ios-4k60.md](ios-4k60.md)**, decision ADR-012. The low-latency encoder works one frame at a time (~26 ms per 4K frame).
+- iOS: HEVC above 4K30 pixels/s or 60 fps uses the normal encoder: 4K60 HEVC 37.6 -> 60 fps (~37 ms), 1080p120 108 -> 120. H.264 unchanged
+  (~40 at 4K60) because its normal encoder only reaches 50 fps at 139 ms. Built (Release), CryptoTests pass, measured on the iPhone 14.
+- PC, both engines: ask HEVC for exactly those iPhone modes (`iphone_needs_hevc` in `rust/engine/src/api.rs`, `IphoneNeedsHevc` in
+  `src/engine/EngineApi.cpp`). **Written on the Mac, NOT compiled.** On Windows: build, then the real iPhone at 4K60 over USB through the
+  virtual camera (`phone_perf --usb --format 3840x2160@60`, `NIWCAM_TRACE=1`): expect ~60 fps; the mode menu should still show 4K60.
+- Open: Wi‑Fi at 4K. Each 4K keyframe delays the frames behind it past the phone's 150 ms drop rule (`Session.congestion`), which asks for
+  another keyframe and cuts 30 %: the bitrate spirals down to 1 Mbps (docs/ios-4k60.md, "Còn mở"). Not fixed yet.
 
 ### 0.3 Discord still stutters at high resolution/rate (open, not reproduced by us)
 
@@ -54,7 +53,6 @@ What we know (2026-11-22, Rust engine, Redmi/iPhone):
   see `docs/third-party-models.md`). Needed first: a real Windows 10 PC for the DirectShow filter, iPhone/Wi-Fi runs, a real Discord/OBS/Zoom call.
 - The hot-phone rule (`MainWindow.Thermal.cs`) lowers the mode to <= 1080p30 / 720p: it works against "native resolution always". Option: make it a
   setting, or warn only. Not changed.
-- HEVC for heavy iPhone modes (4K at > 30 fps) halves the bytes (good for Wi-Fi) but did not raise the frame rate; tried in `api.rs`, reverted. Cheap to redo.
 - C++ `AppDataDir.h` typo (`L"\NiwCam"` -> default folder `LocalNiwCam`), copied on purpose in `rust/phone/src/appdata.rs`; fix both together.
 
 ### 0.5 How to measure (all built under `build\`)
@@ -87,7 +85,7 @@ Verified: GPU decode correct (hash per frame = software, 640x480..4K, H.264/HEVC
 28 -> 61 fps with a fake phone; real iPhone 4K30 = 30, 1080p60 = 60 via the cable; Redmi 1080p30 over USB; installed 0.1.15 starts, the camera lists 14 modes.
 Not verified: the new code on a Windows 10 PC; HEVC 10-bit / HLG through the GPU path (falls back to software by design, never exercised); Wi-Fi at 4K60;
 a real Discord/OBS/Zoom call with the Rust core; the rebuild-on-faster-source rule (`Pipeline::relayout`, both engines; compiled and reviewed, not run in the exact
-"same size, faster rate" case); every Swift change of 0.2.
+"same size, faster rate" case); the PC side of ADR-012 (not compiled).
 
 ## 1. What is not verified yet (older notes, 2026-11-09)
 

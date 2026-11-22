@@ -117,3 +117,16 @@ pixels. One difference: the GPU decoder has no one-frame delay, so an HEVC strea
 and slow to wake; irrelevant at 30 fps, wanted at 4K60). `xcheck` decode stage runs with `NIWCAM_DECODER=software` so C++ and Rust are still compared like with like.
 Also: the camera is published again at a faster rate when a faster source arrives on the same size while no app holds it (4K60 after 4K30 would stay at 30).
 Not tested: a real iPhone (4K60, HLG 10-bit) and the HEVC 10-bit fallback; Wi-Fi bandwidth at 4K60 (the bitrate heuristic caps at 60 Mbps).
+
+## ADR-012: Heavy iPhone modes use HEVC and the normal encoder (2026-11-22)
+Status: accepted. iOS built and measured on an iPhone 14; PC (both engines) written on the Mac, NOT compiled
+Context: the iPhone sent ~40 fps at 4K60/50/48. Measured on the phone (`StreamDiag`, docs/ios-4k60.md): the camera delivers 60, but VideoToolbox's
+low-latency rate control encodes one frame at a time (the encode call returns when the frame is done): ~26 ms per 4K frame, ~9.5 ms per 1080p frame, so
+4K60 HEVC gave 37.6 fps (22.4 frames/s dropped as `FrameWasLate`) and 1080p120 108. The normal encoder pipelines ~2 frames: HEVC 4K60 = 60 fps at 35-39 ms,
+1080p120 = 120 at 21 ms; but 4K30 waits 77 ms (low latency: 26), and H.264 4K60 reaches only 50 fps with its queue at ~139 ms.
+Decision: low-latency rate control unless the codec is HEVC and the mode has fps > 60 or more than 3840x2160x30 pixels per second
+(`VideoEncoder.lowLatencyFits`; `tune.lowLatency` overrides it for tests). H.264 keeps low latency everywhere, so every existing PC (which always asks
+H.264) sees no change. The PC asks HEVC for exactly those iPhone modes when Windows has an HEVC decoder (`iphone_needs_hevc` / `IphoneNeedsHevc`); the
+two rules must stay equal. The saved mode (`HKCU\...\Modes`) holds lens, size and fps only, so it still matches.
+Not tested: the PC change (compile, then 4K60 from the real iPhone through the virtual camera); other iPhone models (thresholds from an A15); 1080p240 and
+HEVC 10-bit with the normal encoder; Wi-Fi at 4K, where a big keyframe trips the phone's drop rule again and again (docs/ios-4k60.md, "Còn mở").

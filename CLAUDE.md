@@ -3,8 +3,6 @@
 > **Unfinished work (2026-11-22): read [docs/HANDOFF.md](docs/HANDOFF.md) first (section 0 = current state).** It says what is
 > not tested yet, the user's decisions, and the next steps.
 
-> **iPhone 4K60 only gives ~40 fps (2026-11-22): [docs/ios-4k60.md](docs/ios-4k60.md)** has the measurements and what to run on a Mac with the iPhone.
-
 A Camo Studio–like app: external cameras (USB webcams, Android phones, iPhones) published as a Windows 11
 virtual camera **"NiwCam"** at each source's **native resolution**. User-facing docs: [README.md](README.md)
 (Vietnamese). Wire protocol shared by all three sides: [docs/protocol.md](docs/protocol.md).
@@ -437,6 +435,11 @@ Windows 11.
   thread). The decoder MFT now gets a D3D11 device (DXVA) and falls back to software by itself; `NIWCAM_DECODER=software` forces the old path,
   `NIWCAM_TRACE=1` (Rust engine) prints decode ms, lag and skips each second. Tools: `niwcam-fake-phone --replay <gen_stream .bin> --size WxH --fps N
   --codec h264|hevc` (any size/rate), `driver --phone-args`, `phone_perf` (real phone), `decode_bench`. 4K60: 28 fps -> 61 fps. Not seen on a real iPhone yet.
+- **iPhone heavy modes (2026-11-22, ADR-012, docs/ios-4k60.md):** VideoToolbox's low-latency rate control encodes one frame at a time (~26 ms
+  per 4K frame), so 4K60 gave ~38 fps. HEVC above 4K30 pixels/s or above 60 fps now uses the normal encoder (4K60: 60 fps, ~37 ms);
+  H.264 keeps low latency (its normal encoder: 50 fps, 139 ms). The PC asks HEVC for those iPhone modes (`iphone_needs_hevc`, written on
+  the Mac, not compiled). `state` carries per-second counters (`captureFps`, `droppedFps`, `encodeOutFps`, `lowLatency`…); fake-pc prints
+  them as `phone side:`, and `--tune` overrides the encoder for tests.
 - **Build tools:** VS 2022 Build Tools (C++, CMake, Windows 11 SDK 26100) and the .NET 10 SDK
   (`C:\Program Files\dotnet`, not on PATH in an old shell). A `build\CMakeCache.txt` from a removed
   Visual Studio stops CMake ("could not find specified instance"): delete it and `build\CMakeFiles`.
@@ -622,8 +625,8 @@ Windows 11.
    status; no China: no ICP), not on Mac / Vision Pro, released manually after approval. Upload
    gotcha: `-exportArchive` with `destination=upload` failed ~10 times in a row with "Credentials
    Error … network connection was lost" while the network was fine, then passed; exporting to an
-   .ipa (`destination=export`) still works then. The Claude app has no Local Network permission on
-   this Mac, so `fake-pc` reaches the iPhone only over the cable.
+   .ipa (`destination=export`) still works then. Since 2026-11-22 `fake-pc --host <ip>` reaches the iPhone
+   over Wi‑Fi from the Claude app (before, it had no Local Network permission: cable only), and `devicectl` installs over Wi‑Fi.
    Screenshots (3, 1206×2622): `scripts/appstore-shot.mjs` over real captures (streaming 4K, the
    pairing code, the screen card). The Claude in Chrome extension may attach to the Windows PC's
    Chrome: pick the Mac one (`select_browser`), where App Store Connect is signed in.

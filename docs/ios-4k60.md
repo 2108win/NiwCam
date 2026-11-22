@@ -1,63 +1,41 @@
-# iPhone 4K60 chỉ ra ~40 fps: việc cho máy Mac
+# iPhone 4K60 chỉ ra ~40 fps: đã tìm ra (2026-11-22)
 
-(2026-11-22. Đọc `docs/HANDOFF.md` mục 0 trước, rồi ADR-011 trong `rust/DECISIONS.md`.)
+Quyết định: ADR-012 trong `rust/DECISIONS.md`. Đo trên máy Mac với iPhone 14 qua Wi‑Fi (`fake-pc --host`), bản Release,
+`back-wide`, máy nguội (`thermal` nominal suốt). Số "phía iPhone" là bộ đếm `StreamDiag`, không phụ thuộc đường truyền.
 
-## Đã biết (đo trên PC Windows, iPhone 14 cắm cáp USB, engine Rust, giải mã GPU)
+## Nguyên nhân
 
-| Chế độ | Khung/giây tới PC |
-|---|---|
-| 1080p60 | 60 |
-| 4K30 | 30 |
-| 4K60, 4K50, 4K48 (H.264 hoặc HEVC) | ~38–40 |
+Bộ mã hóa ở chế độ độ trễ thấp (`kVTVideoEncoderSpecification_EnableLowLatencyRateControl`) làm **từng khung một**: lệnh
+`VTCompressionSessionEncodeFrame` chỉ trả về khi khung đã mã hóa xong. Một khung 4K mất ~26 ms, một khung 1080p ~9,5 ms.
+Khung nào hết thời gian thì camera bỏ (`FrameWasLate`, hàng đợi `captureOutput` còn bận).
 
-- PC không phải nút thắt: giải mã + xử lý ~11 ms một khung 4K, 0 khung bị bỏ, hàng đợi gửi 0 B, độ trễ ~20 ms,
-  PC không báo `lost`. Điện thoại cũng không tự giảm bitrate (không có `congestion`).
-- Con số ~40 giống nhau ở 60/50/48 fps và ở H.264/HEVC, nên không phải do codec hay do fps đặt: iPhone chỉ
-  đẩy được ~40 khung 4K ra mỗi giây.
-- iPhone có lúc báo `thermal` serious (cắm sạc, 70 %): PC khi đó tự hạ xuống 1080p30 (`MainWindow.Thermal.cs`). Phải
-  loại trừ chuyện máy nóng trước khi kết luận về bộ mã hóa: để máy nguội rồi đo.
+| Chế độ | Độ trễ thấp (bản cũ) | Bộ mã hóa thường |
+|---|---|---|
+| 4K60 HEVC | 37,6 fps, bỏ 22,4/s, 26 ms | **60 fps**, bỏ 0, 35–39 ms |
+| 4K60 H.264 | ~39–43 fps, 25 ms | 50 fps, bỏ 9,6/s, **139 ms** (không kịp, hàng đợi dài ra) |
+| 1080p120 HEVC | 108 fps, 9 ms | **120 fps**, 21 ms |
+| 1080p240 HEVC | 96 fps | (chưa đo) |
+| 4K30 HEVC | 30 fps, 24–26 ms | 30 fps, **77 ms** (tệ hơn) |
+| 1080p60 / 1080p30 | 60 / 30, ~10 ms | (không cần) |
 
-## Các nghi phạm (chưa chứng minh cái nào)
+Không phải nguyên nhân: camera luôn giao đủ 60 (giao + bỏ = 60), nên HDR và low-light boost phía camera không cản (không đo
+riêng; caps báo `lowLightBoost` false trên máy này); `maxFrameDelay:1` không đổi gì; nhiệt nominal suốt, kể cả 2 phút 4K60 HEVC.
 
-1. Bộ mã hóa ở chế độ độ trễ thấp (`kVTVideoEncoderSpecification_EnableLowLatencyRateControl`, `VideoEncoder.swift`):
-   một số máy chỉ đạt vài trăm Mpixel/s ở chế độ này.
-2. Video HDR tự bật (`automaticallyAdjustsVideoHDREnabled` mặc định bật): xử lý thêm ở 4K60.
-3. Low-light boost (`automaticallyEnablesLowLightBoostWhenAvailable`): phòng tối, có thể ảnh hưởng tốc độ khung.
-4. Hàng đợi `camstudio.capture` bận (`alwaysDiscardsLateVideoFrames = true` bỏ khung khi `captureOutput` còn chạy).
-5. Nhiệt (xem trên).
+## Đã sửa
 
-## Cái đã thêm sẵn để đo (chưa chạy: viết trên Windows, không có Swift ở đó)
+- iPhone (`VideoEncoder.lowLatencyFits`): HEVC có fps > 60 hoặc số điểm ảnh/giây > 4K30 thì dùng bộ mã hóa thường. H.264 giữ
+  độ trễ thấp ở mọi chế độ (bộ mã hóa thường của H.264 trễ 139 ms ở 4K60). `state.lowLatency` cho biết chế độ đang dùng.
+- PC (`phone_formats` trong `rust/engine/src/api.rs`, `PhoneFormats` trong `src/engine/EngineApi.cpp`): với iPhone, đúng các
+  chế độ đó xin HEVC (khi Windows có bộ giải mã HEVC). **Viết trên Mac, chưa biên dịch.**
+- Kiểm lại sau khi sửa: 4K60 HEVC phía iPhone 60, máy nhận 58,5; H.264 4K60 vẫn ~40 với `lowLatency=1` (y như bản cũ);
+  4K30, 1080p60, 1080p30 không đổi. CryptoTests đạt.
 
-- `StreamDiag` trong `ios/CamStudio/VideoEncoder.swift`: mỗi giây đếm khung camera giao (`captureFps`), khung bị bỏ
-  ở hàng đợi kèm lý do của iOS (`droppedFps`, `dropReason`, qua `captureOutput(_:didDrop:from:)`), khung vào/ra bộ mã hóa
-  (`encodeInFps`/`encodeOutFps`), thời gian gọi `VTCompressionSessionEncodeFrame` lâu nhất (`encodeCallMs`) và độ trễ
-  mã hóa trung bình (`encodeLatencyMs`). Đi vào `state` (docs/protocol.md 4.2) và log hệ thống
-  (`subsystem vn.camstudio.phone`, category `stream`).
-- Object `tune` tùy chọn trong `start`: `lowLatency` (false = bỏ chế độ độ trễ thấp), `realTime`, `maxFrameDelay`,
-  `videoHDR` (false = tắt), `lowLightBoost` (false = tắt). Mặc định không đổi gì.
-- `tools/fake_pc.swift`: `--tune '<json>'` và dòng `phone side: ...` trong bản tóm tắt mỗi luồng.
+## Còn mở
 
-## Việc cần làm (cần iPhone cắm vào Mac)
-
-1. `git pull`; `scripts/ios-run.sh` (có test mật mã, build, cài, mở app). Nếu không biên dịch được thì sửa lỗi cú pháp
-   trong ba file Swift trên trước (code mới chưa qua trình biên dịch).
-2. Để máy nguội (hoặc ghi lại `thermal` trong dòng tóm tắt), rồi đo từng cấu hình, 15 giây mỗi cái, ở 4K60:
-   ```
-   scripts/fake-pc.sh --usb --lens back-wide-1 --width 3840 --height 2160 --fps 60 --codec hevc --bitrate 40000 --seconds 15
-   scripts/fake-pc.sh ... --tune '{"lowLatency":false}'
-   scripts/fake-pc.sh ... --tune '{"videoHDR":false}'
-   scripts/fake-pc.sh ... --tune '{"lowLightBoost":false}'
-   scripts/fake-pc.sh ... --tune '{"lowLatency":false,"videoHDR":false,"lowLightBoost":false}'
-   scripts/fake-pc.sh ... --codec h264     # so sánh
-   ```
-   (lens id lấy từ dòng `caps` mà fake-pc in; `--lens all` liệt kê.) Đọc `fps=` (đo theo pts) và `phone side:`.
-3. Đọc kết quả:
-   - `captureFps` ~40 (camera chỉ giao 40): nguyên nhân ở camera (HDR, boost, nhiệt, định dạng được chọn trong `pickFormat`).
-   - `captureFps` 60 nhưng `droppedFps` ~20: hàng đợi bận → xem `encodeCallMs`; nếu lớn, `encode()` đang chặn hàng đợi
-     (thử `maxFrameDelay`, hoặc đẩy `encode` sang hàng đợi riêng).
-   - `encodeInFps` 60 nhưng `encodeOutFps` ~40: bộ mã hóa không kịp → `lowLatency:false` thường là lời giải;
-     khi đó cân nhắc chỉ tắt chế độ độ trễ thấp cho 4K (pixel rate lớn), giữ nguyên ở độ phân giải thấp
-     (độ trễ qua Wi‑Fi: docs/protocol.md 6).
-4. Khi biết nguyên nhân: sửa mặc định (chỉ cho các chế độ nặng), chạy `CryptoTests`, đo lại 4K60 phải ≥ 58 fps ở
-   `fake-pc --usb` và 1080p30/60 không đổi, rồi đo qua PC thật nếu được (`phone_perf`, `NIWCAM_TRACE=1`).
-5. Ghi kết quả vào CLAUDE.md (mục iOS) và ADR-012 trong `rust/DECISIONS.md`. Một bản TestFlight mới mới đến tay người dùng.
+- **Wi‑Fi ở 4K:** mỗi khung khóa 4K làm các khung sau chờ quá 150 ms, iPhone tưởng nghẽn (`Session.congestion`): bỏ khung,
+  xin khung khóa mới, giảm bitrate 30 %. Khung khóa mới lại gây nghẽn, nên bitrate tụt dần tới 1 Mbps (2 phút ở 15 Mbps:
+  36 khung khóa, máy nhận 32 fps). Lần đầu luôn rơi đúng giây thứ 10 (khung khóa định kỳ). Cáp USB không bị.
+- Các iPhone khác chưa đo: ngưỡng lấy từ iPhone 14 (A15).
+- Cách đo lại: `scripts/fake-pc.sh --host <ip iPhone> --lens back-wide --width 3840 --height 2160 --fps 60 --codec hevc
+  --bitrate 15000 --seconds 15 [--tune '{"lowLatency":true}']`, đọc dòng `phone side:`. IP lấy bằng
+  `dns-sd -B _camstudio._tcp`, rồi `dns-sd -L iPhone _camstudio._tcp` và `dns-sd -G v4 <host>`.
