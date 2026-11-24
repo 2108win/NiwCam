@@ -633,7 +633,7 @@ Windows 11.
    `vn.camstudio.phonewl` on the user's own paid team. The App Store Connect record "NiwCam"
    says version 1.0; the build says 0.1.0. Next: test the TestFlight install on the iPhone.
    **App Store 1.0: live since 2026-11-10** (submitted 2026-11-09), https://apps.apple.com/app/niwcam/id6824100361.
-   **1.0.1 (build 20261122.2016, ADR-012: 4K60 HEVC at 60 fps) submitted 2026-11-22**, released automatically once approved.
+   **1.0.1 (build 20261122.2016, ADR-012: 4K60 HEVC at 60 fps) is live** (seen 2026-11-24). **1.0.2 (build 20261124.1035, iOS 16 for the iPhone 8 / X) uploaded to TestFlight (internal group) and submitted 2026-11-24**, released automatically once approved; then README and the QR/store text say iOS 16.
    README, the PC QR (next PC release) and winlax.id.vn/niwcam point there. Build 1.0 (20261109.0100), iPhone only, no `voip` (guideline
    2.5.4: the PiP switch is hidden). Listing text and review notes: [docs/appstore.md](docs/appstore.md);
    privacy policy: [docs/privacy.md](docs/privacy.md). Free, 147 countries (no EU: no DSA trader
