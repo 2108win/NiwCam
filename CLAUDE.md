@@ -440,6 +440,20 @@ Windows 11.
   H.264 keeps low latency (its normal encoder: 50 fps, 139 ms). The PC asks HEVC for those iPhone modes (`iphone_needs_hevc`, written on
   the Mac, not compiled). `state` carries per-second counters (`captureFps`, `droppedFps`, `encodeOutFps`, `lowLatency`…); fake-pc prints
   them as `phone side:`, `--tune` overrides the encoder for tests, and every stream leaves `<lens>.frames.csv` (arrival, pts, bytes, key).
+- **iOS 16 for the iPhone 8 / X (2026-11-24):** deployment target 16.0 (`project.yml`, `Package.swift`; iPhone 8 stops at iOS 16.7). iOS 17's
+  `RotationCoordinator` / `videoRotationAngle` live in `HorizonRotation.swift`: on 16 the angle comes from `UIDevice` orientation, switched on
+  at launch (`DeviceOrientation`; right after switching on it reads unknown, so a stream started then got the default 90): portrait 90,
+  upside-down 270, landscapeLeft 0, landscapeRight 180 (the two enums name the landscapes oppositely); the front camera gets `180 - a`
+  (its frames are mirrored). The preview follows the window's interface orientation (`PreviewView.turnLikeInterface`).
+  `-legacyRotation YES` as a launch argument runs that path on a newer iPhone (`devicectl device process launch ... <bundle id> -- -legacyRotation YES`:
+  without `--` devicectl takes it as its own option). `previewOptimized` stabilization (17) is skipped on 16; `.onChange` uses its one-parameter form.
+  Needs iOS 16 only: not 15 (would also need `persistentSystemOverlays`, `Task.sleep(for:)`, `isStudioLightSupported`, multitasking camera and a
+  `VTPixelTransferSession` replacement in the screen extension).
+  **Checked on the iPhone 14 (iOS 27) with `-legacyRotation` against RotationCoordinator, `devicectl device orientation set`:** same `orientation` for
+  back and front in the four orientations, the same back-camera frames (pixel difference at noise level, 55 when turned 180°), the same in-app
+  preview in landscape, and the angle follows a turn during a stream. **Not run on an iOS 16 iPhone** (no such device here, no iOS 16 simulator
+  runtime and the simulator has no camera), nor on an iPhone 8 (A11: 4K60/HEVC modes and the screen extension's memory are unchecked).
+  README, the App Store listing and its minimum OS still say 17 until the next build is submitted.
 - **Build tools:** VS 2022 Build Tools (C++, CMake, Windows 11 SDK 26100) and the .NET 10 SDK
   (`C:\Program Files\dotnet`, not on PATH in an old shell). A `build\CMakeCache.txt` from a removed
   Visual Studio stops CMake ("could not find specified instance"): delete it and `build\CMakeFiles`.

@@ -19,8 +19,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     private let queue = DispatchQueue(label: "camstudio.capture", qos: .userInteractive)
     private var input: AVCaptureDeviceInput?
     private var encoder: VideoEncoder?
-    private var rotation: AVCaptureDevice.RotationCoordinator?
-    private var rotationObserver: NSKeyValueObservation?
+    private var rotation: CaptureRotation?
     private var stateTimer: Timer?
     private var controls: [String: Any] = [:]
     private var cinematicOn = false
@@ -107,7 +106,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
         if let connection = output.connection(with: .video) {
             // Frames stay in sensor orientation; the PC rotates using "orientation".
-            if connection.isVideoRotationAngleSupported(0) { connection.videoRotationAngle = 0 }
+            HorizonRotation.keepSensorOrientation(connection)
             if let s = stabilization, connection.isVideoStabilizationSupported {
                 connection.preferredVideoStabilizationMode = Self.stabilizationMode(s)
             }
@@ -126,10 +125,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
         session.startRunning()
 
-        rotation = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
-        rotationObserver = rotation?.observe(\.videoRotationAngleForHorizonLevelCapture, options: [.new]) { [weak self] _, _ in
-            self?.publishState()
-        }
+        rotation = CaptureRotation(device: device) { [weak self] in self?.publishState() }
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.stateTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in self?.publishState() }
@@ -140,7 +136,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
         interruptionObserver = nil
         session.stopRunning()
-        rotationObserver = nil
+        rotation?.invalidate()
         rotation = nil
         DispatchQueue.main.async { self.stateTimer?.invalidate() }
         queue.sync {
@@ -169,7 +165,7 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     /// Orientation the PC must apply (clockwise degrees) to make the image upright.
     var orientation: Int {
-        Int((rotation?.videoRotationAngleForHorizonLevelCapture ?? 90).rounded()) % 360
+        rotation?.angle ?? 90
     }
 
     private func pickFormat(_ device: AVCaptureDevice, cinematic: Bool) -> AVCaptureDevice.Format? {
@@ -317,7 +313,9 @@ final class CameraStreamer: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         case "standard": return .standard
         case "cinematic": return .cinematic
         case "cinematicExtended": return .cinematicExtended
-        case "previewOptimized": return .previewOptimized
+        case "previewOptimized":
+            if #available(iOS 17.0, *) { return .previewOptimized }
+            return .off
         default: return .off
         }
     }

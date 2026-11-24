@@ -122,9 +122,11 @@ final class CameraCaps {
         var stabilization = ["off"]
         let modes: [(AVCaptureVideoStabilizationMode, String)] = [
             (.standard, "standard"), (.cinematic, "cinematic"),
-            (.cinematicExtended, "cinematicExtended"), (.previewOptimized, "previewOptimized"),
+            (.cinematicExtended, "cinematicExtended"),
         ]
         for (mode, name) in modes where f.isVideoStabilizationModeSupported(mode) { stabilization.append(name) }
+        // iOS 17 added this mode.
+        if #available(iOS 17.0, *), f.isVideoStabilizationModeSupported(.previewOptimized) { stabilization.append("previewOptimized") }
 
         var wbModes = ["auto"]
         if d.isLockingWhiteBalanceWithCustomDeviceGainsSupported { wbModes.append("manual") }

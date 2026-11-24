@@ -18,7 +18,8 @@ struct CamStudioApp: App {
         WindowGroup {
             ContentView(model: model)
                 .onAppear { model.start() }
-                .onChange(of: phase) { _, newPhase in model.phaseChanged(newPhase) }
+                // The one-parameter form: the two-parameter one needs iOS 17, this runs on 16 too.
+                .onChange(of: phase) { newPhase in model.phaseChanged(newPhase) }
         }
     }
 }
@@ -61,6 +62,7 @@ final class AppModel: ObservableObject, Session.UI {
     func start() {
         guard server == nil else { return }
         UIApplication.shared.isIdleTimerDisabled = true
+        if HorizonRotation.legacy { DeviceOrientation.start() }   // iOS 16: ready before the first stream
         AVCaptureDevice.requestAccess(for: .video) { _ in }
         let store = Store()
         store.shareLegacyKeys()

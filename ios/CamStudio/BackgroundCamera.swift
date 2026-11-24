@@ -26,7 +26,7 @@ final class BackgroundCamera: NSObject, AVPictureInPictureControllerDelegate {
     private let preview = PreviewView()
     private let callViewController = AVPictureInPictureVideoCallViewController()
     private var controller: AVPictureInPictureController?
-    private var rotation: AVCaptureDevice.RotationCoordinator?
+    private var rotation: AnyObject?        // AVCaptureDevice.RotationCoordinator (iOS 17+)
     private var rotationObserver: NSKeyValueObservation?
 
     override init() {
@@ -46,7 +46,7 @@ final class BackgroundCamera: NSObject, AVPictureInPictureControllerDelegate {
         preview.previewLayer.session = session
         rotationObserver = nil
         rotation = nil
-        if let device {
+        if #available(iOS 17.0, *), !HorizonRotation.legacy, let device {
             let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: preview.previewLayer)
             rotationObserver = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.initial, .new]) { [weak self] c, _ in
                 let angle = c.videoRotationAngleForHorizonLevelPreview
@@ -56,6 +56,8 @@ final class BackgroundCamera: NSObject, AVPictureInPictureControllerDelegate {
                 }
             }
             rotation = coordinator
+        } else {
+            preview.turnLikeInterface()      // iOS 16: no coordinator, the preview follows the app's own orientation
         }
         if size.width > 0, size.height > 0 { callViewController.preferredContentSize = size }
 
@@ -116,4 +118,19 @@ final class PreviewView: UIView {
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    /// iOS 16 has no RotationCoordinator: the preview takes the orientation of the app's window
+    /// (the interface turns with the phone), so it stays upright. The raw values of the two enums match.
+    func turnLikeInterface() {
+        guard HorizonRotation.legacy, let connection = previewLayer.connection, connection.isVideoOrientationSupported,
+              let interface = window?.windowScene?.interfaceOrientation,
+              let orientation = AVCaptureVideoOrientation(rawValue: interface.rawValue),
+              connection.videoOrientation != orientation else { return }
+        connection.videoOrientation = orientation
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        turnLikeInterface()      // the interface turned: the bounds changed
+    }
 }

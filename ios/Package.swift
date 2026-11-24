@@ -8,7 +8,7 @@ import PackageDescription
 let package = Package(
     name: "CamStudio",
     platforms: [
-        .iOS(.v17),
+        .iOS(.v16),
     ],
     products: [
         // xtool packages the library product named in xtool.yml as the app.

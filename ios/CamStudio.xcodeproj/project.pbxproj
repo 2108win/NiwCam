@@ -19,6 +19,7 @@
 		77A6165D12FE34A82E09C82B /* PhoneServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A12D25697CB21D92CA77B313 /* PhoneServer.swift */; };
 		7BF9CDBA8685C15C4E2C1EE8 /* VideoEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC9DC52B5DABB93E2F57635 /* VideoEncoder.swift */; };
 		82F8F9C89F90345A24D4D142 /* StreamSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1D0F2A07CA35F2D3944E9E9 /* StreamSupport.swift */; };
+		867638B3928D4A8EFF7F94E9 /* HorizonRotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BBC5740BA62C21AFDFA5BC3 /* HorizonRotation.swift */; };
 		8B050C7C507D0B8C12315F6D /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F6A5491E9CDE58FA9DF231 /* Store.swift */; };
 		8C40902C7DD7FA82736EE8F4 /* CamStudioApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41B37FE4431EA98FA6A6BA9 /* CamStudioApp.swift */; };
 		8E13E4E9A82C40827ADE9F07 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 2F6123D52C22C5CFC26789D8 /* PrivacyInfo.xcprivacy */; };
@@ -74,6 +75,7 @@
 		383D35DCC107591AD089B555 /* CamStudio.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CamStudio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4584F82000638669470DC684 /* CamStudioTestsMac.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CamStudioTestsMac.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4FD2FE4642ADC0E27AC88332 /* Crypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crypto.swift; sourceTree = "<group>"; };
+		5BBC5740BA62C21AFDFA5BC3 /* HorizonRotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HorizonRotation.swift; sourceTree = "<group>"; };
 		5C0B8F9DDD417EDC1962335A /* CameraSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSource.swift; sourceTree = "<group>"; };
 		671EE379B54B186D315BFEA5 /* CameraStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraStreamer.swift; sourceTree = "<group>"; };
 		7496422F7B9651C470D431A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				F41B37FE4431EA98FA6A6BA9 /* CamStudioApp.swift */,
 				8C45B3C9B8A17E34E463CB2B /* Cinematic.swift */,
 				4FD2FE4642ADC0E27AC88332 /* Crypto.swift */,
+				5BBC5740BA62C21AFDFA5BC3 /* HorizonRotation.swift */,
 				A12D25697CB21D92CA77B313 /* PhoneServer.swift */,
 				3148F9DCF14C9ED7071418BC /* Session.swift */,
 				B2F6A5491E9CDE58FA9DF231 /* Store.swift */,
@@ -389,6 +392,7 @@
 				8FA8D42B1FA7716C1B5A5D90 /* CameraStreamer.swift in Sources */,
 				EE6BFDCF74CA1BFB4F7802D8 /* Cinematic.swift in Sources */,
 				0AF7DE7849AA3D5170572A97 /* Crypto.swift in Sources */,
+				867638B3928D4A8EFF7F94E9 /* HorizonRotation.swift in Sources */,
 				D19B12751AFCAD4F8277368B /* PhoneServer.swift in Sources */,
 				27B6542473C423A84F571B34 /* Session.swift in Sources */,
 				8B050C7C507D0B8C12315F6D /* Store.swift in Sources */,
@@ -515,7 +519,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -628,7 +632,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
